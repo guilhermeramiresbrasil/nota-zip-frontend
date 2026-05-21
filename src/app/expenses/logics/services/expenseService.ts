@@ -1,11 +1,9 @@
 import { Transaction } from '@/app/home/types/dashboard.types';
 import { ExpenseFormData } from '../../types/expense.types';
+import { generateCorrelationId } from '@/lib/utils';
 
 const GATEWAY_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
-/**
- * Serviço para gerenciar transações de despesas/receitas
- */
 export class ExpenseService {
   private static instance: ExpenseService;
 
@@ -18,115 +16,132 @@ export class ExpenseService {
     return ExpenseService.instance;
   }
 
-  /**
-   * Busca todas as transações
-   * @returns Lista de transações
-   */
-  async fetchTransactions(): Promise<Transaction[]> {
-    // TODO: Integrar com API real
-    // const response = await fetch(`${GATEWAY_URL}/api/transactions`);
-    // return response.json();
-
-    // Dados mockados por enquanto
-    return [
-      {
-        id: '1',
-        name: 'Supermercado',
-        amount: -450.50,
-        category: 'Alimentação',
-        date: '2024-01-15',
-        type: 'expense',
-      },
-      {
-        id: '2',
-        name: 'Salário',
-        amount: 5000.00,
-        category: 'Receita',
-        date: '2024-01-14',
-        type: 'income',
-      },
-      {
-        id: '3',
-        name: 'Uber',
-        amount: -35.00,
-        category: 'Transporte',
-        date: '2024-01-13',
-        type: 'expense',
-      },
-      {
-        id: '4',
-        name: 'Netflix',
-        amount: -55.90,
-        category: 'Entretenimento',
-        date: '2024-01-12',
-        type: 'expense',
-      },
-    ];
+  private getHeaders(): Record<string, string> {
+    const accessToken = localStorage.getItem('accessToken');
+    const correlationId = generateCorrelationId();
+    return {
+      'Content-Type': 'application/json',
+      'x-correlation-id': correlationId,
+      ...(accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {}),
+    };
   }
 
-  /**
-   * Cria uma nova transação
-   * @param formData - Dados do formulário
-   * @param type - Tipo de transação (income ou expense)
-   * @returns Transação criada
-   */
+  async fetchTransactions(userId: string, type?: 'credit' | 'debit'): Promise<Transaction[]> {
+    try {
+      const response = await fetch(`${GATEWAY_URL}/api/transactions/list`, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify({
+          userId,
+          type,
+          limit: 100,
+          offset: 0,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Erro ao buscar transacoes');
+      }
+
+      const result = await response.json();
+      const data = result.data || [];
+
+      return data.map((t: { id: string; description: string; amount: number; type: string; category: string; date: string }) => ({
+        id: t.id,
+        name: t.description,
+        amount: t.type === 'debit' ? -Math.abs(t.amount) : Math.abs(t.amount),
+        category: t.category,
+        date: t.date,
+        type: t.type === 'credit' ? 'income' : 'expense',
+      }));
+    } catch (error) {
+      console.error('Error fetching transactions:', error);
+      return [];
+    }
+  }
+
   async createTransaction(
     formData: ExpenseFormData,
-    type: 'income' | 'expense'
+    type: 'income' | 'expense',
+    userId: string
   ): Promise<Transaction> {
-    // TODO: Integrar com API real
-    // const response = await fetch(`${GATEWAY_URL}/api/transactions`, {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({ ...formData, type }),
-    // });
-    // return response.json();
+    const response = await fetch(`${GATEWAY_URL}/api/transactions`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify({
+        userId,
+        amount: parseFloat(formData.amount),
+        type: type === 'income' ? 'credit' : 'debit',
+        category: formData.category,
+        description: formData.description || formData.category,
+        date: formData.date,
+      }),
+    });
 
-    // Dados mockados por enquanto
-    const newTransaction: Transaction = {
-      id: Date.now().toString(),
-      name: formData.description || formData.category,
-      amount: type === 'expense' ? -parseFloat(formData.amount) : parseFloat(formData.amount),
-      category: formData.category,
-      date: formData.date,
-      type,
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Erro ao criar transacao');
+    }
+
+    const result = await response.json();
+    const t = result.data;
+
+    return {
+      id: t.id,
+      name: t.description,
+      amount: t.type === 'debit' ? -Math.abs(t.amount) : Math.abs(t.amount),
+      category: t.category,
+      date: t.date,
+      type: t.type === 'credit' ? 'income' : 'expense',
     };
-
-    return newTransaction;
   }
 
-  /**
-   * Atualiza uma transação existente
-   * @param id - ID da transação
-   * @param formData - Dados atualizados
-   * @returns Transação atualizada
-   */
   async updateTransaction(
     id: string,
-    formData: Partial<ExpenseFormData>
+    formData: Partial<ExpenseFormData>,
+    userId: string
   ): Promise<Transaction> {
-    // TODO: Integrar com API real
-    // const response = await fetch(`${GATEWAY_URL}/api/transactions/${id}`, {
-    //   method: 'PUT',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify(formData),
-    // });
-    // return response.json();
+    const body: Record<string, unknown> = {};
+    if (formData.amount !== undefined) body.amount = parseFloat(formData.amount);
+    if (formData.category !== undefined) body.category = formData.category;
+    if (formData.description !== undefined) body.description = formData.description;
+    if (formData.date !== undefined) body.date = formData.date;
 
-    throw new Error('Not implemented');
+    const response = await fetch(`${GATEWAY_URL}/api/transactions/${id}?userId=${userId}`, {
+      method: 'PUT',
+      headers: this.getHeaders(),
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Erro ao atualizar transacao');
+    }
+
+    const result = await response.json();
+    const t = result.data;
+
+    return {
+      id: t.id,
+      name: t.description,
+      amount: t.type === 'debit' ? -Math.abs(t.amount) : Math.abs(t.amount),
+      category: t.category,
+      date: t.date,
+      type: t.type === 'credit' ? 'income' : 'expense',
+    };
   }
 
-  /**
-   * Deleta uma transação
-   * @param id - ID da transação
-   */
-  async deleteTransaction(id: string): Promise<void> {
-    // TODO: Integrar com API real
-    // await fetch(`${GATEWAY_URL}/api/transactions/${id}`, {
-    //   method: 'DELETE',
-    // });
+  async deleteTransaction(id: string, userId: string): Promise<void> {
+    const response = await fetch(`${GATEWAY_URL}/api/transactions/${id}?userId=${userId}`, {
+      method: 'DELETE',
+      headers: this.getHeaders(),
+    });
 
-    throw new Error('Not implemented');
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Erro ao deletar transacao');
+    }
   }
 }
 
