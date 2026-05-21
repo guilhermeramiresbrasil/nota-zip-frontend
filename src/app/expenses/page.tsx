@@ -11,8 +11,9 @@ import { ExpenseFilter } from './components/ExpenseFilter';
 import { ExpenseList } from './components/ExpenseList';
 import { ExpenseForm } from './components/ExpenseForm';
 import { expenseService } from './logics/services/expenseService';
-import { countWeeklyTransactions, calculateTotalByType } from './logics/calculations/expenseCalculations';
+import { calculateTotalByType } from './logics/calculations/expenseCalculations';
 import { useAuth } from '@/contexts/AuthContext';
+import { Transaction } from '@/app/home/types/dashboard.types';
 
 interface FormData {
   amount: string;
@@ -23,7 +24,7 @@ interface FormData {
 
 export default function ExpensesPage() {
   const { user } = useAuth();
-  const [transactions, setTransactions] = useState<any[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [transactionType, setTransactionType] = useState<'income' | 'expense'>('expense');
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -35,9 +36,11 @@ export default function ExpensesPage() {
   });
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchTransactions = async () => {
+      if (!user?.id) return;
       try {
-        const transactionsData = await expenseService.fetchTransactions();
+        setLoading(true);
+        const transactionsData = await expenseService.fetchTransactions(user.id);
         setTransactions(transactionsData);
       } catch (error) {
         console.error('Error fetching transactions:', error);
@@ -45,9 +48,8 @@ export default function ExpensesPage() {
         setLoading(false);
       }
     };
-
-    fetchData();
-  }, []);
+    fetchTransactions();
+  }, [user?.id]);
 
   const totalIncome = calculateTotalByType(transactions, 'income');
   const totalExpenses = calculateTotalByType(transactions, 'expense');
@@ -65,8 +67,26 @@ export default function ExpensesPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Form submitted:', formData, transactionType);
-    setDialogOpen(false);
+    if (!user?.id) return;
+
+    try {
+      const newTransaction = await expenseService.createTransaction(formData, transactionType, user.id);
+      setDialogOpen(false);
+      setTransactions((prev) => [newTransaction, ...prev]);
+    } catch (error) {
+      console.error('Error creating transaction:', error);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!user?.id) return;
+
+    try {
+      await expenseService.deleteTransaction(id, user.id);
+      setTransactions((prev) => prev.filter((t) => t.id !== id));
+    } catch (error) {
+      console.error('Error deleting transaction:', error);
+    }
   };
 
   const handleCancel = () => {
@@ -103,7 +123,10 @@ export default function ExpensesPage() {
             {loading ? (
               <div className="text-center py-8">Carregando...</div>
             ) : (
-              <ExpenseList transactions={transactions} />
+              <ExpenseList
+                transactions={transactions}
+                onDelete={handleDelete}
+              />
             )}
           </CardContent>
         </Card>
