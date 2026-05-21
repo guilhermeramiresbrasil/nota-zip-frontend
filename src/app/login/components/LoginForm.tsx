@@ -4,35 +4,23 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Mail, Lock, ArrowRight } from 'lucide-react';
-import { useAuthStore } from '@/stores/useAuthStore';
-import { useRouter } from 'next/navigation';
 import { LoginFormData } from '../types/auth.types';
 
-export const LoginForm: React.FC = () => {
-  const [formData, setFormData] = React.useState<LoginFormData>({
-    email: '',
-    password: '',
-  });
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [error, setError] = React.useState('');
+interface LoginFormProps {
+  formData: LoginFormData;
+  isLoading: boolean;
+  error: string;
+  onChangeFormData: (data: LoginFormData) => void;
+  onSubmit: (e: React.FormEvent) => Promise<void>;
+}
 
-  const { login } = useAuthStore();
-  const router = useRouter();
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError('');
-
-    try {
-      await login(formData.email, formData.password);
-      router.push('/home');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao fazer login');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+export const LoginForm: React.FC<LoginFormProps> = ({ 
+  formData, 
+  isLoading, 
+  error, 
+  onChangeFormData, 
+  onSubmit 
+}) => {
 
   return (
     <Card className="shadow-xl">
@@ -43,7 +31,7 @@ export const LoginForm: React.FC = () => {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={onSubmit} className="space-y-4">
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-800">
               {error}
@@ -60,7 +48,7 @@ export const LoginForm: React.FC = () => {
                 placeholder="seu@email.com"
                 className="pl-10"
                 value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                onChange={(e) => onChangeFormData({ ...formData, email: e.target.value })}
                 required
               />
             </div>
@@ -76,7 +64,7 @@ export const LoginForm: React.FC = () => {
                 placeholder="••••••••"
                 className="pl-10"
                 value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                onChange={(e) => onChangeFormData({ ...formData, password: e.target.value })}
                 required
               />
             </div>

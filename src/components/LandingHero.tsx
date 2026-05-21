@@ -28,11 +28,6 @@ export const LandingHero: React.FC = () => {
               Entrar
             </Button>
           </Link>
-          <Link href="/plans">
-            <Button size="lg" variant="outline" className="border-2 border-white text-black hover:bg-white hover:text-blue-600">
-              Ver Planos
-            </Button>
-          </Link>
         </div>
       </div>
     </section>

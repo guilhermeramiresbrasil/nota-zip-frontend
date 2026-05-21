@@ -19,33 +19,37 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { expenseCategories, incomeCategories } from '../types/expense.types';
 import { TransactionType } from '@/app/home/types/dashboard.types';
-import { useExpensePageStore } from '../stores/useExpensePageStore';
 
-export const ExpenseForm: React.FC = () => {
-  const {
-    isDialogOpen,
-    transactionType,
-    formData,
-    limitError,
-    setDialogOpen,
-    setTransactionType,
-    setFormData,
-    resetForm,
-  } = useExpensePageStore();
+interface FormData {
+  amount: string;
+  category: string;
+  description: string;
+  date: string;
+}
 
-  const categories =
-    transactionType === 'expense' ? expenseCategories : incomeCategories;
+interface ExpenseFormProps {
+  dialogOpen: boolean;
+  onDialogOpenChange: (open: boolean) => void;
+  transactionType: 'income' | 'expense';
+  formData: FormData;
+  onChangeFormData: (data: FormData) => void;
+  onSubmit: (e: React.FormEvent) => Promise<void>;
+  onCancel: () => void;
+}
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    // TODO: Implementar lógica de criação de transação
-    console.log('Form submitted:', formData, transactionType);
-    resetForm();
-    setDialogOpen(false);
-  };
+export const ExpenseForm: React.FC<ExpenseFormProps> = ({
+  dialogOpen,
+  onDialogOpenChange,
+  transactionType,
+  formData,
+  onChangeFormData,
+  onSubmit,
+  onCancel,
+}) => {
+  const categories = transactionType === 'expense' ? expenseCategories : incomeCategories;
 
   return (
-    <Dialog open={isDialogOpen} onOpenChange={setDialogOpen}>
+    <Dialog open={dialogOpen} onOpenChange={onDialogOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>
@@ -57,7 +61,7 @@ export const ExpenseForm: React.FC = () => {
               : 'Registre suas receitas para controle financeiro'}
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="amount">Valor</Label>
             <Input
@@ -65,7 +69,7 @@ export const ExpenseForm: React.FC = () => {
               type="number"
               placeholder="0,00"
               value={formData.amount}
-              onChange={(e) => setFormData({ amount: e.target.value })}
+              onChange={(e) => onChangeFormData({ ...formData, amount: e.target.value })}
               required
             />
           </div>
@@ -74,7 +78,7 @@ export const ExpenseForm: React.FC = () => {
             <Label htmlFor="category">Categoria</Label>
             <Select
               value={formData.category}
-              onValueChange={(value) => setFormData({ category: value })}
+              onValueChange={(value) => onChangeFormData({ ...formData, category: value })}
               required
             >
               <SelectTrigger>
@@ -96,7 +100,7 @@ export const ExpenseForm: React.FC = () => {
               id="description"
               placeholder="Descrição opcional"
               value={formData.description}
-              onChange={(e) => setFormData({ description: e.target.value })}
+              onChange={(e) => onChangeFormData({ ...formData, description: e.target.value })}
             />
           </div>
 
@@ -106,24 +110,17 @@ export const ExpenseForm: React.FC = () => {
               id="date"
               type="date"
               value={formData.date}
-              onChange={(e) => setFormData({ date: e.target.value })}
+              onChange={(e) => onChangeFormData({ ...formData, date: e.target.value })}
               required
             />
           </div>
-
-          {limitError && (
-            <p className="text-sm text-red-600">{limitError}</p>
-          )}
 
           <div className="flex gap-2">
             <Button
               type="button"
               variant="outline"
               className="flex-1"
-              onClick={() => {
-                resetForm();
-                setDialogOpen(false);
-              }}
+              onClick={onCancel}
             >
               Cancelar
             </Button>

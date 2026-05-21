@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
@@ -10,32 +10,67 @@ import { StatsCard } from '../home/components/StatsCard';
 import { ExpenseFilter } from './components/ExpenseFilter';
 import { ExpenseList } from './components/ExpenseList';
 import { ExpenseForm } from './components/ExpenseForm';
-import { useTransactionsStore } from '@/stores/useTransactionsStore';
-import { usePlanLimitsStore } from '@/stores/usePlanLimitsStore';
-import { useExpensePageStore } from './stores/useExpensePageStore';
+import { expenseService } from './logics/services/expenseService';
 import { countWeeklyTransactions, calculateTotalByType } from './logics/calculations/expenseCalculations';
+import { useAuth } from '@/contexts/AuthContext';
+
+interface FormData {
+  amount: string;
+  category: string;
+  description: string;
+  date: string;
+}
 
 export default function ExpensesPage() {
-  const { transactions, loading, fetchTransactions } = useTransactionsStore();
-  const { limits, canAddTransaction, refresh } = usePlanLimitsStore();
-  const { transactionType, setTransactionType, setDialogOpen } = useExpensePageStore();
+  const { user } = useAuth();
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [transactionType, setTransactionType] = useState<'income' | 'expense'>('expense');
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [formData, setFormData] = useState<FormData>({
+    amount: '',
+    category: '',
+    description: '',
+    date: new Date().toISOString().split('T')[0],
+  });
 
   useEffect(() => {
-    fetchTransactions();
-    refresh();
-  }, [fetchTransactions, refresh]);
+    const fetchData = async () => {
+      try {
+        const transactionsData = await expenseService.fetchTransactions();
+        setTransactions(transactionsData);
+      } catch (error) {
+        console.error('Error fetching transactions:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const totalIncome = calculateTotalByType(transactions, 'income');
   const totalExpenses = calculateTotalByType(transactions, 'expense');
   const balance = totalIncome - totalExpenses;
 
   const handleAddTransaction = () => {
-    const weeklyCount = countWeeklyTransactions(transactions, transactionType);
-    if (!canAddTransaction(transactionType, weeklyCount)) {
-      // TODO: Show limit error
-      return;
-    }
+    setFormData({
+      amount: '',
+      category: '',
+      description: '',
+      date: new Date().toISOString().split('T')[0],
+    });
     setDialogOpen(true);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log('Form submitted:', formData, transactionType);
+    setDialogOpen(false);
+  };
+
+  const handleCancel = () => {
+    setDialogOpen(false);
   };
 
   return (
@@ -73,7 +108,15 @@ export default function ExpensesPage() {
           </CardContent>
         </Card>
 
-        <ExpenseForm />
+        <ExpenseForm 
+          dialogOpen={dialogOpen} 
+          onDialogOpenChange={setDialogOpen} 
+          transactionType={transactionType}
+          formData={formData}
+          onChangeFormData={setFormData}
+          onSubmit={handleSubmit}
+          onCancel={handleCancel}
+        />
       </div>
     </ProtectedRoute>
   );

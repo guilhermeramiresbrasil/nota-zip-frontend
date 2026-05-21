@@ -4,20 +4,20 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { User } from 'lucide-react';
-import { useAuthStore } from '@/stores/useAuthStore';
+import { IUser } from '@/contexts/AuthContext';
 
-export const ProfileSection: React.FC = () => {
-  const { user } = useAuthStore();
+
+interface ProfileSectionProps {
+  user: IUser;
+  onChangeUser: (user: IUser) => void;
+  handleSave: () => void;
+  isLoading: boolean;
+}
+
+export const ProfileSection: React.FC<ProfileSectionProps> = ({ user, onChangeUser, handleSave, isLoading }) => {
   const [isEditing, setIsEditing] = React.useState(false);
-  const [formData, setFormData] = React.useState({
-    name: user?.name || '',
-    email: user?.email || '',
-  });
 
-  const handleSave = () => {
-    // TODO: Implementar atualização do perfil
-    setIsEditing(false);
-  };
+  
 
   return (
     <Card>
@@ -33,8 +33,8 @@ export const ProfileSection: React.FC = () => {
           <Label htmlFor="name">Nome</Label>
           <Input
             id="name"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            value={user.name}
+            onChange={(e) => onChangeUser({ ...user, name: e.target.value })}
             disabled={!isEditing}
           />
         </div>
@@ -44,8 +44,8 @@ export const ProfileSection: React.FC = () => {
           <Input
             id="email"
             type="email"
-            value={formData.email}
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            value={user.email}
+            onChange={(e) => onChangeUser({ ...user, email: e.target.value })}
             disabled
           />
         </div>
@@ -57,10 +57,12 @@ export const ProfileSection: React.FC = () => {
 
         {isEditing ? (
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setIsEditing(false)}>
+            <Button variant="outline" onClick={() => setIsEditing(false)} disabled={isLoading}>
               Cancelar
             </Button>
-            <Button onClick={handleSave}>Salvar</Button>
+            <Button onClick={handleSave} disabled={isLoading}>
+              {isLoading ? 'Salvando...' : 'Salvar'}
+            </Button>
           </div>
         ) : (
           <Button onClick={() => setIsEditing(true)}>Editar Perfil</Button>

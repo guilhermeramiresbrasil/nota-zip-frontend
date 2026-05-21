@@ -5,53 +5,24 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Mail, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 
-const GATEWAY_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+interface ForgotPasswordFormProps {
+  email: string;
+  isLoading: boolean;
+  error: string;
+  success: boolean;
+  onChangeEmail: (email: string) => void;
+  onSubmit: (e: React.FormEvent) => Promise<void>;
+}
 
-export const ForgotPasswordForm: React.FC = () => {
-  const [email, setEmail] = React.useState('');
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [error, setError] = React.useState('');
-  const [success, setSuccess] = React.useState(false);
-  const router = useRouter();
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setSuccess(false);
-
-    if (!email) {
-      setError('Email é obrigatório');
-      return;
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      setError('Email inválido');
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const response = await fetch(`${GATEWAY_URL}/api/auth/forgot-password`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || errorData.message || 'Erro ao solicitar recuperação de senha');
-      }
-
-      setSuccess(true);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao solicitar recuperação de senha');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
+  email,
+  isLoading,
+  error,
+  success,
+  onChangeEmail,
+  onSubmit,
+}) => {
 
   if (success) {
     return (
@@ -99,7 +70,7 @@ export const ForgotPasswordForm: React.FC = () => {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={onSubmit} className="space-y-4">
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-800">
               {error}
@@ -116,7 +87,7 @@ export const ForgotPasswordForm: React.FC = () => {
                 placeholder="seu@email.com"
                 className="pl-10"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => onChangeEmail(e.target.value)}
                 required
               />
             </div>

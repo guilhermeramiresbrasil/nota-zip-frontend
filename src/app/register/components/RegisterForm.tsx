@@ -4,45 +4,25 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { User, Mail, Lock, ArrowRight } from 'lucide-react';
-import { useAuthStore } from '@/stores/useAuthStore';
-import { useRouter } from 'next/navigation';
 import { RegisterFormData } from '@/app/login/types/auth.types';
 import { registerValidation } from '../logics/validations/registerValidation';
 import { PasswordRequirements } from './PasswordRequirements';
 
-export const RegisterForm: React.FC = () => {
-  const [formData, setFormData] = React.useState<RegisterFormData>({
-    name: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-  });
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [error, setError] = React.useState('');
+interface RegisterFormProps {
+  formData: RegisterFormData;
+  isLoading: boolean;
+  error: string;
+  onChangeFormData: (data: RegisterFormData) => void;
+  onSubmit: (e: React.FormEvent) => Promise<void>;
+}
 
-  const { register } = useAuthStore();
-  const router = useRouter();
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-
-    const validation = registerValidation.validate(formData);
-    if (!validation.isValid) {
-      setError(validation.error || 'Erro de validação');
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      await register(formData.name, formData.email, formData.password);
-      router.push('/home');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao criar conta');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+export const RegisterForm: React.FC<RegisterFormProps> = ({ 
+  formData, 
+  isLoading, 
+  error, 
+  onChangeFormData, 
+  onSubmit 
+}) => {
 
   return (
     <Card className="shadow-xl">
@@ -53,7 +33,7 @@ export const RegisterForm: React.FC = () => {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={onSubmit} className="space-y-4">
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-800">
               {error}
@@ -70,7 +50,7 @@ export const RegisterForm: React.FC = () => {
                 placeholder="Seu nome"
                 className="pl-10"
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={(e) => onChangeFormData({ ...formData, name: e.target.value })}
                 required
               />
             </div>
@@ -86,7 +66,7 @@ export const RegisterForm: React.FC = () => {
                 placeholder="seu@email.com"
                 className="pl-10"
                 value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                onChange={(e) => onChangeFormData({ ...formData, email: e.target.value })}
                 required
               />
             </div>
@@ -102,7 +82,7 @@ export const RegisterForm: React.FC = () => {
                 placeholder="••••••••"
                 className="pl-10"
                 value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                onChange={(e) => onChangeFormData({ ...formData, password: e.target.value })}
                 required
               />
             </div>
@@ -119,7 +99,7 @@ export const RegisterForm: React.FC = () => {
                 placeholder="••••••••"
                 className="pl-10"
                 value={formData.confirmPassword}
-                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                onChange={(e) => onChangeFormData({ ...formData, confirmPassword: e.target.value })}
                 required
               />
             </div>

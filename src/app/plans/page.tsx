@@ -6,11 +6,11 @@ import { PageHeader } from '@/components/PageHeader';
 import { PlanCard } from './components/PlanCard';
 import { PlanComparison } from './components/PlanComparison';
 import { planService } from './logics/services/planService';
-import { useAuthStore } from '@/stores/useAuthStore';
+import { useAuth } from '@/contexts/AuthContext';
 import { Plan } from './types/plan.types';
 
 export default function PlansPage() {
-  const { user } = useAuthStore();
+  const { user } = useAuth();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
 

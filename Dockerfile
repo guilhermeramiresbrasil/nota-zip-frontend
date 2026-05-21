@@ -1,5 +1,5 @@
 # Stage 1: Build
-FROM node:20-alpine AS builder
+FROM oven/bun:1.3.13-alpine AS builder
 
 WORKDIR /app
 
@@ -7,16 +7,16 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-RUN npm ci
+RUN bun install
 
 # Copy source code
 COPY . .
 
 # Build the application
-RUN npm run build
+RUN bun run build
 
 # Stage 2: Run
-FROM node:20-alpine AS runner
+FROM oven/bun:1.3.13-alpine AS runner
 
 WORKDIR /app
 
@@ -24,7 +24,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install production dependencies only
-RUN npm ci --only=production
+RUN bun install --production
 
 # Copy built application from builder stage
 COPY --from=builder /app/.next ./.next
@@ -35,4 +35,4 @@ COPY --from=builder /app/next.config.ts ./
 EXPOSE 3000
 
 # Start the application
-CMD ["npm", "start"]
+CMD ["bun", "run", "start"]

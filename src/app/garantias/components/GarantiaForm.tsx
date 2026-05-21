@@ -12,17 +12,39 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Upload, Plus, AlertCircle } from 'lucide-react';
-import { useGarantiasPageStore } from '../stores/useGarantiasPageStore';
-import { useAuthStore } from '@/stores/useAuthStore';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface GarantiaFormProps {
   uploadLimit: number;
+  onGarantiaCreated?: () => void;
 }
 
-export const GarantiaForm: React.FC<GarantiaFormProps> = ({ uploadLimit }) => {
-  const { dialogOpen, setDialogOpen, formData, setFormData, resetFormData } = useGarantiasPageStore();
+interface GarantiaFormData {
+  nome: string;
+  arquivo: File | null;
+  dataExpiracao: string;
+  tags: string[];
+}
+
+export const GarantiaForm: React.FC<GarantiaFormProps> = ({ uploadLimit, onGarantiaCreated }) => {
+  const [dialogOpen, setDialogOpen] = React.useState(false);
+  const [formData, setFormData] = React.useState<GarantiaFormData>({
+    nome: '',
+    arquivo: null,
+    dataExpiracao: '',
+    tags: [],
+  });
   const [error, setError] = React.useState('');
   const [uploadError, setUploadError] = React.useState('');
+
+  const resetFormData = () => {
+    setFormData({
+      nome: '',
+      arquivo: null,
+      dataExpiracao: '',
+      tags: [],
+    });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,6 +56,7 @@ export const GarantiaForm: React.FC<GarantiaFormProps> = ({ uploadLimit }) => {
       resetFormData();
       setDialogOpen(false);
       setUploadError('');
+      onGarantiaCreated?.();
     } catch (error) {
       console.error('Error creating garantia:', error);
       setError(error instanceof Error ? error.message : 'Erro ao criar garantia');
@@ -42,7 +65,7 @@ export const GarantiaForm: React.FC<GarantiaFormProps> = ({ uploadLimit }) => {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
-    setFormData({ arquivo: file });
+    setFormData((prev) => ({ ...prev, arquivo: file }));
     setUploadError('');
 
     if (file) {
@@ -93,7 +116,7 @@ export const GarantiaForm: React.FC<GarantiaFormProps> = ({ uploadLimit }) => {
               <Input
                 id="nome"
                 value={formData.nome}
-                onChange={(e) => setFormData({ nome: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
                 placeholder="Ex: Notebook Dell"
               />
             </div>
@@ -135,7 +158,7 @@ export const GarantiaForm: React.FC<GarantiaFormProps> = ({ uploadLimit }) => {
                 id="dataExpiracao"
                 type="date"
                 value={formData.dataExpiracao}
-                onChange={(e) => setFormData({ dataExpiracao: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, dataExpiracao: e.target.value })}
               />
             </div>
 
@@ -144,7 +167,7 @@ export const GarantiaForm: React.FC<GarantiaFormProps> = ({ uploadLimit }) => {
               <Input
                 id="tags"
                 value={formData.tags.join(', ')}
-                onChange={(e) => setFormData({ tags: e.target.value.split(',').map(t => t.trim()).filter(Boolean) })}
+                onChange={(e) => setFormData({ ...formData, tags: e.target.value.split(',').map(t => t.trim()).filter(Boolean) })}
                 placeholder="Ex: eletrônicos, notebook"
               />
             </div>

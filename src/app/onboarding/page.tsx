@@ -57,6 +57,7 @@ export default function OnboardingPage() {
     if (currentStep < steps.length) {
       setCurrentStep(currentStep + 1);
     } else {
+      // Redirect to plans after completing onboarding
       router.push('/plans');
     }
   };
@@ -65,6 +66,7 @@ export default function OnboardingPage() {
     if (currentStep < steps.length) {
       setCurrentStep(currentStep + 1);
     } else {
+      // Redirect to plans after skipping onboarding
       router.push('/plans');
     }
   };

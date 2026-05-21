@@ -1,6 +1,7 @@
 import { LandingHero } from '@/components/LandingHero';
 import { LandingFeatures } from '@/components/LandingFeatures';
 import { LandingCTA } from '@/components/LandingCTA';
+import PlansPage from './plans/page';
 
 export default function HomePage() {
   return (
@@ -8,6 +9,7 @@ export default function HomePage() {
       <LandingHero />
       <LandingFeatures />
       <LandingCTA />
+      <PlansPage />
     </div>
   );
 }

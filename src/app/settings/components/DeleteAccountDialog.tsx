@@ -10,28 +10,16 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Trash2, AlertTriangle } from 'lucide-react';
-import { useAuthStore } from '@/stores/useAuthStore';
-import { useRouter } from 'next/navigation';
 
-export const DeleteAccountDialog: React.FC = () => {
+
+interface DeleteAccountDialogProps {
+  handleDeleteAccount: () => void;
+  isDeleting: boolean;
+}
+
+export const DeleteAccountDialog: React.FC<DeleteAccountDialogProps> = ({ handleDeleteAccount, isDeleting }) => {
   const [isOpen, setIsOpen] = React.useState(false);
-  const [isDeleting, setIsDeleting] = React.useState(false);
-  const { deleteAccount, logout } = useAuthStore();
-  const router = useRouter();
 
-  const handleDelete = async () => {
-    setIsDeleting(true);
-    try {
-      await deleteAccount();
-      logout();
-      router.push('/login');
-    } catch (error) {
-      console.error('Error deleting account:', error);
-    } finally {
-      setIsDeleting(false);
-      setIsOpen(false);
-    }
-  };
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -62,7 +50,7 @@ export const DeleteAccountDialog: React.FC = () => {
           </Button>
           <Button
             variant="destructive"
-            onClick={handleDelete}
+            onClick={handleDeleteAccount}
             disabled={isDeleting}
           >
             {isDeleting ? 'Excluindo...' : 'Confirmar Exclusão'}

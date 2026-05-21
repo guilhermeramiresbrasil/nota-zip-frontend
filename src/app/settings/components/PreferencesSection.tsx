@@ -3,28 +3,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Bell, Palette, Globe, CreditCard } from 'lucide-react';
-import { useAuthStore } from '@/stores/useAuthStore';
-import { UserPreferences } from '@/stores/useAuthStore';
+import { Bell, Palette, CreditCard } from 'lucide-react';
+import { IUser } from '@/contexts/AuthContext';
 
-export const PreferencesSection: React.FC = () => {
-  const { user, updatePreferences } = useAuthStore();
-  const [preferences, setPreferences] = React.useState<UserPreferences>({
-    theme: user?.theme || 'light',
-    currency: user?.currency || 'BRL',
-    language: user?.language || 'pt-BR',
-    notifications: user?.notifications ?? true,
-    emailAlerts: user?.emailAlerts ?? true,
-  });
 
-  const handleSave = async () => {
-    try {
-      await updatePreferences(preferences);
-    } catch (error) {
-      console.error('Error saving preferences:', error);
-    }
-  };
+interface PreferencesSectionProps {
+  preferences: IUser;
+  onChangePreferences: (preferences: IUser) => void;
+  handleSavePreferences: () => Promise<void>;
+  isLoading: boolean;
+}
 
+export const PreferencesSection: React.FC<PreferencesSectionProps> = ({ preferences, onChangePreferences, handleSavePreferences, isLoading }) => {
+ 
   return (
     <Card>
       <CardHeader>
@@ -38,9 +29,9 @@ export const PreferencesSection: React.FC = () => {
         <div className="space-y-2">
           <Label>Tema</Label>
           <Select
-            value={preferences.theme}
+            value={preferences?.theme}
             onValueChange={(value: 'light' | 'dark' | 'system') =>
-              setPreferences({ ...preferences, theme: value })
+              onChangePreferences({ ...preferences, theme: value })
             }
           >
             <SelectTrigger>
@@ -57,9 +48,9 @@ export const PreferencesSection: React.FC = () => {
         <div className="space-y-2">
           <Label>Moeda</Label>
           <Select
-            value={preferences.currency}
+            value={preferences?.currency}
             onValueChange={(value: 'BRL' | 'USD' | 'EUR') =>
-              setPreferences({ ...preferences, currency: value })
+              onChangePreferences({ ...preferences, currency: value })
             }
           >
             <SelectTrigger>
@@ -76,9 +67,9 @@ export const PreferencesSection: React.FC = () => {
         <div className="space-y-2">
           <Label>Idioma</Label>
           <Select
-            value={preferences.language}
+            value={preferences?.language}
             onValueChange={(value: 'pt-BR' | 'en-US') =>
-              setPreferences({ ...preferences, language: value })
+              onChangePreferences({ ...preferences, language: value })
             }
           >
             <SelectTrigger>
@@ -98,8 +89,8 @@ export const PreferencesSection: React.FC = () => {
           </div>
           <input
             type="checkbox"
-            checked={preferences.notifications}
-            onChange={(e) => setPreferences({ ...preferences, notifications: e.target.checked })}
+            checked={preferences?.notifications}
+            onChange={(e) => onChangePreferences({ ...preferences, notifications: e.target.checked })}
             className="h-4 w-4"
           />
         </div>
@@ -111,13 +102,15 @@ export const PreferencesSection: React.FC = () => {
           </div>
           <input
             type="checkbox"
-            checked={preferences.emailAlerts}
-            onChange={(e) => setPreferences({ ...preferences, emailAlerts: e.target.checked })}
+            checked={preferences?.emailAlerts}
+            onChange={(e) => onChangePreferences({ ...preferences, emailAlerts: e.target.checked })}
             className="h-4 w-4"
           />
         </div>
 
-        <Button onClick={handleSave}>Salvar Preferências</Button>
+        <Button onClick={handleSavePreferences} disabled={isLoading}>
+          {isLoading ? 'Salvando...' : 'Salvar Preferências'}
+        </Button>
       </CardContent>
     </Card>
   );

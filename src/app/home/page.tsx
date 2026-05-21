@@ -1,23 +1,53 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { PageHeader } from '@/components/PageHeader';
 import { StatsCard } from './components/StatsCard';
 import { QuickActions } from './components/QuickActions';
 import { TransactionItem } from './components/TransactionItem';
-import { useDashboardStore } from './stores/useDashboardStore';
-import { useTransactionsStore } from '@/stores/useTransactionsStore';
+import { dashboardService } from './logics/services/dashboardService';
 
 export default function Dashboard() {
-  const { stats, loading: statsLoading, fetchStats } = useDashboardStore();
-  const { transactions, loading: transactionsLoading, fetchTransactions } = useTransactionsStore();
+  const [stats, setStats] = useState<any>(null);
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [transactionsLoading, setTransactionsLoading] = useState(true);
 
   useEffect(() => {
-    fetchStats();
-    fetchTransactions();
-  }, [fetchStats, fetchTransactions]);
+    const fetchData = async () => {
+      try {
+        const [transactionsData] = await Promise.all([
+          dashboardService.fetchRecentTransactions(),
+        ]);
+        setTransactions(transactionsData);
+
+        // Calculate stats from transactions
+        const totalIncome = transactionsData
+          .filter((t: any) => t.type === 'income')
+          .reduce((sum: number, t: any) => sum + Math.abs(t.amount), 0);
+        const totalExpenses = transactionsData
+          .filter((t: any) => t.type === 'expense')
+          .reduce((sum: number, t: any) => sum + Math.abs(t.amount), 0);
+
+        setStats({
+          totalBalance: totalIncome - totalExpenses,
+          totalIncome,
+          totalExpenses,
+          savings: totalIncome - totalExpenses,
+          monthlyGrowth: 0,
+        });
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setStatsLoading(false);
+        setTransactionsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   return (
     <ProtectedRoute>

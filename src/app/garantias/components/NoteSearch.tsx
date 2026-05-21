@@ -1,11 +1,13 @@
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
-import { useNotesPageStore } from '../stores/useNotesPageStore';
 
-export const NoteSearch: React.FC = () => {
-  const { searchQuery, setSearchQuery } = useNotesPageStore();
+interface NoteSearchProps {
+  searchQuery: string;
+  onSearchQueryChange: (query: string) => void;
+}
 
+export const NoteSearch: React.FC<NoteSearchProps> = ({ searchQuery, onSearchQueryChange }) => {
   return (
     <div className="relative mb-6">
       <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
@@ -13,7 +15,7 @@ export const NoteSearch: React.FC = () => {
         placeholder="Buscar notas..."
         className="pl-10"
         value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
+        onChange={(e) => onSearchQueryChange(e.target.value)}
       />
     </div>
   );
