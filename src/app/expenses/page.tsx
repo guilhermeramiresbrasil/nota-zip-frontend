@@ -135,6 +135,7 @@ export default function ExpensesPage() {
           dialogOpen={dialogOpen} 
           onDialogOpenChange={setDialogOpen} 
           transactionType={transactionType}
+          onTransactionTypeChange={setTransactionType}
           formData={formData}
           onChangeFormData={setFormData}
           onSubmit={handleSubmit}
