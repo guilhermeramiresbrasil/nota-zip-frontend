@@ -125,6 +125,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error('Invalid user response');
       }      
       const userDetails = userInfo.data;
+      console.log('userDetails', userDetails);
       
       const userObj: IUser = {
         id: loginDetails.userId,
@@ -140,6 +141,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         notifications: userDetails.notifications ?? true,
         emailAlerts: userDetails.emailAlerts ?? true,
       };
+
 
       await setUser(userObj);
       console.log('User object:', userObj); 

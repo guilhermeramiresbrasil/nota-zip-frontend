@@ -26,8 +26,9 @@ export default function ExpensesPage() {
   const { user } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
-  const [transactionType, setTransactionType] = useState<'income' | 'expense'>('expense');
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [transactionType, setTransactionType] = useState<'income' | 'expense'>('expense');
+  const [dateRange, setDateRange] = useState({ startDate: '', endDate: '' });
   const [formData, setFormData] = useState<FormData>({
     amount: '',
     category: '',
@@ -40,7 +41,7 @@ export default function ExpensesPage() {
       if (!user?.id) return;
       try {
         setLoading(true);
-        const transactionsData = await expenseService.fetchTransactions(user.id);
+        const transactionsData = await expenseService.fetchTransactions(user.id, dateRange.startDate, dateRange.endDate);
         setTransactions(transactionsData);
       } catch (error) {
         console.error('Error fetching transactions:', error);
@@ -49,7 +50,11 @@ export default function ExpensesPage() {
       }
     };
     fetchTransactions();
-  }, [user?.id]);
+  }, [user?.id, dateRange]);
+
+  const handleDateRangeChange = (startDate: string, endDate: string) => {
+    setDateRange({ startDate, endDate });
+  };
 
   const totalIncome = calculateTotalByType(transactions, 'income');
   const totalExpenses = calculateTotalByType(transactions, 'expense');
@@ -100,8 +105,7 @@ export default function ExpensesPage() {
 
         <div className="flex justify-between items-center mb-6">
           <ExpenseFilter
-            transactionType={transactionType}
-            onTransactionTypeChange={setTransactionType}
+            onDateRangeChange={handleDateRangeChange}
           />
           <Button onClick={handleAddTransaction}>
             <Plus className="h-5 w-5 mr-2" />

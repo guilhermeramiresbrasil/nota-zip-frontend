@@ -26,17 +26,23 @@ export class ExpenseService {
     };
   }
 
-  async fetchTransactions(userId: string, type?: 'credit' | 'debit'): Promise<Transaction[]> {
+  async fetchTransactions(userId: string, startDate?: string, endDate?: string): Promise<Transaction[]> {
     try {
+      const body: Record<string, unknown> = {
+        userId,
+        limit: 100,
+        offset: 0,
+      };
+
+      if (startDate && endDate) {
+        body.startDate = startDate;
+        body.endDate = endDate;
+      }
+
       const response = await fetch(`${GATEWAY_URL}/api/transactions/list`, {
         method: 'POST',
         headers: this.getHeaders(),
-        body: JSON.stringify({
-          userId,
-          type,
-          limit: 100,
-          offset: 0,
-        }),
+        body: JSON.stringify(body),
       });
 
       if (!response.ok) {

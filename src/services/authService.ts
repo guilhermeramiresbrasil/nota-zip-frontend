@@ -22,9 +22,7 @@ class AuthService {
       throw new Error(errorData.error || errorData.message || 'Failed to login');
     }
 
-    const result = await response.json();
-      return result.data;
-
+    return await response.json();
     } catch (error) {
       throw error;
     }
@@ -44,7 +42,6 @@ class AuthService {
       },
       body: JSON.stringify({ sessionId }),
     });
-
     
     return 
     } catch (error) {
