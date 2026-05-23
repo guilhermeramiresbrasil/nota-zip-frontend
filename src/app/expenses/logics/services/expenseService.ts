@@ -29,7 +29,7 @@ export class ExpenseService {
   async fetchTransactions(userId: string, startDate?: string, endDate?: string): Promise<Transaction[]> {
     try {
       const body: Record<string, unknown> = {
-        userId,
+        userId: String(userId),
         limit: 100,
         offset: 0,
       };

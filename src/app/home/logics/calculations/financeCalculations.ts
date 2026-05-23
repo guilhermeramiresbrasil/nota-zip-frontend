@@ -16,8 +16,8 @@ export function calculateTotalBalance(transactions: Transaction[]): number {
  */
 export function calculateTotalIncome(transactions: Transaction[]): number {
   return transactions
-    .filter(transaction => transaction.type === 'income')
-    .reduce((total, transaction) => total + transaction.amount, 0);
+    .filter(transaction => transaction.type === 'income' || transaction.type === 'credit')
+    .reduce((total, transaction) => total + Math.abs(transaction.amount), 0);
 }
 
 /**
@@ -27,7 +27,7 @@ export function calculateTotalIncome(transactions: Transaction[]): number {
  */
 export function calculateTotalExpenses(transactions: Transaction[]): number {
   return transactions
-    .filter(transaction => transaction.type === 'expense')
+    .filter(transaction => transaction.type === 'expense' || transaction.type === 'debit')
     .reduce((total, transaction) => total + Math.abs(transaction.amount), 0);
 }
 

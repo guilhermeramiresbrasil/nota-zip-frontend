@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -50,6 +50,13 @@ export const ExpenseFilter: React.FC<ExpenseFilterProps> = ({
     }
     return null;
   };
+
+  useEffect(() => {
+    const range = getDateRange('current');
+    if (range && onDateRangeChange) {
+      onDateRangeChange(range.start, range.end);
+    }
+  }, []);
 
   const handlePresetChange = (preset: DatePreset) => {
     setDatePreset(preset);

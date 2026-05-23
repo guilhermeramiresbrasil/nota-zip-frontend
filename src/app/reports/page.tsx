@@ -7,20 +7,27 @@ import { CategoryChart } from './components/CategoryChart';
 import { MonthlyChart } from './components/MonthlyChart';
 import { PeriodSelector } from './components/PeriodSelector';
 import { useReportsStore } from './stores/useReportsStore';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function ReportsPage() {
+  const { user } = useAuth();
   const { reportData, loading, selectedPeriod, fetchReportData, setSelectedPeriod } = useReportsStore();
 
   useEffect(() => {
-    fetchReportData(selectedPeriod);
-  }, [fetchReportData, selectedPeriod]);
+    if (user?.id) {
+      fetchReportData(user.id, selectedPeriod);
+    }
+  }, [user?.id, fetchReportData, selectedPeriod]);
 
   return (
     <ProtectedRoute>
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         <div className="flex justify-between items-center mb-6">
           <PageHeader title="Relatórios" description="Análise detalhada das suas finanças" />
-          <PeriodSelector selectedPeriod={selectedPeriod} onPeriodChange={setSelectedPeriod} />
+          <PeriodSelector
+            selectedPeriod={selectedPeriod}
+            onPeriodChange={(period) => setSelectedPeriod(user?.id ?? '', period)}
+          />
         </div>
 
         {loading ? (

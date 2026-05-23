@@ -44,7 +44,11 @@ export function calculateTotalByType(
   type: TransactionType
 ): number {
   return transactions
-    .filter((t) => t.type === type)
+    .filter((t) => {
+      if (type === 'income') return t.type === 'income' || t.type === 'credit';
+      if (type === 'expense') return t.type === 'expense' || t.type === 'debit';
+      return t.type === type;
+    })
     .reduce((total, t) => total + Math.abs(t.amount), 0);
 }
 

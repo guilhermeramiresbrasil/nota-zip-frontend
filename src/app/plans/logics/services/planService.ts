@@ -41,7 +41,7 @@ export class PlanService {
         ],
         popular: false,
         gradient: 'from-gray-500 to-gray-600',
-        uploadLimit: 0,
+        uploadLimit: 15,
       },
       {
         id: 'basic',

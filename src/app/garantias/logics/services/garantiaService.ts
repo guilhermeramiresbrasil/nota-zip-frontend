@@ -1,6 +1,21 @@
 import { Garantia, GarantiaFormData } from '../../types/garantia.types';
+import { compressImage, fileToBase64 } from '../utils/imageCompressor';
 
 const GATEWAY_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
+export const PLAN_PER_FILE_LIMITS: Record<string, number> = {
+  free: 2 * 1024 * 1024,
+  basic: 5 * 1024 * 1024,
+  premium: 10 * 1024 * 1024,
+};
+
+function getAuthHeaders(): Record<string, string> {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+  return {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+}
 
 export class GarantiaService {
   private static instance: GarantiaService;
@@ -14,94 +29,96 @@ export class GarantiaService {
     return GarantiaService.instance;
   }
 
-  async fetchGarantias(): Promise<Garantia[]> {
-    // TODO: Integrar com API real
-    // const response = await fetch(`${GATEWAY_URL}/api/garantias`, {
-    //   headers: { Authorization: `Bearer ${token}` },
-    // });
-    // return response.json();
-
-    // Mock data
-    return [
-      {
-        id: '1',
-        nome: 'Notebook Dell',
-        arquivoUrl: '/files/notebook.pdf',
-        arquivoNome: 'nota_fiscal_notebook.pdf',
-        dataExpiracao: '2025-12-31',
-        dataUpload: '2024-01-15',
-        tags: ['eletrônicos', 'notebook'],
-      },
-    ];
+  async fetchGarantias(userId: string): Promise<Garantia[]> {
+    const response = await fetch(`${GATEWAY_URL}/api/warranties/list`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ userId }),
+    });
+    if (!response.ok) throw new Error('Erro ao buscar garantias');
+    const json = await response.json();
+    const items: any[] = json.data ?? [];
+    return items.map((w) => ({
+      id: w.id,
+      nome: w.nome,
+      arquivoUrl: '',
+      arquivoNome: w.arquivoNome,
+      dataExpiracao: w.dataExpiracao ?? '',
+      dataUpload: new Date(w.createdAt).toISOString().split('T')[0],
+      tags: w.tags ?? [],
+    }));
   }
 
-  validateFileSize(file: File, uploadLimit: number): { valid: boolean; error?: string } {
-    const fileSizeMB = file.size / (1024 * 1024);
-    if (uploadLimit === 0) {
-      return { valid: false, error: 'O plano Grátis não permite upload de arquivos. Faça upgrade para o plano Básico ou Premium.' };
+  async createGarantia(
+    formData: GarantiaFormData,
+    file: File,
+    userId: string,
+    userPlan: string
+  ): Promise<Garantia> {
+    const perFileLimit = PLAN_PER_FILE_LIMITS[userPlan] ?? PLAN_PER_FILE_LIMITS.free;
+
+    const processedFile = await compressImage(file);
+
+    if (processedFile.size > perFileLimit) {
+      throw new Error(
+        `Arquivo excede o limite por arquivo do plano ${userPlan} (${perFileLimit / (1024 * 1024)} MB). Tamanho atual: ${(processedFile.size / (1024 * 1024)).toFixed(2)} MB`
+      );
     }
-    if (fileSizeMB > uploadLimit) {
-      return { valid: false, error: `O arquivo excede o limite de ${uploadLimit} MB do seu plano.` };
+
+    const arquivoBase64 = await fileToBase64(processedFile);
+
+    const response = await fetch(`${GATEWAY_URL}/api/warranties`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({
+        userId,
+        userPlan,
+        nome: formData.nome,
+        arquivoBase64,
+        arquivoNome: processedFile.name,
+        arquivoTipo: processedFile.type || file.type,
+        arquivoTamanhoBytes: processedFile.size,
+        dataExpiracao: formData.dataExpiracao || undefined,
+        tags: formData.tags,
+      }),
+    });
+
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error || 'Erro ao criar garantia');
     }
-    return { valid: true };
+
+    const json = await response.json();
+    const w = json.data;
+    return {
+      id: w.id,
+      nome: w.nome,
+      arquivoUrl: '',
+      arquivoNome: w.arquivoNome,
+      dataExpiracao: w.dataExpiracao ?? '',
+      dataUpload: new Date(w.createdAt).toISOString().split('T')[0],
+      tags: w.tags ?? [],
+    };
   }
 
-  async createGarantia(formData: GarantiaFormData, file: File, uploadLimit: number): Promise<Garantia> {
-    const validation = this.validateFileSize(file, uploadLimit);
-    if (!validation.valid) {
-      throw new Error(validation.error);
+  async deleteGarantia(id: string, userId: string): Promise<void> {
+    const response = await fetch(`${GATEWAY_URL}/api/warranties/${id}?userId=${userId}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error || 'Erro ao deletar garantia');
     }
-
-    // TODO: Integrar com API real
-    // const formDataObj = new FormData();
-    // formDataObj.append('nome', formData.nome);
-    // formDataObj.append('arquivo', file);
-    // formDataObj.append('dataExpiracao', formData.dataExpiracao);
-    // formDataObj.append('tags', JSON.stringify(formData.tags));
-
-    // const response = await fetch(`${GATEWAY_URL}/api/garantias`, {
-    //   method: 'POST',
-    //   headers: { Authorization: `Bearer ${token}` },
-    //   body: formDataObj,
-    // });
-    // return response.json();
-
-    throw new Error('Not implemented');
   }
 
-  async updateGarantia(id: string, formData: GarantiaFormData, file?: File, uploadLimit?: number): Promise<Garantia> {
-    if (file && uploadLimit !== undefined) {
-      const validation = this.validateFileSize(file, uploadLimit);
-      if (!validation.valid) {
-        throw new Error(validation.error);
-      }
-    }
-
-    // TODO: Integrar com API real
-    // const formDataObj = new FormData();
-    // formDataObj.append('nome', formData.nome);
-    // if (file) formDataObj.append('arquivo', file);
-    // formDataObj.append('dataExpiracao', formData.dataExpiracao);
-    // formDataObj.append('tags', JSON.stringify(formData.tags));
-
-    // const response = await fetch(`${GATEWAY_URL}/api/garantias/${id}`, {
-    //   method: 'PUT',
-    //   headers: { Authorization: `Bearer ${token}` },
-    //   body: formDataObj,
-    // });
-    // return response.json();
-
-    throw new Error('Not implemented');
-  }
-
-  async deleteGarantia(id: string): Promise<void> {
-    // TODO: Integrar com API real
-    // await fetch(`${GATEWAY_URL}/api/garantias/${id}`, {
-    //   method: 'DELETE',
-    //   headers: { Authorization: `Bearer ${token}` },
-    // });
-
-    throw new Error('Not implemented');
+  async fetchStorageUsage(userId: string): Promise<{ usedBytes: number }> {
+    const response = await fetch(`${GATEWAY_URL}/api/warranties/storage/${userId}`, {
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Erro ao buscar uso de storage');
+    const json = await response.json();
+    return json.data ?? { usedBytes: 0 };
   }
 }
 

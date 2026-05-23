@@ -8,36 +8,26 @@ import { StatsCard } from './components/StatsCard';
 import { QuickActions } from './components/QuickActions';
 import { TransactionItem } from './components/TransactionItem';
 import { dashboardService } from './logics/services/dashboardService';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function Dashboard() {
+  const { user } = useAuth();
   const [stats, setStats] = useState<any>(null);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [statsLoading, setStatsLoading] = useState(true);
   const [transactionsLoading, setTransactionsLoading] = useState(true);
 
   useEffect(() => {
+    if (!user?.id) return;
+
     const fetchData = async () => {
       try {
-        const [transactionsData] = await Promise.all([
-          dashboardService.fetchRecentTransactions(),
+        const [statsData, transactionsData] = await Promise.all([
+          dashboardService.fetchDashboardStats(user.id),
+          dashboardService.fetchRecentTransactions(user.id),
         ]);
+        setStats(statsData);
         setTransactions(transactionsData);
-
-        // Calculate stats from transactions
-        const totalIncome = transactionsData
-          .filter((t: any) => t.type === 'income')
-          .reduce((sum: number, t: any) => sum + Math.abs(t.amount), 0);
-        const totalExpenses = transactionsData
-          .filter((t: any) => t.type === 'expense')
-          .reduce((sum: number, t: any) => sum + Math.abs(t.amount), 0);
-
-        setStats({
-          totalBalance: totalIncome - totalExpenses,
-          totalIncome,
-          totalExpenses,
-          savings: totalIncome - totalExpenses,
-          monthlyGrowth: 0,
-        });
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
@@ -47,41 +37,47 @@ export default function Dashboard() {
     };
 
     fetchData();
-  }, []);
+  }, [user?.id]);
 
   return (
     <ProtectedRoute>
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         <PageHeader
-          title="Bem-vindo ao Nota Zip"
+          title={user?.name ? `Bem-vindo, ${user.name.split(' ')[0]}` : 'Bem-vindo ao Nota Zip'}
           description="Gerencie suas finanças de forma simples e inteligente"
         />
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <StatsCard
-            title="Saldo Total"
-            value={stats?.totalBalance || 0}
-            trend={stats?.monthlyGrowth}
-            variant="balance"
-          />
-          <StatsCard
-            title="Receitas"
-            value={stats?.totalIncome || 0}
-            trend={stats?.monthlyGrowth}
-            variant="income"
-          />
-          <StatsCard
-            title="Despesas"
-            value={stats?.totalExpenses || 0}
-            trend={stats?.monthlyGrowth}
-            variant="expense"
-          />
-          <StatsCard
-            title="Economia"
-            value={stats?.savings || 0}
-            variant="savings"
-          />
+          {statsLoading ? (
+            Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="h-32 bg-gray-100 rounded-lg animate-pulse" />
+            ))
+          ) : (
+            <>
+              <StatsCard
+                title="Saldo Total"
+                value={stats?.totalBalance || 0}
+                trend={stats?.monthlyGrowth}
+                variant="balance"
+              />
+              <StatsCard
+                title="Receitas"
+                value={stats?.totalIncome || 0}
+                variant="income"
+              />
+              <StatsCard
+                title="Despesas"
+                value={stats?.totalExpenses || 0}
+                variant="expense"
+              />
+              <StatsCard
+                title="Economia"
+                value={stats?.savings || 0}
+                variant="savings"
+              />
+            </>
+          )}
         </div>
 
         {/* Quick Actions */}
@@ -91,13 +87,18 @@ export default function Dashboard() {
         <Card>
           <CardHeader>
             <CardTitle>Transações Recentes</CardTitle>
-            <CardDescription>Últimas movimentações financeiras</CardDescription>
+            <CardDescription>Últimas movimentações do mês atual</CardDescription>
           </CardHeader>
           <CardContent>
             {transactionsLoading ? (
               <div className="text-center py-8">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
                 <p className="text-gray-500 mt-4">Carregando transações...</p>
+              </div>
+            ) : transactions.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <p>Nenhuma transação encontrada.</p>
+                <p className="text-sm mt-1">Adicione sua primeira transação em <strong>Novo Gasto</strong>.</p>
               </div>
             ) : (
               <div className="space-y-4">

@@ -2,7 +2,6 @@ import React from 'react';
 import { Transaction } from '@/app/home/types/dashboard.types';
 import { TransactionItem } from '@/app/home/components/TransactionItem';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Wallet, Edit, Trash2 } from 'lucide-react';
 
 interface ExpenseListProps {
@@ -18,12 +17,11 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
 }) => {
   if (transactions.length === 0) {
     return (
-      <Card>
-        <CardContent className="text-center py-8">
-          <Wallet className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-500">Nenhuma transação encontrada</p>
-        </CardContent>
-      </Card>
+      <div className="text-center py-8">
+        <Wallet className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+        <p className="text-gray-500">Nenhuma transação encontrada</p>
+        <p className="text-sm text-gray-400 mt-1">Adicione uma nova transação clicando em "Nova Transação".</p>
+      </div>
     );
   }
 

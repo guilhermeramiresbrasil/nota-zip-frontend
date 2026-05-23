@@ -5,17 +5,21 @@ const GATEWAY_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 
 class UserService {
-  async getUserById(userId: string): Promise<Promise<any>> {
+  private getHeaders(): Record<string, string> {
+    const accessToken = localStorage.getItem('accessToken');
+    const correlationId = generateCorrelationId();
+    return {
+      'Content-Type': 'application/json',
+      'x-correlation-id': correlationId,
+      ...(accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {}),
+    };
+  }
+
+  async getUserById(userId: string): Promise<any> {
     try {
-      const accessToken = localStorage.getItem('accessToken');
-      const correlationId = generateCorrelationId()
       const response = await fetch(`${GATEWAY_URL}/api/users/${userId}`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-correlation-id': correlationId,
-          'Authorization': `Bearer ${accessToken}`,
-        },
+        headers: this.getHeaders(),
       });
 
       if (!response.ok) {
@@ -53,15 +57,9 @@ class UserService {
 
   async updateUser(data: IUser): Promise<any> {
     try {
-      const accessToken = localStorage.getItem('accessToken');
-      const correlationId = generateCorrelationId()
       const response = await fetch(`${GATEWAY_URL}/api/users/${data.id}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-correlation-id': correlationId,
-          'Authorization': `Bearer ${accessToken}`,
-        },
+        headers: this.getHeaders(),
         body: JSON.stringify(data),
       });
 
@@ -78,15 +76,9 @@ class UserService {
 
   async deleteUser(userId: string): Promise<any> {
     try {
-      const accessToken = localStorage.getItem('accessToken');
-      const correlationId = generateCorrelationId()
       const response = await fetch(`${GATEWAY_URL}/api/users/${userId}`, {
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-correlation-id': correlationId,
-          'Authorization': `Bearer ${accessToken}`,
-        },
+        headers: this.getHeaders(),
       });
 
       if (!response.ok) {

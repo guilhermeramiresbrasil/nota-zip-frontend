@@ -12,10 +12,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Upload, Plus, AlertCircle } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+import { garantiaService, PLAN_PER_FILE_LIMITS } from '../logics/services/garantiaService';
 
 interface GarantiaFormProps {
   uploadLimit: number;
+  userPlan: string;
+  userId: string;
   onGarantiaCreated?: () => void;
 }
 
@@ -26,7 +28,7 @@ interface GarantiaFormData {
   tags: string[];
 }
 
-export const GarantiaForm: React.FC<GarantiaFormProps> = ({ uploadLimit, onGarantiaCreated }) => {
+export const GarantiaForm: React.FC<GarantiaFormProps> = ({ uploadLimit, userPlan, userId, onGarantiaCreated }) => {
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [formData, setFormData] = React.useState<GarantiaFormData>({
     nome: '',
@@ -49,17 +51,22 @@ export const GarantiaForm: React.FC<GarantiaFormProps> = ({ uploadLimit, onGaran
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.nome || !formData.arquivo) return;
+    setError('');
 
     try {
-      // TODO: Call service to create garantia with uploadLimit
-      console.log('Creating garantia:', formData);
+      await garantiaService.createGarantia(
+        { nome: formData.nome, arquivo: formData.arquivo, dataExpiracao: formData.dataExpiracao, tags: formData.tags },
+        formData.arquivo,
+        userId,
+        userPlan
+      );
       resetFormData();
       setDialogOpen(false);
       setUploadError('');
       onGarantiaCreated?.();
-    } catch (error) {
-      console.error('Error creating garantia:', error);
-      setError(error instanceof Error ? error.message : 'Erro ao criar garantia');
+    } catch (err) {
+      console.error('Error creating garantia:', err);
+      setError(err instanceof Error ? err.message : 'Erro ao criar garantia');
     }
   };
 
@@ -69,11 +76,9 @@ export const GarantiaForm: React.FC<GarantiaFormProps> = ({ uploadLimit, onGaran
     setUploadError('');
 
     if (file) {
-      const fileSizeMB = file.size / (1024 * 1024);
-      if (uploadLimit === 0) {
-        setUploadError('O plano Grátis não permite upload de arquivos. Faça upgrade para o plano Básico ou Premium.');
-      } else if (fileSizeMB > uploadLimit) {
-        setUploadError(`O arquivo excede o limite de ${uploadLimit} MB do seu plano. Tamanho atual: ${fileSizeMB.toFixed(2)} MB`);
+      const perFileLimit = PLAN_PER_FILE_LIMITS[userPlan] ?? PLAN_PER_FILE_LIMITS.free;
+      if (file.size > perFileLimit) {
+        setUploadError(`O arquivo excede o limite por arquivo do plano ${userPlan} (${perFileLimit / (1024 * 1024)} MB). Tamanho: ${(file.size / (1024 * 1024)).toFixed(2)} MB`);
       }
     }
   };
@@ -87,7 +92,7 @@ export const GarantiaForm: React.FC<GarantiaFormProps> = ({ uploadLimit, onGaran
   return (
     <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
       <DialogTrigger asChild>
-        <Button className="flex items-center gap-2" disabled={uploadLimit === 0}>
+        <Button className="flex items-center gap-2">
           <Plus className="h-4 w-4" />
           Nova Garantia
         </Button>
@@ -101,16 +106,6 @@ export const GarantiaForm: React.FC<GarantiaFormProps> = ({ uploadLimit, onGaran
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="space-y-4 py-4">
-            {uploadLimit === 0 && (
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 flex items-start gap-2">
-                <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-                <div className="text-sm text-yellow-800">
-                  <p className="font-semibold">Plano Grátis</p>
-                  <p>O upload de arquivos não está disponível no plano Grátis. Faça upgrade para o plano Básico ou Premium.</p>
-                </div>
-              </div>
-            )}
-
             <div className="space-y-2">
               <Label htmlFor="nome">Nome do Produto</Label>
               <Input
@@ -125,7 +120,7 @@ export const GarantiaForm: React.FC<GarantiaFormProps> = ({ uploadLimit, onGaran
               <Label htmlFor="arquivo">
                 Arquivo da Nota Fiscal
                 <span className="text-gray-500 text-sm ml-2">
-                  (Limite: {formatUploadLimit(uploadLimit)})
+                  (Limite por arquivo: {(PLAN_PER_FILE_LIMITS[userPlan] ?? PLAN_PER_FILE_LIMITS.free) / (1024 * 1024)} MB)
                 </span>
               </Label>
               <div className="flex items-center gap-2">
@@ -135,7 +130,6 @@ export const GarantiaForm: React.FC<GarantiaFormProps> = ({ uploadLimit, onGaran
                   accept=".pdf,.jpg,.jpeg,.png"
                   onChange={handleFileChange}
                   className="cursor-pointer"
-                  disabled={uploadLimit === 0}
                 />
                 {formData.arquivo && (
                   <span className="text-sm text-green-600 flex items-center gap-1">
@@ -180,7 +174,7 @@ export const GarantiaForm: React.FC<GarantiaFormProps> = ({ uploadLimit, onGaran
             <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={!formData.nome || !formData.arquivo || uploadLimit === 0 || !!uploadError}>
+            <Button type="submit" disabled={!formData.nome || !formData.arquivo || !!uploadError}>
               Salvar Garantia
             </Button>
           </DialogFooter>

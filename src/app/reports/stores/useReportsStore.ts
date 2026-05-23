@@ -7,8 +7,8 @@ interface ReportsState {
   loading: boolean;
   error: string | null;
   selectedPeriod: ReportPeriod['value'];
-  fetchReportData: (period: ReportPeriod['value']) => Promise<void>;
-  setSelectedPeriod: (period: ReportPeriod['value']) => void;
+  fetchReportData: (userId: string, period: ReportPeriod['value']) => Promise<void>;
+  setSelectedPeriod: (userId: string, period: ReportPeriod['value']) => void;
 }
 
 export const useReportsStore = create<ReportsState>((set, get) => ({
@@ -17,10 +17,11 @@ export const useReportsStore = create<ReportsState>((set, get) => ({
   error: null,
   selectedPeriod: 'current',
 
-  fetchReportData: async (period) => {
+  fetchReportData: async (userId, period) => {
+    if (!userId) return;
     set({ loading: true, error: null });
     try {
-      const data = await reportService.fetchReportData(period);
+      const data = await reportService.fetchReportData(userId, period);
       set({ reportData: data, loading: false });
     } catch (error) {
       set({
@@ -30,8 +31,8 @@ export const useReportsStore = create<ReportsState>((set, get) => ({
     }
   },
 
-  setSelectedPeriod: (period) => {
+  setSelectedPeriod: (userId, period) => {
     set({ selectedPeriod: period });
-    get().fetchReportData(period);
+    get().fetchReportData(userId, period);
   },
 }));

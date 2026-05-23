@@ -4,11 +4,6 @@ import authService from '@/services/authService';
 import userService from '@/services/userService';
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
-// Helper function to generate correlation ID
-const generateCorrelationId = () => {
-  return crypto.randomUUID();
-};
-
 export interface IUser {
   id: string;
   name: string;
@@ -45,10 +40,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Clear old Zustand persist data
     localStorage.removeItem('auth-storage');
 
-    // Check for existing session and refresh user data
     const storedUser = localStorage.getItem('user');
     const storedAccessToken = localStorage.getItem('accessToken');
     
@@ -57,20 +50,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
           const parsedUser = JSON.parse(storedUser);
           
-          // Check if user has required fields (id, name, email)
           if (!parsedUser.id || !parsedUser.name || !parsedUser.email) {
-            console.log('Invalid user data, clearing storage');
             localStorage.removeItem('user');
             localStorage.removeItem('accessToken');
-            localStorage.removeItem('refreshToken');
             localStorage.removeItem('sessionId');
             setIsLoading(false);
             return;
           }
+
+          const restoredUser: IUser = {
+            ...parsedUser,
+            accessToken: storedAccessToken,
+            sessionId: parsedUser.sessionId || localStorage.getItem('sessionId') || undefined,
+          };
+
+          setUser(restoredUser);
           
-          // Fetch fresh user data from backend
           try {
-            
             const userResponse = await userServiceInstance.getUserById(parsedUser.id);
             if (userResponse.success) {
               const userData = userResponse.data;
@@ -90,13 +86,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               };
               setUser(updatedUser);
               localStorage.setItem('user', JSON.stringify(updatedUser));
-            } else {
-              // If fetch fails, use stored data
-              setUser(parsedUser);
             }
           } catch (error) {
             console.error('Error fetching fresh user data:', error);
-            setUser(parsedUser);
           }
         } catch (error) {
           console.error('Error parsing stored user:', error);
@@ -117,15 +109,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!loginInfo) {
         throw new Error('Invalid user data');
       }
-      console.log('loginInfo', loginInfo);
       const loginDetails = loginInfo.data;
+
+      localStorage.setItem('accessToken', loginDetails.accessToken);
+      localStorage.setItem('sessionId', loginDetails.sessionId);
 
       const userInfo = await userServiceInstance.getUserById(loginDetails.userId);
       if (!userInfo) {
         throw new Error('Invalid user response');
       }      
       const userDetails = userInfo.data;
-      console.log('userDetails', userDetails);
       
       const userObj: IUser = {
         id: loginDetails.userId,
@@ -142,12 +135,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         emailAlerts: userDetails.emailAlerts ?? true,
       };
 
-
-      await setUser(userObj);
-      console.log('User object:', userObj); 
+      setUser(userObj);
       localStorage.setItem('user', JSON.stringify(userObj));
-      localStorage.setItem('accessToken', loginDetails.accessToken);
-      localStorage.setItem('sessionId', loginDetails.sessionId);
     } catch (error) {
       console.error('Login error:', error);
       throw error;

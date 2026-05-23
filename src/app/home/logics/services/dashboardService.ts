@@ -1,10 +1,27 @@
 import { Transaction, DashboardStats } from '../../types/dashboard.types';
 import { calculateDashboardStats } from '../calculations/financeCalculations';
 
-/**
- * Serviço para buscar dados do dashboard
- * Por enquanto retorna dados mockados, preparado para integração com API real
- */
+const GATEWAY_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
+function getAuthHeaders(): Record<string, string> {
+  const accessToken = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+  return {
+    'Content-Type': 'application/json',
+    ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+  };
+}
+
+function formatRelativeDate(dateStr: string): string {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  if (diffDays === 0) return 'Hoje';
+  if (diffDays === 1) return 'Ontem';
+  if (diffDays < 7) return `${diffDays} dias atrás`;
+  return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
+}
+
 export class DashboardService {
   private static instance: DashboardService;
 
@@ -17,77 +34,60 @@ export class DashboardService {
     return DashboardService.instance;
   }
 
-  /**
-   * Busca estatísticas do dashboard
-   * @returns Estatísticas do dashboard
-   */
-  async fetchDashboardStats(): Promise<DashboardStats> {
-    // TODO: Integrar com API real
-    // const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/dashboard/stats`);
-    // return response.json();
+  async fetchDashboardStats(userId: string): Promise<DashboardStats> {
+    const response = await fetch(`${GATEWAY_URL}/api/reports`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ userId, period: 'current' }),
+    });
 
-    // Dados mockados por enquanto
+    if (!response.ok) throw new Error(`Failed to fetch stats: ${response.status}`);
+
+    const json = await response.json();
+    const data = json.data ?? json;
+
+    const totalIncome = data.totalIncome ?? 0;
+    const totalExpenses = data.totalExpenses ?? 0;
+    const savings = totalIncome - totalExpenses;
+
     return {
-      totalBalance: 12450.00,
-      totalIncome: 8500.00,
-      totalExpenses: 5230.00,
-      savings: 3270.00,
-      savingsRate: 38.5,
-      monthlyGrowth: 12.5,
+      totalBalance: savings,
+      totalIncome,
+      totalExpenses,
+      savings,
+      savingsRate: totalIncome > 0 ? (savings / totalIncome) * 100 : 0,
+      monthlyGrowth: 0,
     };
   }
 
-  /**
-   * Busca transações recentes
-   * @returns Lista de transações recentes
-   */
-  async fetchRecentTransactions(): Promise<Transaction[]> {
-    // TODO: Integrar com API real
-    // const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/dashboard/transactions`);
-    // return response.json();
+  async fetchRecentTransactions(userId: string): Promise<Transaction[]> {
+    const now = new Date();
+    const startDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    const endDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
 
-    // Dados mockados por enquanto
-    return [
-      {
-        id: '1',
-        name: 'Supermercado',
-        amount: -450.50,
-        category: 'Alimentação',
-        date: 'Hoje',
-        type: 'expense',
-      },
-      {
-        id: '2',
-        name: 'Salário',
-        amount: 5000.00,
-        category: 'Receita',
-        date: 'Ontem',
-        type: 'income',
-      },
-      {
-        id: '3',
-        name: 'Uber',
-        amount: -35.00,
-        category: 'Transporte',
-        date: 'Ontem',
-        type: 'expense',
-      },
-      {
-        id: '4',
-        name: 'Netflix',
-        amount: -55.90,
-        category: 'Entretenimento',
-        date: '2 dias atrás',
-        type: 'expense',
-      },
-    ];
+    const response = await fetch(`${GATEWAY_URL}/api/transactions/list`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ userId, limit: 5, startDate, endDate }),
+    });
+
+    if (!response.ok) throw new Error(`Failed to fetch transactions: ${response.status}`);
+
+    const json = await response.json();
+    const items: any[] = json.data ?? [];
+
+    return items.map((t) => ({
+      id: t.id,
+      name: t.description || t.category || '—',
+      description: t.description,
+      amount: t.type === 'debit' ? -Math.abs(t.amount) : Math.abs(t.amount),
+      category: t.category,
+      date: formatRelativeDate(t.date),
+      type: t.type === 'credit' ? 'income' : 'expense',
+    }));
   }
 
-  /**
-   * Calcula estatísticas baseadas em transações
-   * @param transactions - Lista de transações
-   * @returns Estatísticas calculadas
-   */
   calculateStats(transactions: Transaction[]): DashboardStats {
     return calculateDashboardStats(transactions);
   }

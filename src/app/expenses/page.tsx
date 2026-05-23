@@ -37,8 +37,8 @@ export default function ExpensesPage() {
   });
 
   useEffect(() => {
+    if (!user?.id || !dateRange.startDate) return;
     const fetchTransactions = async () => {
-      if (!user?.id) return;
       try {
         setLoading(true);
         const transactionsData = await expenseService.fetchTransactions(user.id, dateRange.startDate, dateRange.endDate);
