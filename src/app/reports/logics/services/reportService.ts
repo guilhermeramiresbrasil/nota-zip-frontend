@@ -1,4 +1,4 @@
-import { ReportData, ReportPeriod } from '../../types/report.types';
+import { ReportData, ReportPeriod, ReportFilters, DetailedTransaction } from '../../types/report.types';
 
 const GATEWAY_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -14,15 +14,18 @@ export class ReportService {
     return ReportService.instance;
   }
 
-  async fetchReportData(userId: string, period: ReportPeriod['value']): Promise<ReportData> {
-    const accessToken = localStorage.getItem('accessToken');
+  private getHeaders(): Record<string, string> {
+    const accessToken = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+    return {
+      'Content-Type': 'application/json',
+      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+    };
+  }
 
+  async fetchReportData(userId: string, period: ReportPeriod['value']): Promise<ReportData> {
     const response = await fetch(`${GATEWAY_URL}/api/reports`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-      },
+      headers: this.getHeaders(),
       body: JSON.stringify({ userId, period }),
     });
 
@@ -40,6 +43,23 @@ export class ReportService {
       totalIncome: data.totalIncome ?? 0,
       avgExpenses: data.avgExpenses ?? 0,
     };
+  }
+
+  async fetchDetailedTransactions(userId: string, filters: ReportFilters): Promise<DetailedTransaction[]> {
+    try {
+      const response = await fetch(`${GATEWAY_URL}/api/transactions/detailed`, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify({ userId, ...filters }),
+      });
+
+      if (!response.ok) return [];
+
+      const json = await response.json();
+      return json.data ?? [];
+    } catch {
+      return [];
+    }
   }
 }
 
