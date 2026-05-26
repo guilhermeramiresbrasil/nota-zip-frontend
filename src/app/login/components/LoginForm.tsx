@@ -1,9 +1,11 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Mail, Lock, ArrowRight } from 'lucide-react';
+import { Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { LoginFormData } from '../types/auth.types';
 
 interface LoginFormProps {
@@ -21,6 +23,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   onChangeFormData, 
   onSubmit 
 }) => {
+  const [showPassword, setShowPassword] = useState(false);
 
   return (
     <Card className="shadow-xl">
@@ -60,13 +63,20 @@ export const LoginForm: React.FC<LoginFormProps> = ({
               <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
               <Input
                 id="password"
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 placeholder="••••••••"
-                className="pl-10"
+                className="pl-10 pr-10"
                 value={formData.password}
                 onChange={(e) => onChangeFormData({ ...formData, password: e.target.value })}
                 required
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
             </div>
           </div>
 

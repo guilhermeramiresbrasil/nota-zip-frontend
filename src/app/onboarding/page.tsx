@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Wallet, ArrowRight, Check, Mail, MessageCircle, Settings, QrCode } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 
 const steps = [
   {
@@ -29,7 +30,7 @@ const steps = [
     title: 'Conecte seu WhatsApp',
     description: 'Adicione seu WhatsApp para enviar notas por mensagem',
     icon: MessageCircle,
-    skippable: true,
+    skippable: false,
   },
   {
     id: 4,
@@ -51,14 +52,16 @@ export default function OnboardingPage() {
   });
   const [qrCodeData, setQrCodeData] = useState<{ code: string; qrCode: string; expiresAt: string } | null>(null);
   const [loadingQrCode, setLoadingQrCode] = useState(false);
+  const [emailVerifying, setEmailVerifying] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(false);
   const router = useRouter();
+  const { user } = useAuth();
 
   const handleNext = () => {
     if (currentStep < steps.length) {
       setCurrentStep(currentStep + 1);
     } else {
-      // Redirect to plans after completing onboarding
-      router.push('/plans');
+      router.push('/home');
     }
   };
 
@@ -66,8 +69,7 @@ export default function OnboardingPage() {
     if (currentStep < steps.length) {
       setCurrentStep(currentStep + 1);
     } else {
-      // Redirect to plans after skipping onboarding
-      router.push('/plans');
+      router.push('/home');
     }
   };
 
@@ -84,8 +86,8 @@ export default function OnboardingPage() {
   const generateWhatsAppCode = async () => {
     setLoadingQrCode(true);
     try {
-      // TODO: Get user ID from auth context
-      const userId = 'temp-user-id';
+      const userId = user?.id || '';
+      if (!userId) return;
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/whatsapp/generate-code`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -165,9 +167,36 @@ export default function OnboardingPage() {
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('emailCode', e.target.value)}
                   maxLength={6}
                 />
+                {emailVerified && (
+                  <p className="text-sm text-green-600 font-medium">Email verificado com sucesso!</p>
+                )}
                 <p className="text-sm text-gray-500">
                   Não recebeu o código? <button className="text-blue-600 hover:underline">Reenviar</button>
                 </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full mt-2"
+                  disabled={emailVerifying || formData.emailCode.length !== 6}
+                  onClick={async () => {
+                    setEmailVerifying(true);
+                    try {
+                      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/verify-email`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ userId: user?.id, code: formData.emailCode }),
+                      });
+                      const data = await res.json();
+                      if (data.success) setEmailVerified(true);
+                    } catch (e) {
+                      console.error('Email verification failed:', e);
+                    } finally {
+                      setEmailVerifying(false);
+                    }
+                  }}
+                >
+                  {emailVerifying ? 'Verificando...' : 'Verificar Email'}
+                </Button>
               </div>
             </div>
           </div>
@@ -338,17 +367,7 @@ export default function OnboardingPage() {
           </CardContent>
         </Card>
 
-        {/* Skip entire onboarding */}
-        {currentStep < steps.length && (
-          <div className="text-center mt-4">
-            <button
-              onClick={() => router.push('/plans')}
-              className="text-sm text-gray-500 hover:text-gray-700 underline"
-            >
-              Pular onboarding
-            </button>
-          </div>
-        )}
+
       </div>
     </div>
   );
