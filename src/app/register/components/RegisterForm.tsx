@@ -1,11 +1,12 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { User, Mail, Lock, ArrowRight } from 'lucide-react';
+import { User, Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { RegisterFormData } from '@/app/login/types/auth.types';
-import { registerValidation } from '../logics/validations/registerValidation';
 import { PasswordRequirements } from './PasswordRequirements';
 
 interface RegisterFormProps {
@@ -23,6 +24,8 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
   onChangeFormData, 
   onSubmit 
 }) => {
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   return (
     <Card className="shadow-xl">
@@ -78,13 +81,20 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
               <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
               <Input
                 id="password"
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 placeholder="••••••••"
-                className="pl-10"
+                className="pl-10 pr-10"
                 value={formData.password}
                 onChange={(e) => onChangeFormData({ ...formData, password: e.target.value })}
                 required
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
             </div>
             <PasswordRequirements password={formData.password} />
           </div>
@@ -95,13 +105,20 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
               <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
               <Input
                 id="confirmPassword"
-                type="password"
+                type={showConfirmPassword ? 'text' : 'password'}
                 placeholder="••••••••"
-                className="pl-10"
+                className="pl-10 pr-10"
                 value={formData.confirmPassword}
                 onChange={(e) => onChangeFormData({ ...formData, confirmPassword: e.target.value })}
                 required
               />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+              >
+                {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
             </div>
           </div>
 

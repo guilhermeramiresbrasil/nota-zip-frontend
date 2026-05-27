@@ -1,0 +1,192 @@
+version: '3.8'
+
+services:
+  # --- Infrastructure ---
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: nota_zip
+      POSTGRES_PASSWORD: changeme
+      POSTGRES_DB: nota_zip
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nota_zip -d nota_zip"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
+  # --- Backend Services ---
+  auth-ms:
+    build:
+      context: ../nota-zip-auth-ms
+      dockerfile: Dockerfile
+    ports:
+      - "3004:3004"
+    environment:
+      DATABASE_URL: postgresql://nota_zip:changeme@postgres:5432/nota_zip
+      SESSION_SECRET: ${SESSION_SECRET:-notazip-session-secret}
+      JWT_SECRET: ${JWT_SECRET:-notazip-jwt-secret}
+      AUTH_MS_PORT: "3004"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  user-ms:
+    build:
+      context: ../nota-zip-user-ms
+      dockerfile: Dockerfile
+    ports:
+      - "3002:3002"
+    environment:
+      DATABASE_URL: postgresql://nota_zip:changeme@postgres:5432/nota_zip
+      USER_MS_PORT: "3002"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  note-guard-ms:
+    build:
+      context: ../nota-zip-note-guard-ms
+      dockerfile: Dockerfile
+    ports:
+      - "3011:3011"
+    environment:
+      DATABASE_URL: postgresql://nota_zip:changeme@postgres:5432/nota_zip
+      NOTE_GUARD_PORT: "3011"
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+
+  message-control-ms:
+    build:
+      context: ../nota-zip-message-control-ms
+      dockerfile: Dockerfile
+    ports:
+      - "3005:3005"
+    environment:
+      DATABASE_URL: postgresql://nota_zip:changeme@postgres:5432/nota_zip
+      REDIS_URL: redis://redis:6379
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      AUTH_MS_URL: http://auth-ms:3004
+      USER_MS_URL: http://user-ms:3002
+      WHATSAPP_API_URL: http://whatsapp-adp:3006
+      MESSAGE_CONTROL_PORT: "3005"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+
+  gateway:
+    build:
+      context: ../nota-zip-gateway
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      GATEWAY_PORT: "3001"
+      AUTH_MS_URL: http://auth-ms:3004
+      USER_MS_URL: http://user-ms:3002
+      NOTE_GUARD_MS_URL: http://note-guard-ms:3011
+      MESSAGE_CONTROL_MS_URL: http://message-control-ms:3005
+      WHATSAPP_ADP_URL: http://whatsapp-adp:3006
+      OCR_ADP_URL: http://ocr-adp:3007
+      LLM_ADP_URL: http://llm-adp:3008
+    depends_on:
+      - auth-ms
+      - user-ms
+      - note-guard-ms
+      - message-control-ms
+    restart: unless-stopped
+
+  whatsapp-adp:
+    build:
+      context: ../nota-zip-whatsapp-adp
+      dockerfile: Dockerfile
+    ports:
+      - "3006:3006"
+    environment:
+      WHATSAPP_ADP_PORT: "3006"
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+
+  ocr-adp:
+    build:
+      context: ../nota-zip-ocr-adp
+      dockerfile: Dockerfile
+    ports:
+      - "3007:3007"
+    environment:
+      OCR_ADP_PORT: "3007"
+    restart: unless-stopped
+
+  llm-adp:
+    build:
+      context: ../nota-zip-llm-adp
+      dockerfile: Dockerfile
+    ports:
+      - "3008:3008"
+    environment:
+      LLM_ADP_PORT: "3008"
+    restart: unless-stopped
+
+  # --- Frontend ---
+  frontend:
+    build:
+      context: ../nota-zip-frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://gateway:3001
+    depends_on:
+      - gateway
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  rabbitmq_data:
