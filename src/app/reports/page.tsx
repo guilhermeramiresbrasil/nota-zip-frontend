@@ -1,64 +1,130 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { PageHeader } from '@/components/PageHeader';
 import { CategoryChart } from './components/CategoryChart';
 import { MonthlyChart } from './components/MonthlyChart';
 import { PeriodSelector } from './components/PeriodSelector';
+import { ChartConfigComponent } from './components/ChartConfig';
+import { ExportButton } from './components/ExportButton';
+import { SummaryCards } from './components/SummaryCards';
+import { AdvancedFilters } from './components/AdvancedFilters';
+import { DataTable } from './components/DataTable';
 import { useReportsStore } from './stores/useReportsStore';
 import { useAuth } from '@/contexts/AuthContext';
+import { exportService } from './logics/services/exportService';
 
 export default function ReportsPage() {
   const { user } = useAuth();
-  const { reportData, loading, selectedPeriod, fetchReportData, setSelectedPeriod } = useReportsStore();
+  const {
+    reportData, loading, selectedPeriod, chartConfig, filters,
+    detailedTransactions, summaryStats,
+    fetchReportData, setSelectedPeriod,
+    updateChartConfig, resetChartConfig,
+    updateFilters, resetFilters, fetchDetailedTransactions,
+  } = useReportsStore();
+
+  const dashboardRef = useRef<HTMLDivElement>(null);
+  const chartsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (user?.id) {
       fetchReportData(user.id, selectedPeriod);
+      fetchDetailedTransactions(user.id);
     }
-  }, [user?.id, fetchReportData, selectedPeriod]);
+  }, [user?.id, fetchReportData, selectedPeriod, fetchDetailedTransactions]);
+
+  useEffect(() => {
+    if (user?.id) {
+      fetchDetailedTransactions(user.id);
+    }
+  }, [user?.id, filters, fetchDetailedTransactions]);
+
+  const categories = reportData?.categoryData.map((c) => c.name) ?? [];
+
+  const handleExportCSV = () => {
+    if (detailedTransactions.length > 0) {
+      exportService.exportToCSV(detailedTransactions, 'notazip-transacoes');
+    }
+  };
+
+  const handleExportSummaryCSV = () => {
+    if (summaryStats) {
+      exportService.exportSummaryCSV(summaryStats, 'notazip-resumo');
+    }
+  };
+
+  const handleExportPDF = async () => {
+    if (dashboardRef.current) {
+      await exportService.exportToPDF(dashboardRef.current, 'notazip-relatorio');
+    }
+  };
+
+  const handleExportImage = async () => {
+    if (chartsRef.current) {
+      await exportService.exportChartAsImage(chartsRef.current, 'notazip-graficos');
+    }
+  };
+
+  const handleExportDashboard = async () => {
+    if (dashboardRef.current) {
+      await exportService.exportDashboardAsImage(dashboardRef.current, 'notazip-dashboard');
+    }
+  };
 
   return (
     <ProtectedRoute>
       <div className="container mx-auto px-4 py-8 max-w-7xl">
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex flex-wrap justify-between items-center mb-6 gap-3">
           <PageHeader title="Relatórios" description="Análise detalhada das suas finanças" />
-          <PeriodSelector
-            selectedPeriod={selectedPeriod}
-            onPeriodChange={(period) => setSelectedPeriod(user?.id ?? '', period)}
+          <div className="flex items-center gap-2">
+            <ExportButton
+              onExportCSV={handleExportCSV}
+              onExportSummaryCSV={handleExportSummaryCSV}
+              onExportPDF={handleExportPDF}
+              onExportImage={handleExportImage}
+              onExportDashboard={handleExportDashboard}
+            />
+            <PeriodSelector
+              selectedPeriod={selectedPeriod}
+              onPeriodChange={(period) => setSelectedPeriod(user?.id ?? '', period)}
+            />
+          </div>
+        </div>
+
+        <div className="space-y-4 mb-6">
+          <AdvancedFilters
+            filters={filters}
+            onFiltersChange={updateFilters}
+            onReset={resetFilters}
+            categories={categories}
           />
         </div>
 
         {loading ? (
           <div className="text-center py-8">Carregando relatórios...</div>
         ) : reportData ? (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <CategoryChart data={reportData.categoryData} />
-              <MonthlyChart data={reportData.monthlyData} />
+          <div ref={dashboardRef} className="space-y-6">
+            {summaryStats && <SummaryCards stats={summaryStats} />}
+
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+              <div className="lg:col-span-3">
+                <div ref={chartsRef} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <CategoryChart data={reportData.categoryData} config={chartConfig} />
+                  <MonthlyChart data={reportData.monthlyData} config={chartConfig} />
+                </div>
+              </div>
+              <div>
+                <ChartConfigComponent
+                  config={chartConfig}
+                  onConfigChange={updateChartConfig}
+                  onReset={resetChartConfig}
+                />
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-white p-6 rounded-lg shadow">
-                <h3 className="text-sm font-medium text-gray-500 mb-2">Total de Receitas</h3>
-                <p className="text-2xl font-bold text-green-600">
-                  R$ {reportData.totalIncome.toFixed(2)}
-                </p>
-              </div>
-              <div className="bg-white p-6 rounded-lg shadow">
-                <h3 className="text-sm font-medium text-gray-500 mb-2">Total de Despesas</h3>
-                <p className="text-2xl font-bold text-red-600">
-                  R$ {reportData.totalExpenses.toFixed(2)}
-                </p>
-              </div>
-              <div className="bg-white p-6 rounded-lg shadow">
-                <h3 className="text-sm font-medium text-gray-500 mb-2">Média de Despesas</h3>
-                <p className="text-2xl font-bold text-blue-600">
-                  R$ {reportData.avgExpenses.toFixed(2)}
-                </p>
-              </div>
-            </div>
+            <DataTable data={detailedTransactions} />
           </div>
         ) : (
           <div className="text-center py-8">Nenhum dado disponível</div>
