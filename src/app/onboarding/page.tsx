@@ -28,9 +28,9 @@ const steps = [
   {
     id: 3,
     title: 'Conecte seu WhatsApp',
-    description: 'Adicione seu WhatsApp para enviar notas por mensagem',
+    description: 'Adicione seu WhatsApp para enviar notas por mensagem (opcional)',
     icon: MessageCircle,
-    skippable: false,
+    skippable: true,
   },
   {
     id: 4,
