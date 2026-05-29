@@ -1,3 +1,5 @@
+'use client';
+
 import { LandingHero } from '@/components/LandingHero';
 import { LandingFeatures } from '@/components/LandingFeatures';
 import { LandingCTA } from '@/components/LandingCTA';

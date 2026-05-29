@@ -1,14 +1,18 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Wallet, ArrowRight, Check, Mail, MessageCircle, Settings, QrCode } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Wallet, Mail, MessageCircle, Settings } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
+import ProtectedRoute from '@/components/ProtectedRoute';
+import { OnboardingProgress } from './components/OnboardingProgress';
+import { WelcomeStep } from './components/WelcomeStep';
+import { EmailVerificationStep } from './components/EmailVerificationStep';
+import { WhatsAppConnectionStep } from './components/WhatsAppConnectionStep';
+import { PreferencesStep } from './components/PreferencesStep';
+import { OnboardingNavigation } from './components/OnboardingNavigation';
 
 const steps = [
   {
@@ -42,6 +46,10 @@ const steps = [
 ];
 
 export default function OnboardingPage() {
+  const router = useRouter();
+  const { user } = useAuth();
+  const { showSuccess, showError } = useToast();
+
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     emailCode: '',
@@ -54,11 +62,39 @@ export default function OnboardingPage() {
   const [loadingQrCode, setLoadingQrCode] = useState(false);
   const [emailVerifying, setEmailVerifying] = useState(false);
   const [emailVerified, setEmailVerified] = useState(false);
-  const router = useRouter();
-  const { user } = useAuth();
+  const [resendCooldown, setResendCooldown] = useState(0);
 
-  const handleNext = () => {
+  useEffect(() => {
+    if (resendCooldown > 0) {
+      const timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resendCooldown]);
+
+  const handleNext = async () => {
     if (currentStep < steps.length) {
+      // When moving from step 1 (Welcome) to step 2 (Email Verification), send email code
+      if (currentStep === 1) {
+        try {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/generate-email-code`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: user?.id, email: user?.email }),
+          });
+          const data = await res.json();
+          if (data.success) {
+            showSuccess('Código enviado para seu email!');
+            setResendCooldown(60);
+          }
+        } catch (e) {
+          console.error('Failed to send email code:', e);
+          showError('Erro ao enviar código de verificação');
+        }
+      }
+      // When moving from step 2 (Email Verification) to step 3 (WhatsApp Connection), generate WhatsApp code
+      if (currentStep === 2) {
+        await generateWhatsAppCode();
+      }
       setCurrentStep(currentStep + 1);
     } else {
       router.push('/home');
@@ -88,7 +124,7 @@ export default function OnboardingPage() {
     try {
       const userId = user?.id || '';
       if (!userId) return;
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/whatsapp/generate-code`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/generate-phone-code`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId }),
@@ -112,192 +148,93 @@ export default function OnboardingPage() {
   }, [currentStep]);
 
   const renderStep = () => {
-    const Icon = steps[currentStep - 1].icon;
+    const currentStepData = steps[currentStep - 1];
 
     switch (currentStep) {
       case 1:
         return (
-          <div className="space-y-6">
-            <div className="flex justify-center">
-              <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-500 rounded-2xl flex items-center justify-center">
-                <Icon className="h-10 w-10 text-white" />
-              </div>
-            </div>
-            <div className="text-center space-y-2">
-              <h2 className="text-2xl font-bold text-gray-900">{steps[0].title}</h2>
-              <p className="text-gray-600">{steps[0].description}</p>
-            </div>
-            <div className="space-y-4">
-              <div className="flex items-center gap-3 p-4 bg-green-50 rounded-lg">
-                <Check className="h-5 w-5 text-green-600" />
-                <span className="text-gray-700">Controle completo de suas finanças</span>
-              </div>
-              <div className="flex items-center gap-3 p-4 bg-green-50 rounded-lg">
-                <Check className="h-5 w-5 text-green-600" />
-                <span className="text-gray-700">Relatórios detalhados e insights</span>
-              </div>
-              <div className="flex items-center gap-3 p-4 bg-green-50 rounded-lg">
-                <Check className="h-5 w-5 text-green-600" />
-                <span className="text-gray-700">Notas e anotações financeiras</span>
-              </div>
-            </div>
-          </div>
+          <WelcomeStep
+            title={currentStepData.title}
+            description={currentStepData.description}
+            icon={currentStepData.icon}
+          />
         );
 
       case 2:
         return (
-          <div className="space-y-6">
-            <div className="flex justify-center">
-              <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-500 rounded-2xl flex items-center justify-center">
-                <Icon className="h-10 w-10 text-white" />
-              </div>
-            </div>
-            <div className="text-center space-y-2">
-              <h2 className="text-2xl font-bold text-gray-900">{steps[1].title}</h2>
-              <p className="text-gray-600">{steps[1].description}</p>
-            </div>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="emailCode">Código de verificação</Label>
-                <Input
-                  id="emailCode"
-                  type="text"
-                  placeholder="Digite o código enviado para seu email"
-                  value={formData.emailCode}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('emailCode', e.target.value)}
-                  maxLength={6}
-                />
-                {emailVerified && (
-                  <p className="text-sm text-green-600 font-medium">Email verificado com sucesso!</p>
-                )}
-                <p className="text-sm text-gray-500">
-                  Não recebeu o código? <button className="text-blue-600 hover:underline">Reenviar</button>
-                </p>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full mt-2"
-                  disabled={emailVerifying || formData.emailCode.length !== 6}
-                  onClick={async () => {
-                    setEmailVerifying(true);
-                    try {
-                      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/verify-email`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ userId: user?.id, code: formData.emailCode }),
-                      });
-                      const data = await res.json();
-                      if (data.success) setEmailVerified(true);
-                    } catch (e) {
-                      console.error('Email verification failed:', e);
-                    } finally {
-                      setEmailVerifying(false);
-                    }
-                  }}
-                >
-                  {emailVerifying ? 'Verificando...' : 'Verificar Email'}
-                </Button>
-              </div>
-            </div>
-          </div>
+          <EmailVerificationStep
+            title={currentStepData.title}
+            description={currentStepData.description}
+            icon={currentStepData.icon}
+            emailCode={formData.emailCode}
+            emailVerified={emailVerified}
+            resendCooldown={resendCooldown}
+            onEmailCodeChange={(value) => handleChange('emailCode', value)}
+            onVerifyEmail={async () => {
+              setEmailVerifying(true);
+              try {
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/verify-email`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ userId: user?.id, code: formData.emailCode }),
+                });
+                const data = await res.json();
+                if (data.success) setEmailVerified(true);
+              } catch (e) {
+                console.error('Email verification failed:', e);
+              } finally {
+                setEmailVerifying(false);
+              }
+            }}
+            onResendCode={async () => {
+              if (resendCooldown > 0) return;
+              try {
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/generate-email-code`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ userId: user?.id, email: user?.email }),
+                });
+                const data = await res.json();
+                if (data.success) {
+                  showSuccess('Código reenviado para seu email!');
+                  setResendCooldown(60);
+                }
+              } catch (e) {
+                console.error('Failed to resend code:', e);
+                showError('Erro ao reenviar código');
+              }
+            }}
+            emailVerifying={emailVerifying}
+            userId={user?.id}
+            userEmail={user?.email}
+          />
         );
 
       case 3:
         return (
-          <div className="space-y-6">
-            <div className="flex justify-center">
-              <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-500 rounded-2xl flex items-center justify-center">
-                <Icon className="h-10 w-10 text-white" />
-              </div>
-            </div>
-            <div className="text-center space-y-2">
-              <h2 className="text-2xl font-bold text-gray-900">{steps[2].title}</h2>
-              <p className="text-gray-600">{steps[2].description}</p>
-            </div>
-            <div className="space-y-4">
-              <div className="p-6 bg-blue-50 rounded-lg text-center">
-                {loadingQrCode ? (
-                  <div className="flex items-center justify-center py-8">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-                  </div>
-                ) : qrCodeData ? (
-                  <div className="space-y-4">
-                    <div className="bg-white p-4 rounded-lg inline-block">
-                      <img src={qrCodeData.qrCode} alt="QR Code" className="w-48 h-48 mx-auto" />
-                    </div>
-                    <p className="text-gray-700 mb-2">
-                      Escaneie o QR code e envie a mensagem para o WhatsApp
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      Código: <strong className="text-blue-600">{qrCodeData.code}</strong>
-                    </p>
-                    <p className="text-xs text-gray-400">
-                      Expira em: {new Date(qrCodeData.expiresAt).toLocaleTimeString()}
-                    </p>
-                  </div>
-                ) : (
-                  <QrCode className="h-16 w-16 text-blue-600 mx-auto mb-4" />
-                )}
-                <p className="text-sm text-gray-500 mt-4">
-                  Envie uma mensagem para o número: <strong>+55 11 99999-9999</strong>
-                </p>
-              </div>
-            </div>
-          </div>
+          <WhatsAppConnectionStep
+            title={currentStepData.title}
+            description={currentStepData.description}
+            icon={currentStepData.icon}
+            qrCodeData={qrCodeData}
+            loadingQrCode={loadingQrCode}
+            onGenerateQRCode={generateWhatsAppCode}
+          />
         );
 
       case 4:
         return (
-          <div className="space-y-6">
-            <div className="flex justify-center">
-              <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-500 rounded-2xl flex items-center justify-center">
-                <Icon className="h-10 w-10 text-white" />
-              </div>
-            </div>
-            <div className="text-center space-y-2">
-              <h2 className="text-2xl font-bold text-gray-900">{steps[3].title}</h2>
-              <p className="text-gray-600">{steps[3].description}</p>
-            </div>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="currency">Moeda</Label>
-                <Select value={formData.currency} onValueChange={(value) => handleChange('currency', value)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="BRL">R$ - Real Brasileiro</SelectItem>
-                    <SelectItem value="USD">$ - Dólar Americano</SelectItem>
-                    <SelectItem value="EUR">€ - Euro</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="language">Idioma</Label>
-                <Select value={formData.language} onValueChange={(value) => handleChange('language', value)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="pt-BR">Português (Brasil)</SelectItem>
-                    <SelectItem value="en-US">English (US)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="notifications"
-                  checked={formData.notifications}
-                  onChange={(e) => handleChange('notifications', e.target.checked)}
-                  className="w-4 h-4"
-                />
-                <Label htmlFor="notifications" className="cursor-pointer">
-                  Receber notificações por email
-                </Label>
-              </div>
-            </div>
-          </div>
+          <PreferencesStep
+            title={currentStepData.title}
+            description={currentStepData.description}
+            icon={currentStepData.icon}
+            currency={formData.currency}
+            language={formData.language}
+            notifications={formData.notifications}
+            onCurrencyChange={(value) => handleChange('currency', value)}
+            onLanguageChange={(value) => handleChange('language', value)}
+            onNotificationsChange={(value) => handleChange('notifications', value)}
+          />
         );
 
       default:
@@ -306,69 +243,28 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-lg">
-        {/* Progress */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-gray-600">
-              Passo {currentStep} de {steps.length}
-            </span>
-            <span className="text-sm text-gray-600">
-              {Math.round((currentStep / steps.length) * 100)}%
-            </span>
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div
-              className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${(currentStep / steps.length) * 100}%` }}
-            />
-          </div>
+    <ProtectedRoute>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
+        <div className="w-full max-w-lg">
+          <OnboardingProgress currentStep={currentStep} totalSteps={steps.length} />
+
+          <Card className="shadow-xl">
+            <CardContent className="p-8">
+              {renderStep()}
+
+              <OnboardingNavigation
+                currentStep={currentStep}
+                totalSteps={steps.length}
+                onNext={handleNext}
+                onBack={handleBack}
+                onSkip={handleSkip}
+                isStepSkippable={steps[currentStep - 1].skippable}
+                isNextDisabled={currentStep === 2 && !emailVerified}
+              />
+            </CardContent>
+          </Card>
         </div>
-
-        {/* Card */}
-        <Card className="shadow-xl">
-          <CardContent className="p-8">
-            {renderStep()}
-
-            {/* Navigation */}
-            <div className="flex gap-3 mt-8">
-              {currentStep > 1 && (
-                <Button
-                  variant="outline"
-                  onClick={handleBack}
-                  className="flex-1"
-                >
-                  Voltar
-                </Button>
-              )}
-              <Button
-                onClick={handleNext}
-                className={`flex-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 ${
-                  currentStep === 1 ? 'flex-1' : ''
-                }`}
-              >
-                {currentStep === steps.length ? 'Concluir' : 'Próximo'}
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
-
-            {/* Skip button */}
-            {steps[currentStep - 1].skippable && currentStep < steps.length && (
-              <div className="text-center mt-4">
-                <button
-                  onClick={handleSkip}
-                  className="text-sm text-gray-500 hover:text-gray-700 underline"
-                >
-                  Pular este passo
-                </button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-
       </div>
-    </div>
+    </ProtectedRoute>
   );
 }

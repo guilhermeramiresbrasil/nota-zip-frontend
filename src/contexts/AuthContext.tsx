@@ -3,6 +3,7 @@
 import authService from '@/services/authService';
 import userService from '@/services/userService';
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
 
 export interface IUser {
   id: string;
@@ -17,6 +18,8 @@ export interface IUser {
   language?: 'pt-BR' | 'en-US';
   notifications?: boolean;
   emailAlerts?: boolean;
+  emailVerified?: boolean;
+  phoneVerified?: boolean;
 }
 
 interface AuthContextType {
@@ -34,72 +37,103 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const router = useRouter();
   const authServiceInstance = new authService();
   const userServiceInstance = new userService();
   const [user, setUser] = useState<IUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    localStorage.removeItem('auth-storage');
-
+  const getStoredAuthData = () => {
     const storedUser = localStorage.getItem('user');
     const storedAccessToken = localStorage.getItem('accessToken');
-    
-    const loadUserData = async () => {
-      if (storedUser && storedAccessToken) {
+    return { storedUser, storedAccessToken };
+  };
+
+  const validateStoredUser = (parsedUser: any): boolean => {
+    return !!(parsedUser.id && parsedUser.name && parsedUser.email);
+  };
+
+  const clearInvalidAuthData = () => {
+    localStorage.removeItem('user');
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('sessionId');
+  };
+
+  const restoreUserFromStorage = (parsedUser: any, storedAccessToken: string): IUser => {
+    return {
+      ...parsedUser,
+      accessToken: storedAccessToken,
+      sessionId: parsedUser.sessionId || localStorage.getItem('sessionId') || undefined,
+    };
+  };
+
+  const buildUpdatedUser = (userData: any, parsedUser: any, storedAccessToken: string): IUser => {
+    return {
+      id: userData.id,
+      name: userData.name,
+      email: userData.email,
+      plan: userData.plan || 'free',
+      createdAt: userData.createdAt,
+      sessionId: parsedUser.sessionId,
+      accessToken: storedAccessToken,
+      theme: userData.theme || 'light',
+      currency: userData.currency || 'BRL',
+      language: userData.language || 'pt-BR',
+      notifications: userData.notifications ?? true,
+      emailAlerts: userData.emailAlerts ?? true,
+      emailVerified: userData.emailVerified ?? false,
+      phoneVerified: userData.phoneVerified ?? false,
+    };
+  };
+
+  const shouldRedirectToOnboarding = (updatedUser: IUser): boolean => {
+    return (!updatedUser.emailVerified || !updatedUser.phoneVerified) && window.location.pathname !== '/onboarding';
+  };
+
+  const fetchFreshUserData = async (userId: string) => {
+    return await userServiceInstance.getUserById(userId);
+  };
+
+  const loadUserData = async () => {
+    const { storedUser, storedAccessToken } = getStoredAuthData();
+
+    if (storedUser && storedAccessToken) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+
+        if (!validateStoredUser(parsedUser)) {
+          clearInvalidAuthData();
+          setIsLoading(false);
+          return;
+        }
+
+        const restoredUser = restoreUserFromStorage(parsedUser, storedAccessToken);
+        setUser(restoredUser);
+
         try {
-          const parsedUser = JSON.parse(storedUser);
-          
-          if (!parsedUser.id || !parsedUser.name || !parsedUser.email) {
-            localStorage.removeItem('user');
-            localStorage.removeItem('accessToken');
-            localStorage.removeItem('sessionId');
-            setIsLoading(false);
-            return;
-          }
+          const userResponse = await fetchFreshUserData(parsedUser.id);
+          if (userResponse.success) {
+            const userData = userResponse.data;
+            const updatedUser = buildUpdatedUser(userData, parsedUser, storedAccessToken);
+            setUser(updatedUser);
+            localStorage.setItem('user', JSON.stringify(updatedUser));
 
-          const restoredUser: IUser = {
-            ...parsedUser,
-            accessToken: storedAccessToken,
-            sessionId: parsedUser.sessionId || localStorage.getItem('sessionId') || undefined,
-          };
-
-          setUser(restoredUser);
-          
-          try {
-            const userResponse = await userServiceInstance.getUserById(parsedUser.id);
-            if (userResponse.success) {
-              const userData = userResponse.data;
-              const updatedUser: IUser = {
-                id: userData.id,
-                name: userData.name,
-                email: userData.email,
-                plan: userData.plan || 'free',
-                createdAt: userData.createdAt,
-                sessionId: parsedUser.sessionId,
-                accessToken: storedAccessToken,
-                theme: userData.theme || 'light',
-                currency: userData.currency || 'BRL',
-                language: userData.language || 'pt-BR',
-                notifications: userData.notifications ?? true,
-                emailAlerts: userData.emailAlerts ?? true,
-              };
-              setUser(updatedUser);
-              localStorage.setItem('user', JSON.stringify(updatedUser));
+            if (shouldRedirectToOnboarding(updatedUser)) {
+              router.push('/onboarding');
             }
-          } catch (error) {
-            console.error('Error fetching fresh user data:', error);
           }
         } catch (error) {
-          console.error('Error parsing stored user:', error);
-          localStorage.removeItem('user');
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('sessionId');
+          console.error('Error fetching fresh user data:', error);
         }
+      } catch (error) {
+        console.error('Error parsing stored user:', error);
+        clearInvalidAuthData();
       }
-      setIsLoading(false);
-    };
+    }
+    setIsLoading(false);
+  };
 
+  useEffect(() => {
     loadUserData();
   }, []);
 
@@ -117,9 +151,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const userInfo = await userServiceInstance.getUserById(loginDetails.userId);
       if (!userInfo) {
         throw new Error('Invalid user response');
-      }      
+      }
       const userDetails = userInfo.data;
-      
+
       const userObj: IUser = {
         id: loginDetails.userId,
         name: userDetails.name,
@@ -133,10 +167,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         language: userDetails.language || 'pt-BR',
         notifications: userDetails.notifications ?? true,
         emailAlerts: userDetails.emailAlerts ?? true,
+        emailVerified: userDetails.emailVerified ?? loginDetails.emailVerified ?? false,
+        phoneVerified: userDetails.phoneVerified ?? loginDetails.phoneVerified ?? false,
       };
 
       setUser(userObj);
       localStorage.setItem('user', JSON.stringify(userObj));
+
+      // Redirect to onboarding if email or phone not verified
+      if (!userObj.emailVerified || !userObj.phoneVerified) {
+        router.push('/onboarding');
+      } else {
+        router.push('/home');
+      }
     } catch (error) {
       console.error('Login error:', error);
       throw error;
@@ -149,7 +192,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!registerInfo) {
         throw new Error('Invalid user data');
       }
-      
+      router.push('/login');
 
     } catch (error) {
       console.error('Registration error:', error);

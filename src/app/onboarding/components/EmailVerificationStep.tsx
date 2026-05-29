@@ -1,0 +1,81 @@
+import { LucideIcon } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+
+interface EmailVerificationStepProps {
+  title: string;
+  description: string;
+  icon: LucideIcon;
+  emailCode: string;
+  emailVerified: boolean;
+  resendCooldown: number;
+  onEmailCodeChange: (value: string) => void;
+  onVerifyEmail: () => void;
+  onResendCode: () => void;
+  emailVerifying: boolean;
+  userId?: string;
+  userEmail?: string;
+}
+
+export function EmailVerificationStep({
+  title,
+  description,
+  icon: Icon,
+  emailCode,
+  emailVerified,
+  resendCooldown,
+  onEmailCodeChange,
+  onVerifyEmail,
+  onResendCode,
+  emailVerifying,
+  userId,
+  userEmail,
+}: EmailVerificationStepProps) {
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-center">
+        <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-500 rounded-2xl flex items-center justify-center">
+          <Icon className="h-10 w-10 text-white" />
+        </div>
+      </div>
+      <div className="text-center space-y-2">
+        <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
+        <p className="text-gray-600">{description}</p>
+      </div>
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="emailCode">Código de verificação</Label>
+          <Input
+            id="emailCode"
+            type="text"
+            placeholder="Digite o código enviado para seu email"
+            value={emailCode}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => onEmailCodeChange(e.target.value)}
+            maxLength={6}
+          />
+          {emailVerified && (
+            <p className="text-sm text-green-600 font-medium">Email verificado com sucesso!</p>
+          )}
+          <p className="text-sm text-gray-500">
+            Não recebeu o código? <button
+              type="button"
+              className={`text-blue-600 hover:underline ${resendCooldown > 0 ? 'text-gray-400 cursor-not-allowed' : ''}`}
+              disabled={resendCooldown > 0}
+              onClick={onResendCode}
+            >{resendCooldown > 0 ? `Reenviar em ${resendCooldown}s` : 'Reenviar'}</button>
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full mt-2"
+            disabled={emailVerifying || emailCode.length !== 6 || emailVerified}
+            onClick={onVerifyEmail}
+          >
+            {emailVerified ? 'Email Verificado' : emailVerifying ? 'Verificando...' : 'Verificar Email'}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
