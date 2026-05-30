@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Toast notification system with use-toast hook
 - Toaster component for toast notifications
 - Plans section to landing page
+- Production-ready Dockerfile with health check
+- Support for production environment variables
 
 ### Changed
 - Refactored LoginForm, ForgotPasswordForm, ExpenseForm to pure components
@@ -20,6 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated landing page to include Plans section
 - Updated settings components to use new service pattern
 - Updated LandingCTA styling with gradient background
+- Standardized Bun version to 1.3.13-alpine in Dockerfile
+- Added curl for health checks in Dockerfile
 
 ### Removed
 - Stores (useAuthStore, usePlanLimitsStore, useTransactionsStore, etc.)

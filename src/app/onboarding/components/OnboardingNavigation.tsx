@@ -9,6 +9,7 @@ interface OnboardingNavigationProps {
   onSkip: () => void;
   isStepSkippable: boolean;
   isNextDisabled?: boolean;
+  emailVerified?: boolean;
 }
 
 export function OnboardingNavigation({
@@ -19,6 +20,7 @@ export function OnboardingNavigation({
   onSkip,
   isStepSkippable,
   isNextDisabled = false,
+  emailVerified,
 }: OnboardingNavigationProps) {
   return (
     <>
@@ -39,7 +41,7 @@ export function OnboardingNavigation({
             currentStep === 1 ? 'flex-1' : ''
           } ${isNextDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
-          {currentStep === totalSteps ? 'Concluir' : 'Próximo'}
+          {currentStep === 2 && emailVerified ? 'Próximo' : currentStep === 2 ? 'Verificar Email' : currentStep === totalSteps ? 'Concluir' : 'Próximo'}
           <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
       </div>

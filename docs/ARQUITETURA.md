@@ -27,14 +27,19 @@ O NotaZip é uma plataforma de gestão financeira pessoal baseada em microservi�
                                     └──────┬───────┘
                            ┌───────────────┼───────────────┐
                     ┌──────▼───────┐ ┌─────▼──────┐ ┌──────▼──────┐
-                    │ Msg Control  │ │ WhatsApp   │ │  OCR Adp    │
-                    │   :3005      │ │  Adp :3006 │ │   :3007     │
+                    │ Msg Control  │ │ WhatsApp   │ │   LLM Adp   │
+                    │   :3007      │ │  Adp :3006 │ │   :3010     │
                     └──────────────┘ └────────────┘ └─────────────┘
                            │
                     ┌──────▼───────┐              ┌──────────────┐
-                    │    Redis     │              │   LLM Adp    │
-                    │    :6379     │              │    :3008     │
+                    │    Redis     │              │ Notifications│
+                    │    :6379     │              │    Adp :3008 │
                     └──────────────┘              └──────────────┘
+                                                   │
+                                            ┌──────▼───────┐
+                                            │ Warranty MS  │
+                                            │    :3012     │
+                                            └──────────────┘
 ```
 
 ---
@@ -60,7 +65,7 @@ O NotaZip é uma plataforma de gestão financeira pessoal baseada em microservi�
 - **Responsabilidades:** Login, registro, sessões, JWT, validação de email, WhatsApp code generation
 - **Tabelas:** users (referência para sessions)
 
-### Message Control MS (nota-zip-message-control-ms) — :3005
+### Message Control MS (nota-zip-message-control-ms) — :3007
 - **Stack:** Elysia, Drizzle ORM, PostgreSQL, Redis
 - **Responsabilidades:** Controle de mensagens WhatsApp, rate limiting, processamento de filas
 - **Tabelas:** messages, whatsappUserLinks, autoReplies, processingEvents, webhookEvents
@@ -68,20 +73,25 @@ O NotaZip é uma plataforma de gestão financeira pessoal baseada em microservi�
 
 ### WhatsApp Adapter (nota-zip-whatsapp-adp) — :3006
 - **Stack:** Elysia, Bun
-- **Responsabilidades:** Interface com API WhatsApp, envio/recebimento de mensagens
+- **Responsabilidades:** Interface com API WhatsApp, envio/recebimento de mensagens, webhook processing
 
-### OCR Adapter (nota-zip-ocr-adp) — :3007
-- **Stack:** Elysia, Sharp
-- **Responsabilidades:** Processamento de imagens, OCR de notas fiscais
-
-### LLM Adapter (nota-zip-llm-adp) — :3008
+### LLM Adapter (nota-zip-llm-adp) — :3010
 - **Stack:** Elysia
-- **Responsabilidades:** Processamento de linguagem natural, extração de dados financeiros
+- **Responsabilidades:** Processamento de linguagem natural, extração de dados financeiros, RabbitMQ consumer
+
+### Notifications Adapter (nota-zip-notifications-adp) — :3008
+- **Stack:** Elysia, Nodemailer
+- **Responsabilidades:** Envio de notificações por email via Locaweb SMTP
 
 ### Note Guard MS (nota-zip-note-guard-ms) — :3011
 - **Stack:** Elysia, Drizzle ORM, PostgreSQL
-- **Responsabilidades:** CRUD de transações, categorias, notas, relatórios financeiros
+- **Responsabilidades:** CRUD de transações, categorias, notas, relatórios financeiros, RabbitMQ consumer
 - **Tabelas:** transactions, expenses, categories, notes
+
+### Warranty MS (nota-zip-warranty-ms) — :3012
+- **Stack:** Elysia, Drizzle ORM, PostgreSQL
+- **Responsabilidades:** CRUD de garantias, armazenamento de documentos, controle de uso de storage
+- **Tabelas:** warranties
 
 ---
 
@@ -106,11 +116,10 @@ O NotaZip é uma plataforma de gestão financeira pessoal baseada em microservi�
 1. Usuário envia mensagem → WhatsApp API → WhatsApp Adapter
 2. WhatsApp Adapter → RabbitMQ (fila de entrada)
 3. Message Control MS consome fila → verifica rate limit (Redis)
-4. Se dentro do limite: Message Control → OCR Adapter (se imagem)
-5. OCR Adapter → LLM Adapter (extração de dados)
-6. LLM Adapter → Note Guard MS (salva transação)
-7. Note Guard MS → RabbitMQ (fila de resposta)
-8. WhatsApp Adapter → responde ao usuário
+4. Se dentro do limite: Message Control → LLM Adapter (extração de dados)
+5. LLM Adapter → Note Guard MS (salva transação)
+6. Note Guard MS → RabbitMQ (fila de resposta)
+7. WhatsApp Adapter → responde ao usuário
 
 ### Relatórios
 1. Frontend → Gateway → Note Guard MS

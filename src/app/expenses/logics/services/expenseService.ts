@@ -1,6 +1,7 @@
 import { Transaction } from '@/app/home/types/dashboard.types';
 import { ExpenseFormData } from '../../types/expense.types';
 import { generateCorrelationId } from '@/lib/utils';
+import { categoryService } from './categoryService';
 
 const GATEWAY_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -72,15 +73,23 @@ export class ExpenseService {
     type: 'income' | 'expense',
     userId: string
   ): Promise<Transaction> {
+    let categoryId = formData.categoryId;
+    
+    // If user selected "new category", normalize/create it first
+    if (categoryId === 'new' && formData.newCategoryName) {
+      const category = await categoryService.normalizeCategory(formData.newCategoryName);
+      categoryId = category.id;
+    }
+
     const response = await fetch(`${GATEWAY_URL}/api/transactions`, {
       method: 'POST',
       headers: this.getHeaders(),
       body: JSON.stringify({
         userId,
+        categoryId,
         amount: parseFloat(formData.amount),
         type: type === 'income' ? 'credit' : 'debit',
-        category: formData.category,
-        description: formData.description || formData.category,
+        description: formData.description || '',
         date: formData.date,
       }),
     });
@@ -97,7 +106,7 @@ export class ExpenseService {
       id: t.id,
       name: t.description,
       amount: t.type === 'debit' ? -Math.abs(t.amount) : Math.abs(t.amount),
-      category: t.category,
+      category: t.categoryId,
       date: t.date,
       type: t.type === 'credit' ? 'income' : 'expense',
     };
@@ -110,7 +119,7 @@ export class ExpenseService {
   ): Promise<Transaction> {
     const body: Record<string, unknown> = {};
     if (formData.amount !== undefined) body.amount = parseFloat(formData.amount);
-    if (formData.category !== undefined) body.category = formData.category;
+    if (formData.categoryId !== undefined) body.categoryId = formData.categoryId;
     if (formData.description !== undefined) body.description = formData.description;
     if (formData.date !== undefined) body.date = formData.date;
 
@@ -132,7 +141,7 @@ export class ExpenseService {
       id: t.id,
       name: t.description,
       amount: t.type === 'debit' ? -Math.abs(t.amount) : Math.abs(t.amount),
-      category: t.category,
+      category: t.categoryId,
       date: t.date,
       type: t.type === 'credit' ? 'income' : 'expense',
     };

@@ -8,14 +8,10 @@ interface EmailVerificationStepProps {
   description: string;
   icon: LucideIcon;
   emailCode: string;
-  emailVerified: boolean;
+  emailVerified?: boolean;
   resendCooldown: number;
   onEmailCodeChange: (value: string) => void;
-  onVerifyEmail: () => void;
   onResendCode: () => void;
-  emailVerifying: boolean;
-  userId?: string;
-  userEmail?: string;
 }
 
 export function EmailVerificationStep({
@@ -26,11 +22,7 @@ export function EmailVerificationStep({
   emailVerified,
   resendCooldown,
   onEmailCodeChange,
-  onVerifyEmail,
   onResendCode,
-  emailVerifying,
-  userId,
-  userEmail,
 }: EmailVerificationStepProps) {
   return (
     <div className="space-y-6">
@@ -49,14 +41,12 @@ export function EmailVerificationStep({
           <Input
             id="emailCode"
             type="text"
-            placeholder="Digite o código enviado para seu email"
+            placeholder={emailVerified ? "Email verificado com sucesso, pode prosseguir!" : "Digite o código enviado para seu email"}
             value={emailCode}
+            disabled={emailVerified}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => onEmailCodeChange(e.target.value)}
             maxLength={6}
           />
-          {emailVerified && (
-            <p className="text-sm text-green-600 font-medium">Email verificado com sucesso!</p>
-          )}
           <p className="text-sm text-gray-500">
             Não recebeu o código? <button
               type="button"
@@ -65,15 +55,6 @@ export function EmailVerificationStep({
               onClick={onResendCode}
             >{resendCooldown > 0 ? `Reenviar em ${resendCooldown}s` : 'Reenviar'}</button>
           </p>
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full mt-2"
-            disabled={emailVerifying || emailCode.length !== 6 || emailVerified}
-            onClick={onVerifyEmail}
-          >
-            {emailVerified ? 'Email Verificado' : emailVerifying ? 'Verificando...' : 'Verificar Email'}
-          </Button>
         </div>
       </div>
     </div>

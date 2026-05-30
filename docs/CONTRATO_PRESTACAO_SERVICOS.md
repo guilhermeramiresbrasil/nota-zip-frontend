@@ -27,18 +27,18 @@ O presente contrato tem por objeto a prestação de serviços de:
 ## 3. Dos Planos e Preços
 
 ### 3.1 Plano Gratuito (Free)
-- Até 12 mensagens diárias via WhatsApp
+- 1 receita por semana
+- 5 despesas por semana
 - Acesso básico aos relatórios
 - Sem custo
 
 ### 3.2 Plano Trial
 - Até 20 mensagens diárias via WhatsApp
-- Acesso completo aos relatórios
+- Acesso completo a todos os recursos
 - Período de teste gratuito conforme promoção vigente
 
 ### 3.3 Plano Basic
-- Até 100 mensagens diárias via WhatsApp
-- Acesso completo a todos os recursos
+- Acesso completo a todos os recursos( sem whatsapp)
 - Exportação de relatórios (CSV, PDF, imagem)
 
 ### 3.4 Plano Premium

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Wallet, Mail, MessageCircle, Settings } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
+import { IUser, useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { OnboardingProgress } from './components/OnboardingProgress';
@@ -47,7 +47,7 @@ const steps = [
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, updatedUser } = useAuth();
   const { showSuccess, showError } = useToast();
 
   const [currentStep, setCurrentStep] = useState(1);
@@ -71,30 +71,75 @@ export default function OnboardingPage() {
     }
   }, [resendCooldown]);
 
+  const generateEmailCode = async () => {
+    if (user?.emailVerified) return setEmailVerified(true);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/generate-email-code`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user?.id, email: user?.email }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showSuccess('Código enviado para seu email!');
+        setResendCooldown(60);
+      }
+    } catch (e) {
+      console.error('Failed to send email code:', e);
+      showError('Erro ao enviar código de verificação');
+    }
+  };
+
+  const generateWhatsAppCode = async () => {
+    setLoadingQrCode(true);
+    try {
+      const userId = user?.id || '';
+      if (!userId) return;
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/generate-phone-code`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        setQrCodeData(data.data);
+      }
+    } catch (error) {
+      console.error('Error generating WhatsApp code:', error);
+    } finally {
+      setLoadingQrCode(false);
+    }
+  };
+
+  const handleVerifyEmail = async () => {
+    if (user?.emailVerified) return setEmailVerified(true);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/verify-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user?.id, code: formData.emailCode }),
+      });
+      const data = await res.json();
+      if (data.success) setEmailVerified(true);
+    } catch (e) {
+      console.error('Email verification failed:', e);
+    } finally {
+      updatedUser({ ...user, emailVerified: true } as IUser);
+    }
+  };
+
   const handleNext = async () => {
     if (currentStep < steps.length) {
-      // When moving from step 1 (Welcome) to step 2 (Email Verification), send email code
-      if (currentStep === 1) {
-        try {
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/generate-email-code`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: user?.id, email: user?.email }),
-          });
-          const data = await res.json();
-          if (data.success) {
-            showSuccess('Código enviado para seu email!');
-            setResendCooldown(60);
-          }
-        } catch (e) {
-          console.error('Failed to send email code:', e);
-          showError('Erro ao enviar código de verificação');
-        }
+      switch (currentStep) {
+        case 0:
+          await generateEmailCode();
+          break;
+        case 1:
+          await handleVerifyEmail();
+          await generateWhatsAppCode();
+          break;
       }
-      // When moving from step 2 (Email Verification) to step 3 (WhatsApp Connection), generate WhatsApp code
-      if (currentStep === 2) {
-        await generateWhatsAppCode();
-      }
+      
       setCurrentStep(currentStep + 1);
     } else {
       router.push('/home');
@@ -117,28 +162,12 @@ export default function OnboardingPage() {
 
   const handleChange = (field: string, value: string | boolean) => {
     setFormData({ ...formData, [field]: value });
-  };
-
-  const generateWhatsAppCode = async () => {
-    setLoadingQrCode(true);
-    try {
-      const userId = user?.id || '';
-      if (!userId) return;
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/generate-phone-code`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId }),
-      });
-      const data = await response.json();
-      if (data.success) {
-        setQrCodeData(data.data);
-      }
-    } catch (error) {
-      console.error('Error generating WhatsApp code:', error);
-    } finally {
-      setLoadingQrCode(false);
+    if (value.toString().length == 6) {
+      setEmailVerified(true);
     }
   };
+
+  
 
   // Generate QR code when entering step 3
   useEffect(() => {
@@ -167,29 +196,13 @@ export default function OnboardingPage() {
             description={currentStepData.description}
             icon={currentStepData.icon}
             emailCode={formData.emailCode}
-            emailVerified={emailVerified}
+            emailVerified={user?.emailVerified}
             resendCooldown={resendCooldown}
             onEmailCodeChange={(value) => handleChange('emailCode', value)}
-            onVerifyEmail={async () => {
-              setEmailVerifying(true);
-              try {
-                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/verify-email`, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ userId: user?.id, code: formData.emailCode }),
-                });
-                const data = await res.json();
-                if (data.success) setEmailVerified(true);
-              } catch (e) {
-                console.error('Email verification failed:', e);
-              } finally {
-                setEmailVerifying(false);
-              }
-            }}
             onResendCode={async () => {
               if (resendCooldown > 0) return;
               try {
-                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/generate-email-code`, {
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/generate-email-code`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ userId: user?.id, email: user?.email }),
@@ -204,9 +217,6 @@ export default function OnboardingPage() {
                 showError('Erro ao reenviar código');
               }
             }}
-            emailVerifying={emailVerifying}
-            userId={user?.id}
-            userEmail={user?.email}
           />
         );
 
@@ -259,7 +269,8 @@ export default function OnboardingPage() {
                 onBack={handleBack}
                 onSkip={handleSkip}
                 isStepSkippable={steps[currentStep - 1].skippable}
-                isNextDisabled={currentStep === 2 && !emailVerified}
+                isNextDisabled={currentStep === 2 && (!emailVerified || !user?.emailVerified)}
+                emailVerified={user?.emailVerified}
               />
             </CardContent>
           </Card>

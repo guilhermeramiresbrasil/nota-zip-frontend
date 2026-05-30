@@ -17,9 +17,10 @@ import { Transaction } from '@/app/home/types/dashboard.types';
 
 interface FormData {
   amount: string;
-  category: string;
+  categoryId: string;
   description: string;
   date: string;
+  newCategoryName?: string;
 }
 
 export default function ExpensesPage() {
@@ -31,7 +32,7 @@ export default function ExpensesPage() {
   const [dateRange, setDateRange] = useState({ startDate: '', endDate: '' });
   const [formData, setFormData] = useState<FormData>({
     amount: '',
-    category: '',
+    categoryId: '',
     description: '',
     date: new Date().toISOString().split('T')[0],
   });
@@ -63,7 +64,7 @@ export default function ExpensesPage() {
   const handleAddTransaction = () => {
     setFormData({
       amount: '',
-      category: '',
+      categoryId: '',
       description: '',
       date: new Date().toISOString().split('T')[0],
     });

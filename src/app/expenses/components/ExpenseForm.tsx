@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -17,14 +17,21 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { expenseCategories, incomeCategories } from '../types/expense.types';
-import { TransactionType } from '@/app/home/types/dashboard.types';
+import { categoryService } from '../logics/services/categoryService';
+
+interface Category {
+  id: string;
+  name: string;
+  color?: string;
+  icon?: string;
+}
 
 interface FormData {
   amount: string;
-  category: string;
+  categoryId: string;
   description: string;
   date: string;
+  newCategoryName?: string;
 }
 
 interface ExpenseFormProps {
@@ -48,7 +55,23 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
   onSubmit,
   onCancel,
 }) => {
-  const categories = transactionType === 'expense' ? expenseCategories : incomeCategories;
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setLoading(true);
+        const data = await categoryService.fetchCategories();
+        setCategories(data);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   return (
     <Dialog open={dialogOpen} onOpenChange={onDialogOpenChange}>
@@ -66,7 +89,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
               value={transactionType}
               onValueChange={(value: 'income' | 'expense') => {
                 onTransactionTypeChange(value);
-                onChangeFormData({ ...formData, category: '' });
+                onChangeFormData({ ...formData, categoryId: '' });
               }}
             >
               <SelectTrigger>
@@ -94,21 +117,38 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
           <div className="space-y-2">
             <Label htmlFor="category">Categoria</Label>
             <Select
-              value={formData.category}
-              onValueChange={(value) => onChangeFormData({ ...formData, category: value })}
+              value={formData.categoryId}
+              onValueChange={(value) => {
+                onChangeFormData({ ...formData, categoryId: value, newCategoryName: '' });
+              }}
               required
+              disabled={loading}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Selecione a categoria" />
+                <SelectValue placeholder={loading ? "Carregando..." : "Selecione a categoria"} />
               </SelectTrigger>
               <SelectContent>
                 {categories.map((category) => (
-                  <SelectItem key={category} value={category}>
-                    {category}
+                  <SelectItem key={category.id} value={category.id}>
+                    {category.name}
                   </SelectItem>
                 ))}
+                <SelectItem value="new">
+                  + Nova categoria
+                </SelectItem>
               </SelectContent>
             </Select>
+            {formData.categoryId === 'new' && (
+              <Input
+                id="newCategoryName"
+                type="text"
+                placeholder="Nome da nova categoria"
+                value={formData.newCategoryName || ''}
+                onChange={(e) => onChangeFormData({ ...formData, newCategoryName: e.target.value })}
+                required
+                className="mt-2"
+              />
+            )}
           </div>
 
           <div className="space-y-2">

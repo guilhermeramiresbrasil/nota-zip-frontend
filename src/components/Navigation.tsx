@@ -48,12 +48,13 @@ export default function Navigation() {
             {isAuthenticated ? (
               <>
                 {navigation.map((item) => {
-                  const isActive = pathname === item.href;
+                  const isActive = (pathname === item.href && item.href !== '/garantias') || (pathname === item.href && user?.plan && user.plan !== 'free');
                   const Icon = item.icon;
                   return (
                     <Link
                       key={item.name}
-                      href={item.href}
+                      href={item.href === '/garantias' && user?.plan && user.plan === 'free' ? '#' : item.href}
+
                       className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200 ${
                         isActive
                           ? 'bg-gradient-to-r from-blue-50 to-purple-50 text-blue-600'

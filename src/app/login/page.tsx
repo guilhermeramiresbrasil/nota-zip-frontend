@@ -28,8 +28,7 @@ export default function LoginPage() {
 
     try {
       await login(formData.email, formData.password);
-      showSuccess('Login realizado com sucesso!', 'Você será redirecionado para o home.');
-      router.push('/home');
+      showSuccess('Login realizado com sucesso!');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro ao fazer login';
       showError('Erro ao fazer login', errorMessage);

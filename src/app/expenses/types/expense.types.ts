@@ -2,9 +2,10 @@ import { Transaction } from '@/app/home/types/dashboard.types';
 
 export interface ExpenseFormData {
   amount: string;
-  category: string;
+  categoryId: string;
   description: string;
   date: string;
+  newCategoryName?: string;
 }
 
 export interface Expense extends Transaction {
