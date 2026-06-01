@@ -1,7 +1,8 @@
 import { Garantia, GarantiaFormData } from '../../types/garantia.types';
 import { compressImage, fileToBase64 } from '../utils/imageCompressor';
 
-const GATEWAY_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.notazip.com.br';
+// Hardcoded production URL
+const GATEWAY_URL = 'https://api.notazip.com.br';
 
 export const PLAN_PER_FILE_LIMITS: Record<string, number> = {
   free: 2 * 1024 * 1024,

@@ -7,9 +7,12 @@ interface Category {
   updatedAt: string;
 }
 
+// Hardcoded production URL
+const API_URL = 'https://api.notazip.com.br';
+
 export const categoryService = {
   async fetchCategories(): Promise<Category[]> {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3011'}/api/notes/categories`);
+    const response = await fetch(`${API_URL}/api/notes/categories`);
     if (!response.ok) {
       throw new Error('Failed to fetch categories');
     }
@@ -18,7 +21,7 @@ export const categoryService = {
   },
 
   async createCategory(category: { name: string; color?: string; icon?: string }): Promise<Category> {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3011'}/api/notes/categories`, {
+    const response = await fetch(`${API_URL}/api/notes/categories`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -33,7 +36,7 @@ export const categoryService = {
   },
 
   async normalizeCategory(categoryName: string): Promise<Category> {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3011'}/api/notes/categories/normalize`, {
+    const response = await fetch(`${API_URL}/api/notes/categories/normalize`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

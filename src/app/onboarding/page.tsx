@@ -14,6 +14,9 @@ import { WhatsAppConnectionStep } from './components/WhatsAppConnectionStep';
 import { PreferencesStep } from './components/PreferencesStep';
 import { OnboardingNavigation } from './components/OnboardingNavigation';
 
+// Hardcoded production API URL
+const API_URL = 'https://api.notazip.com.br';
+
 const steps = [
   {
     id: 1,
@@ -74,7 +77,7 @@ export default function OnboardingPage() {
   const generateEmailCode = async () => {
     if (user?.emailVerified) return setEmailVerified(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/generate-email-code`, {
+      const res = await fetch(`${API_URL}/api/auth/generate-email-code`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: user?.id, email: user?.email }),
@@ -95,7 +98,7 @@ export default function OnboardingPage() {
     try {
       const userId = user?.id || '';
       if (!userId) return;
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/generate-phone-code`, {
+      const response = await fetch(`${API_URL}/api/auth/generate-phone-code`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId }),
@@ -114,7 +117,7 @@ export default function OnboardingPage() {
   const handleVerifyEmail = async () => {
     if (user?.emailVerified) return setEmailVerified(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/verify-email`, {
+      const res = await fetch(`${API_URL}/api/auth/verify-email`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: user?.id, code: formData.emailCode }),
@@ -202,7 +205,7 @@ export default function OnboardingPage() {
             onResendCode={async () => {
               if (resendCooldown > 0) return;
               try {
-                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/generate-email-code`, {
+                const res = await fetch(`${API_URL}/api/auth/generate-email-code`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ userId: user?.id, email: user?.email }),
