@@ -14,10 +14,10 @@ COPY . .
 
 # Copy env file for build
 ARG NEXT_PUBLIC_API_URL
-ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 
 # Build the application
-RUN bun run build
+RUN echo "NEXT_PUBLIC_API_URL is: $NEXT_PUBLIC_API_URL" && bun run build
 
 # Stage 2: Run
 FROM oven/bun:1.3.13-alpine AS runner
