@@ -17,7 +17,7 @@ ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 
 # Build the application
-RUN echo "NEXT_PUBLIC_API_URL is: $NEXT_PUBLIC_API_URL" && bun run build
+RUN echo "NEXT_PUBLIC_API_URL is: $NEXT_PUBLIC_API_URL" && rm -rf .next && bun run build
 
 # Stage 2: Run
 FROM oven/bun:1.3.13-alpine AS runner
