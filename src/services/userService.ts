@@ -1,7 +1,7 @@
 import { IUser } from "@/contexts/AuthContext";
 import { generateCorrelationId } from "../lib/utils";
 
-const GATEWAY_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const GATEWAY_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.notazip.com.br';
 
 
 class UserService {
