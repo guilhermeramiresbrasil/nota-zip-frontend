@@ -1,6 +1,6 @@
 import { ReportData, ReportPeriod, ReportFilters, DetailedTransaction } from '../../types/report.types';
 
-const GATEWAY_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const GATEWAY_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.notazip.com.br';
 
 export class ReportService {
   private static instance: ReportService;

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { LoginLogo } from '../login/components/LoginLogo';
 import { ForgotPasswordForm } from './components/ForgotPasswordForm';
 
-const GATEWAY_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const GATEWAY_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.notazip.com.br';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');

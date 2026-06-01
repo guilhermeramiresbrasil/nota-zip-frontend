@@ -1,6 +1,6 @@
 import { Plan, PlanUpgradeRequest } from '../../types/plan.types';
 
-const GATEWAY_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const GATEWAY_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.notazip.com.br';
 
 export class PlanService {
   private static instance: PlanService;

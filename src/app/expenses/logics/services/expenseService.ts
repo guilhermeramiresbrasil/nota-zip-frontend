@@ -3,7 +3,7 @@ import { ExpenseFormData } from '../../types/expense.types';
 import { generateCorrelationId } from '@/lib/utils';
 import { categoryService } from './categoryService';
 
-const GATEWAY_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const GATEWAY_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.notazip.com.br';
 
 export class ExpenseService {
   private static instance: ExpenseService;
