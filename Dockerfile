@@ -12,6 +12,10 @@ RUN bun install --frozen-lockfile
 # Copy source code
 COPY . .
 
+# Copy env file for build
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+
 # Build the application
 RUN bun run build
 
