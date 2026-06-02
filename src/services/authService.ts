@@ -1,7 +1,7 @@
 import { generateCorrelationId } from "../lib/utils";
 
 // Hardcoded production URL to avoid build issues
-const GATEWAY_URL = 'https://api.notazip.com.br';
+const GATEWAY_URL = 'http://api.notazip.com.br';
 
 class AuthService {
   
