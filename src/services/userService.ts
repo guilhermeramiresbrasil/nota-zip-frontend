@@ -1,7 +1,7 @@
 import { IUser } from "@/contexts/AuthContext";
 import { generateCorrelationId } from "../lib/utils";
 
-// Hardcoded production URL to avoid build issues
+// Production URL
 const GATEWAY_URL = 'https://api.notazip.com.br';
 
 
