@@ -1,16 +1,21 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/PageHeader';
 import { PlanCard } from './components/PlanCard';
 import { PlanComparison } from './components/PlanComparison';
 import { planService } from './logics/services/planService';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 import { Plan } from './types/plan.types';
 
 export default function PlansPage() {
+  const router = useRouter();
   const { user } = useAuth();
+  const { showSuccess, showError } = useToast();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -30,12 +35,12 @@ export default function PlansPage() {
   }, []);
 
   const handleUpgrade = async (planId: 'free' | 'basic' | 'premium') => {
-    try {
-      await planService.upgradePlan({ planId });
-      // TODO: Refresh user data
-    } catch (error) {
-      console.error('Error upgrading plan:', error);
+    if (planId === 'free') {
+      showSuccess('Plano Grátis ativado!');
+      router.push('/home');
+      return;
     }
+    showError('Pagamento em breve disponível. Continue no plano Grátis por enquanto.');
   };
 
   if (loading) {
@@ -52,6 +57,12 @@ export default function PlansPage() {
         title="Planos e Preços"
         description="Escolha o plano ideal para suas necessidades"
       />
+
+      <div className="flex justify-end mb-4">
+        <Button variant="ghost" onClick={() => router.push('/home')}>
+          Pular por enquanto
+        </Button>
+      </div>
 
       {/* Plans Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">

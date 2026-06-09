@@ -145,7 +145,7 @@ export default function OnboardingPage() {
       
       setCurrentStep(currentStep + 1);
     } else {
-      router.push('/home');
+      router.push('/plans');
     }
   };
 
@@ -153,7 +153,7 @@ export default function OnboardingPage() {
     if (currentStep < steps.length) {
       setCurrentStep(currentStep + 1);
     } else {
-      router.push('/home');
+      router.push('/plans');
     }
   };
 
