@@ -92,7 +92,7 @@ export class PlanService {
           id: p.name as 'free' | 'basic' | 'premium',
           name: p.name === 'free' ? 'Grátis' : p.name === 'basic' ? 'Básico' : 'Premium',
           description: FALLBACK_PLANS.find(f => f.id === p.name)?.description || '',
-          price: p.monthlyPrice === '0' ? 'R$ 0' : `R$ ${parseFloat(p.monthlyPrice).toFixed(2).replace('.', ',')}`,
+          price: !p.price || p.price === 0 ? 'R$ 0' : `R$ ${parseFloat(p.price).toFixed(2).replace('.', ',')}`,
           period: '/mês',
           features: p.features || FALLBACK_PLANS.find(f => f.id === p.name)?.features || [],
           notIncluded: FALLBACK_PLANS.find(f => f.id === p.name)?.notIncluded || [],
