@@ -1,4 +1,4 @@
-import { Plan, PlanUpgradeRequest } from '../../types/plan.types';
+import { Plan, PlanUpgradeRequest } from '../app/plans/types/plan.types';
 
 const GATEWAY_URL = 'https://api.notazip.com.br';
 

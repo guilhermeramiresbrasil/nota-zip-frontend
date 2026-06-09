@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/PageHeader';
 import { PlanCard } from './components/PlanCard';
 import { PlanComparison } from './components/PlanComparison';
-import { planService } from './logics/services/planService';
+import { planService } from '../../services/planService';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { Plan } from './types/plan.types';
