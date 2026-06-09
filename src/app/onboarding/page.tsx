@@ -64,7 +64,7 @@ export default function OnboardingPage() {
   const [qrCodeData, setQrCodeData] = useState<{ code: string; qrCode: string; expiresAt: string } | null>(null);
   const [loadingQrCode, setLoadingQrCode] = useState(false);
   const [emailVerifying, setEmailVerifying] = useState(false);
-  const [emailVerified, setEmailVerified] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(user?.emailVerified ?? false);
   const [resendCooldown, setResendCooldown] = useState(0);
 
   useEffect(() => {
@@ -272,7 +272,7 @@ export default function OnboardingPage() {
                 onBack={handleBack}
                 onSkip={handleSkip}
                 isStepSkippable={steps[currentStep - 1].skippable}
-                isNextDisabled={currentStep === 2 && (!emailVerified || !user?.emailVerified)}
+                isNextDisabled={currentStep === 2 && !emailVerified && !user?.emailVerified}
                 emailVerified={user?.emailVerified}
               />
             </CardContent>
