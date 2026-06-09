@@ -18,6 +18,10 @@ export default function PlansPage() {
   const { showSuccess, showError } = useToast();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
+  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
+  const [paymentMethod, setPaymentMethod] = useState<'credit_card' | 'pix'>('pix');
 
   useEffect(() => {
     const fetchPlans = async () => {
@@ -40,7 +44,29 @@ export default function PlansPage() {
       router.push('/home');
       return;
     }
-    showError('Pagamento em breve disponível. Continue no plano Grátis por enquanto.');
+    const plan = plans.find(p => p.id === planId);
+    if (plan) setSelectedPlan(plan);
+  };
+
+  const handleCheckout = async () => {
+    if (!selectedPlan || !user?.id) return;
+    if (!selectedPlan.planUuid) {
+      showError('Plano não encontrado. Tente recarregar a página.');
+      return;
+    }
+    setCheckoutLoading(selectedPlan.id);
+    try {
+      const { checkoutUrl } = await planService.createPaymentLink({
+        userId: user.id,
+        planId: selectedPlan.planUuid,
+        billingCycle,
+        paymentMethod,
+      });
+      window.location.href = checkoutUrl;
+    } catch (error: any) {
+      showError(error.message || 'Erro ao gerar link de pagamento.');
+      setCheckoutLoading(null);
+    }
   };
 
   if (loading) {
@@ -63,6 +89,39 @@ export default function PlansPage() {
           Pular por enquanto
         </Button>
       </div>
+
+      {/* Checkout Modal */}
+      {selectedPlan && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle>Assinar {selectedPlan.name}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <div>
+                <p className="text-sm font-medium mb-2">Ciclo de cobrança</p>
+                <div className="flex gap-2">
+                  <Button variant={billingCycle === 'monthly' ? 'default' : 'outline'} className="flex-1" onClick={() => setBillingCycle('monthly')}>Mensal</Button>
+                  <Button variant={billingCycle === 'yearly' ? 'default' : 'outline'} className="flex-1" onClick={() => setBillingCycle('yearly')}>Anual <span className="ml-1 text-xs opacity-70">-2%</span></Button>
+                </div>
+              </div>
+              <div>
+                <p className="text-sm font-medium mb-2">Forma de pagamento</p>
+                <div className="flex gap-2">
+                  <Button variant={paymentMethod === 'pix' ? 'default' : 'outline'} className="flex-1" onClick={() => setPaymentMethod('pix')}>Pix <span className="ml-1 text-xs opacity-70">-6%</span></Button>
+                  <Button variant={paymentMethod === 'credit_card' ? 'default' : 'outline'} className="flex-1" onClick={() => setPaymentMethod('credit_card')}>Cartão <span className="ml-1 text-xs opacity-70">-8%</span></Button>
+                </div>
+              </div>
+              <div className="flex gap-2 pt-2">
+                <Button variant="outline" className="flex-1" onClick={() => setSelectedPlan(null)}>Cancelar</Button>
+                <Button className="flex-1" disabled={!!checkoutLoading} onClick={handleCheckout}>
+                  {checkoutLoading ? 'Aguarde...' : 'Ir para pagamento'}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Plans Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">

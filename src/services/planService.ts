@@ -1,6 +1,16 @@
-import { Plan, PlanUpgradeRequest } from '../app/plans/types/plan.types';
+import { Plan, PlanUpgradeRequest, CreatePaymentLinkRequest } from '../app/plans/types/plan.types';
+import { generateCorrelationId } from '../lib/utils';
 
 const GATEWAY_URL = 'https://api.notazip.com.br';
+
+function getHeaders(): Record<string, string> {
+  const accessToken = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+  return {
+    'Content-Type': 'application/json',
+    'x-correlation-id': generateCorrelationId(),
+    ...(accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {}),
+  };
+}
 
 const FALLBACK_PLANS: Plan[] = [
   {
@@ -81,6 +91,7 @@ export class PlanService {
       if (data.success && Array.isArray(data.data) && data.data.length > 0) {
         return data.data.map((p: any) => ({
           id: p.name as 'free' | 'basic' | 'premium',
+          planUuid: p.id,
           name: p.name === 'free' ? 'Grátis' : p.name === 'basic' ? 'Básico' : 'Premium',
           description: FALLBACK_PLANS.find(f => f.id === p.name)?.description || '',
           price: !p.price || p.price === 0 ? 'R$ 0' : `R$ ${parseFloat(p.price).toFixed(2).replace('.', ',')}`,
@@ -96,6 +107,19 @@ export class PlanService {
       console.error('Failed to fetch plans from API, using fallback:', error);
     }
     return FALLBACK_PLANS;
+  }
+
+  async createPaymentLink(request: CreatePaymentLinkRequest): Promise<{ checkoutUrl: string; orderNsu: string }> {
+    const response = await fetch(`${GATEWAY_URL}/api/subscriptions/create-payment-link`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(request),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || data.message || 'Erro ao criar link de pagamento');
+    }
+    return data.data || data;
   }
 
   async upgradePlan(request: PlanUpgradeRequest): Promise<void> {

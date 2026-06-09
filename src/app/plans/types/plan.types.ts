@@ -1,5 +1,6 @@
 export interface Plan {
   id: 'free' | 'basic' | 'premium';
+  planUuid?: string; // UUID real do banco
   name: string;
   description: string;
   price: string;
@@ -20,4 +21,11 @@ export interface PlanComparison {
 
 export interface PlanUpgradeRequest {
   planId: 'free' | 'basic' | 'premium';
+}
+
+export interface CreatePaymentLinkRequest {
+  userId: string;
+  planId: string; // UUID do banco
+  billingCycle: 'monthly' | 'yearly';
+  paymentMethod: 'credit_card' | 'pix';
 }
