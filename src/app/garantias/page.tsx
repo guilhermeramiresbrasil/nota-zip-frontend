@@ -9,7 +9,7 @@ import { GarantiaList } from './components/GarantiaList';
 import { GarantiaForm } from './components/GarantiaForm';
 import { StorageUsageBar } from './components/StorageUsageBar';
 import { garantiaService } from './logics/services/garantiaService';
-import { planService } from '../plans/logics/services/planService';
+import { planService } from '../../services/planService';
 import { Garantia } from './types/garantia.types';
 import { useAuth } from '@/contexts/AuthContext';
 
