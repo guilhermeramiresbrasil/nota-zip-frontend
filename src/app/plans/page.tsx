@@ -49,7 +49,18 @@ export default function PlansPage() {
   };
 
   const handleCheckout = async () => {
-    if (!selectedPlan || !user?.id) return;
+    console.log('🔍 Debug - user:', user);
+    console.log('🔍 Debug - user.id:', user?.id);
+    console.log('🔍 Debug - selectedPlan:', selectedPlan);
+    
+    if (!selectedPlan) {
+      showError('Selecione um plano primeiro.');
+      return;
+    }
+    if (!user?.id) {
+      showError('Usuário não autenticado. Faça login novamente.');
+      return;
+    }
     if (!selectedPlan.planUuid) {
       showError('Plano não encontrado. Tente recarregar a página.');
       return;
