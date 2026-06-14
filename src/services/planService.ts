@@ -110,12 +110,14 @@ export class PlanService {
   }
 
   async createPaymentLink(request: CreatePaymentLinkRequest): Promise<{ checkoutUrl: string; orderNsu: string }> {
+    console.log('🔍 planService.createPaymentLink - request:', request);
     const response = await fetch(`${GATEWAY_URL}/api/subscriptions/create-payment-link`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(request),
     });
     const data = await response.json();
+    console.log('🔍 planService.createPaymentLink - response:', data);
     if (!response.ok) {
       throw new Error(data.error || data.message || 'Erro ao criar link de pagamento');
     }
