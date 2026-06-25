@@ -67,6 +67,13 @@ export default function OnboardingPage() {
   const [emailVerified, setEmailVerified] = useState(user?.emailVerified ?? false);
   const [resendCooldown, setResendCooldown] = useState(0);
 
+  // Sincronizar emailVerified com o estado do usuário
+  useEffect(() => {
+    if (user?.emailVerified) {
+      setEmailVerified(true);
+    }
+  }, [user?.emailVerified]);
+
   useEffect(() => {
     if (resendCooldown > 0) {
       const timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
@@ -115,7 +122,10 @@ export default function OnboardingPage() {
   };
 
   const handleVerifyEmail = async () => {
-    if (user?.emailVerified) return setEmailVerified(true);
+    if (user?.emailVerified) {
+      setEmailVerified(true);
+      return true;
+    }
     try {
       const res = await fetch(`${API_URL}/api/auth/verify-email`, {
         method: 'POST',
@@ -123,27 +133,44 @@ export default function OnboardingPage() {
         body: JSON.stringify({ userId: user?.id, code: formData.emailCode }),
       });
       const data = await res.json();
-      if (data.success) setEmailVerified(true);
+      if (data.success) {
+        setEmailVerified(true);
+        await updatedUser({ ...user, emailVerified: true } as IUser);
+        showSuccess('Email verificado com sucesso!');
+        return true;
+      } else {
+        showError('Código de verificação inválido');
+        return false;
+      }
     } catch (e) {
       console.error('Email verification failed:', e);
-    } finally {
-      updatedUser({ ...user, emailVerified: true } as IUser);
+      showError('Erro ao verificar email');
+      return false;
     }
   };
 
   const handleNext = async () => {
     if (currentStep < steps.length) {
       switch (currentStep) {
-        case 0:
-          await generateEmailCode();
-          break;
         case 1:
-          await handleVerifyEmail();
-          await generateWhatsAppCode();
+          await generateEmailCode();
+          setCurrentStep(currentStep + 1);
           break;
+        case 2:
+          if (!emailVerified && !user?.emailVerified) {
+            await handleVerifyEmail();
+            if (emailVerified || user?.emailVerified) {
+              await generateWhatsAppCode();
+              setCurrentStep(currentStep + 1);
+            }
+          } else {
+            await generateWhatsAppCode();
+            setCurrentStep(currentStep + 1);
+          }
+          break;
+        default:
+          setCurrentStep(currentStep + 1);
       }
-      
-      setCurrentStep(currentStep + 1);
     } else {
       router.push('/plans');
     }
@@ -165,9 +192,6 @@ export default function OnboardingPage() {
 
   const handleChange = (field: string, value: string | boolean) => {
     setFormData({ ...formData, [field]: value });
-    if (value.toString().length == 6) {
-      setEmailVerified(true);
-    }
   };
 
   
@@ -199,7 +223,7 @@ export default function OnboardingPage() {
             description={currentStepData.description}
             icon={currentStepData.icon}
             emailCode={formData.emailCode}
-            emailVerified={user?.emailVerified}
+            emailVerified={emailVerified}
             resendCooldown={resendCooldown}
             onEmailCodeChange={(value) => handleChange('emailCode', value)}
             onResendCode={async () => {
@@ -272,8 +296,8 @@ export default function OnboardingPage() {
                 onBack={handleBack}
                 onSkip={handleSkip}
                 isStepSkippable={steps[currentStep - 1].skippable}
-                isNextDisabled={currentStep === 2 && !emailVerified && !user?.emailVerified}
-                emailVerified={user?.emailVerified}
+                isNextDisabled={currentStep === 2 && !emailVerified && formData.emailCode.length < 6}
+                emailVerified={emailVerified}
               />
             </CardContent>
           </Card>
