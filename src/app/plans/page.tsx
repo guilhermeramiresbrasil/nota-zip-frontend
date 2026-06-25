@@ -21,7 +21,6 @@ export default function PlansPage() {
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
-  const [paymentMethod, setPaymentMethod] = useState<'credit_card' | 'pix'>('pix');
 
   useEffect(() => {
     const fetchPlans = async () => {
@@ -71,7 +70,6 @@ export default function PlansPage() {
         userId: user.id,
         planId: selectedPlan.planUuid,
         billingCycle,
-        paymentMethod,
       });
       window.location.href = checkoutUrl;
     } catch (error: any) {
@@ -113,14 +111,7 @@ export default function PlansPage() {
                 <p className="text-sm font-medium mb-2">Ciclo de cobrança</p>
                 <div className="flex gap-2">
                   <Button variant={billingCycle === 'monthly' ? 'default' : 'outline'} className="flex-1" onClick={() => setBillingCycle('monthly')}>Mensal</Button>
-                  <Button variant={billingCycle === 'yearly' ? 'default' : 'outline'} className="flex-1" onClick={() => setBillingCycle('yearly')}>Anual <span className="ml-1 text-xs opacity-70">-2%</span></Button>
-                </div>
-              </div>
-              <div>
-                <p className="text-sm font-medium mb-2">Forma de pagamento</p>
-                <div className="flex gap-2">
-                  <Button variant={paymentMethod === 'pix' ? 'default' : 'outline'} className="flex-1" onClick={() => setPaymentMethod('pix')}>Pix <span className="ml-1 text-xs opacity-70">-6%</span></Button>
-                  <Button variant={paymentMethod === 'credit_card' ? 'default' : 'outline'} className="flex-1" onClick={() => setPaymentMethod('credit_card')}>Cartão <span className="ml-1 text-xs opacity-70">-8%</span></Button>
+                  <Button variant={billingCycle === 'yearly' ? 'default' : 'outline'} className="flex-1" onClick={() => setBillingCycle('yearly')}>Anual <span className="ml-1 text-xs opacity-70">-10%</span></Button>
                 </div>
               </div>
               <div className="flex gap-2 pt-2">
