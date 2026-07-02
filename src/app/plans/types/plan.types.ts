@@ -27,5 +27,5 @@ export interface CreatePaymentLinkRequest {
   userId: string;
   planId: string; // UUID do banco
   billingCycle: 'monthly' | 'yearly';
-  paymentMethod: 'credit_card' | 'pix';
+  paymentMethod?: 'credit_card' | 'pix';
 }
