@@ -92,6 +92,8 @@ export class ExpenseService {
         type: type === 'income' ? 'credit' : 'debit',
         description: formData.description || '',
         date: formData.date,
+        ...(formData.payment_method ? { payment_method: formData.payment_method } : {}),
+        ...(formData.card_id ? { card_id: formData.card_id } : {}),
       }),
     });
 

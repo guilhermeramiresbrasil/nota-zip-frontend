@@ -19,6 +19,8 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { CurrencyInput } from '@/components/ui/currency-input';
 import { categoryService } from '../logics/services/categoryService';
+import { cardService } from '@/app/cartoes/logics/cardService';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Category {
   id: string;
@@ -33,7 +35,19 @@ interface FormData {
   description: string;
   date: string;
   newCategoryName?: string;
+  payment_method?: string;
+  card_id?: string;
 }
+
+const PAYMENT_METHOD_LABELS: Record<string, string> = {
+  pix: 'Pix',
+  boleto: 'Boleto',
+  debit_card: 'Débito',
+  cash: 'Dinheiro',
+  credit_card: 'Cartão de crédito',
+  vr_va: 'VR/VA',
+  prepaid_debit: 'Pré-pago',
+};
 
 interface ExpenseFormProps {
   dialogOpen: boolean;
@@ -56,7 +70,9 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
   onSubmit,
   onCancel,
 }) => {
+  const { user } = useAuth();
   const [categories, setCategories] = useState<Category[]>([]);
+  const [cards, setCards] = useState<{ id: string; name: string; lastFourDigits?: string }[]>([]);
   const [loading, setLoading] = useState(false);
 
   // Função auxiliar para converter valor formatado em reais para número
@@ -80,6 +96,16 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
     };
     fetchCategories();
   }, []);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    cardService.listCards(user.id).then(setCards).catch(() => {});
+  }, [user?.id]);
+
+  const showCardSelect =
+    formData.payment_method === 'credit_card' ||
+    formData.payment_method === 'vr_va' ||
+    formData.payment_method === 'prepaid_debit';
 
   return (
     <Dialog open={dialogOpen} onOpenChange={onDialogOpenChange}>
@@ -177,6 +203,48 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
               required
             />
           </div>
+
+          {transactionType === 'expense' && (
+            <div className="space-y-2">
+              <Label>Forma de pagamento</Label>
+              <Select
+                value={formData.payment_method || ''}
+                onValueChange={(v) =>
+                  onChangeFormData({ ...formData, payment_method: v, card_id: '' })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione (opcional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(PAYMENT_METHOD_LABELS).map(([value, label]) => (
+                    <SelectItem key={value} value={value}>{label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {transactionType === 'expense' && showCardSelect && cards.length > 0 && (
+            <div className="space-y-2">
+              <Label>Cartão</Label>
+              <Select
+                value={formData.card_id || ''}
+                onValueChange={(v) => onChangeFormData({ ...formData, card_id: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o cartão" />
+                </SelectTrigger>
+                <SelectContent>
+                  {cards.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.name}{c.lastFourDigits ? ` ····${c.lastFourDigits}` : ''}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <div className="flex gap-2">
             <Button

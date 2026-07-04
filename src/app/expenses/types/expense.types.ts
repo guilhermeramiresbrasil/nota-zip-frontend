@@ -6,6 +6,8 @@ export interface ExpenseFormData {
   description: string;
   date: string;
   newCategoryName?: string;
+  payment_method?: string;
+  card_id?: string;
 }
 
 export interface Expense extends Transaction {
