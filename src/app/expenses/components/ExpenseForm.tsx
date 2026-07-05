@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { CurrencyInput } from '@/components/ui/currency-input';
 import { categoryService } from '../logics/services/categoryService';
 
 interface Category {
@@ -57,6 +58,13 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
 }) => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
+
+  // Função auxiliar para converter valor formatado em reais para número
+  const parseCurrencyToNumber = (formattedValue: string): number => {
+    if (!formattedValue) return 0;
+    const cleanValue = formattedValue.replace(/\./g, '').replace(',', '.');
+    return parseFloat(cleanValue) || 0;
+  };
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -104,12 +112,10 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
 
           <div className="space-y-2">
             <Label htmlFor="amount">Valor</Label>
-            <Input
+            <CurrencyInput
               id="amount"
-              type="number"
-              placeholder="0,00"
               value={formData.amount}
-              onChange={(e) => onChangeFormData({ ...formData, amount: e.target.value })}
+              onChange={(value) => onChangeFormData({ ...formData, amount: value })}
               required
             />
           </div>
