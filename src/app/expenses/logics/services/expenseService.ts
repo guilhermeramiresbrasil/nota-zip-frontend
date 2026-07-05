@@ -4,7 +4,7 @@ import { generateCorrelationId } from '@/lib/utils';
 import { categoryService } from './categoryService';
 
 // Hardcoded production URL
-const GATEWAY_URL = 'https://api.notazip.com.br';
+const GATEWAY_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 export class ExpenseService {
   private static instance: ExpenseService;

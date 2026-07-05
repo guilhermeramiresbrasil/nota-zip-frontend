@@ -9,7 +9,7 @@ import {
   CreatePurchaseFormData,
 } from '../types/card.types';
 
-const GATEWAY_URL = 'https://api.notazip.com.br';
+const GATEWAY_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 class CardService {
   private static instance: CardService;
