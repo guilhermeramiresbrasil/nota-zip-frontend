@@ -2,6 +2,7 @@ import { Transaction } from '@/app/home/types/dashboard.types';
 import { ExpenseFormData } from '../../types/expense.types';
 import { generateCorrelationId } from '@/lib/utils';
 import { categoryService } from './categoryService';
+import { cardService } from '@/app/cartoes/logics/cardService';
 
 // Hardcoded production URL
 const GATEWAY_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
@@ -75,11 +76,37 @@ export class ExpenseService {
     userId: string
   ): Promise<Transaction> {
     let categoryId = formData.categoryId;
-    
-    // If user selected "new category", normalize/create it first
+
     if (categoryId === 'new' && formData.newCategoryName) {
       const category = await categoryService.normalizeCategory(formData.newCategoryName);
       categoryId = category.id;
+    }
+
+    const isCreditCardPurchase =
+      type === 'expense' &&
+      formData.payment_method === 'credit_card' &&
+      formData.card_id;
+
+    if (isCreditCardPurchase) {
+      const today = new Date().toISOString().split('T')[0];
+      const nowMonth = new Date().toISOString().slice(0, 7);
+      await cardService.createPurchase(formData.card_id!, userId, {
+        categoryId,
+        description: formData.description || '',
+        totalAmount: String(parseFloat(formData.amount)),
+        installments: formData.installments || '1',
+        purchaseDate: formData.date || today,
+        firstBillingMonth: formData.firstBillingMonth || nowMonth,
+      });
+      const total = parseFloat(formData.amount);
+      return {
+        id: crypto.randomUUID(),
+        name: formData.description || 'Compra no crédito',
+        amount: -Math.abs(total),
+        category: categoryId,
+        date: formData.date,
+        type: 'expense',
+      };
     }
 
     const response = await fetch(`${GATEWAY_URL}/api/transactions`, {

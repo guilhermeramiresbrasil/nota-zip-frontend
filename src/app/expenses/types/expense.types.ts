@@ -8,6 +8,8 @@ export interface ExpenseFormData {
   newCategoryName?: string;
   payment_method?: string;
   card_id?: string;
+  installments?: string;
+  firstBillingMonth?: string;
 }
 
 export interface Expense extends Transaction {

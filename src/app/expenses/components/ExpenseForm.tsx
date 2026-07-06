@@ -37,6 +37,8 @@ interface FormData {
   newCategoryName?: string;
   payment_method?: string;
   card_id?: string;
+  installments?: string;
+  firstBillingMonth?: string;
 }
 
 const PAYMENT_METHOD_LABELS: Record<string, string> = {
@@ -48,6 +50,8 @@ const PAYMENT_METHOD_LABELS: Record<string, string> = {
   vr_va: 'VR/VA',
   prepaid_debit: 'Pré-pago',
 };
+
+const isCreditCardMethod = (method?: string) => method === 'credit_card';
 
 interface ExpenseFormProps {
   dialogOpen: boolean;
@@ -210,7 +214,13 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
               <Select
                 value={formData.payment_method || ''}
                 onValueChange={(v) =>
-                  onChangeFormData({ ...formData, payment_method: v, card_id: '' })
+                  onChangeFormData({
+                    ...formData,
+                    payment_method: v,
+                    card_id: '',
+                    installments: '1',
+                    firstBillingMonth: new Date().toISOString().slice(0, 7),
+                  })
                 }
               >
                 <SelectTrigger>
@@ -225,7 +235,64 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
             </div>
           )}
 
-          {transactionType === 'expense' && showCardSelect && cards.length > 0 && (
+          {transactionType === 'expense' && isCreditCardMethod(formData.payment_method) && (
+            <>
+              <div className="space-y-2">
+                <Label>Cartão de crédito</Label>
+                <Select
+                  value={formData.card_id || ''}
+                  onValueChange={(v) => onChangeFormData({ ...formData, card_id: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={cards.length === 0 ? 'Nenhum cartão cadastrado' : 'Selecione o cartão'} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {cards.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.name}{c.lastFourDigits ? ` ····${c.lastFourDigits}` : ''}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label htmlFor="installments">Parcelas</Label>
+                  <Input
+                    id="installments"
+                    type="number"
+                    min="1"
+                    max="48"
+                    value={formData.installments || '1'}
+                    onChange={(e) => onChangeFormData({ ...formData, installments: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="firstBillingMonth">1ª fatura</Label>
+                  <Input
+                    id="firstBillingMonth"
+                    type="month"
+                    value={formData.firstBillingMonth || new Date().toISOString().slice(0, 7)}
+                    onChange={(e) => onChangeFormData({ ...formData, firstBillingMonth: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              {parseInt(formData.installments || '1') > 1 && (
+                <p className="text-xs text-muted-foreground">
+                  {parseInt(formData.installments || '1')}x de{' '}
+                  <strong>
+                    {(parseCurrencyToNumber(formData.amount) / parseInt(formData.installments || '1'))
+                      .toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  </strong>
+                  {' '}· Você pode ajustar o valor total para incluir juros.
+                </p>
+              )}
+            </>
+          )}
+
+          {transactionType === 'expense' && showCardSelect && !isCreditCardMethod(formData.payment_method) && cards.length > 0 && (
             <div className="space-y-2">
               <Label>Cartão</Label>
               <Select

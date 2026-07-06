@@ -21,6 +21,10 @@ interface FormData {
   description: string;
   date: string;
   newCategoryName?: string;
+  payment_method?: string;
+  card_id?: string;
+  installments?: string;
+  firstBillingMonth?: string;
 }
 
 export default function ExpensesPage() {
@@ -67,6 +71,10 @@ export default function ExpensesPage() {
       categoryId: '',
       description: '',
       date: new Date().toISOString().split('T')[0],
+      payment_method: '',
+      card_id: '',
+      installments: '1',
+      firstBillingMonth: new Date().toISOString().slice(0, 7),
     });
     setDialogOpen(true);
   };
