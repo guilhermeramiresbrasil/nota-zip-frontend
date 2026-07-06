@@ -90,7 +90,8 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
     const fetchCategories = async () => {
       try {
         setLoading(true);
-        const data = await categoryService.fetchCategories();
+        const apiType = transactionType === 'income' ? 'credit' : 'debit';
+        const data = await categoryService.fetchCategories(apiType);
         setCategories(data);
       } catch (error) {
         console.error('Error fetching categories:', error);
@@ -99,7 +100,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
       }
     };
     fetchCategories();
-  }, []);
+  }, [transactionType]);
 
   useEffect(() => {
     if (!user?.id) return;

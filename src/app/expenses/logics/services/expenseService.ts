@@ -78,7 +78,8 @@ export class ExpenseService {
     let categoryId = formData.categoryId;
 
     if (categoryId === 'new' && formData.newCategoryName) {
-      const category = await categoryService.normalizeCategory(formData.newCategoryName);
+      const categoryType = type === 'income' ? 'credit' : 'debit';
+      const category = await categoryService.normalizeCategory(formData.newCategoryName, categoryType);
       categoryId = category.id;
     }
 
