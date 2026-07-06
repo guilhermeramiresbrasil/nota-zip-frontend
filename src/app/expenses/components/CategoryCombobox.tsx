@@ -122,12 +122,15 @@ export function CategoryCombobox({
   );
 
   const ListContent = (
-    <div className="flex flex-col min-h-0 flex-1">
+    <div className="flex flex-col">
       {/* Search */}
-      <div className="flex items-center gap-2 border-b border-slate-100 px-3 py-2">
+      <div className="flex items-center gap-2 border-b border-slate-100 px-3 py-2 flex-shrink-0">
         <Search className="h-4 w-4 shrink-0 text-slate-400" />
         <input
           ref={searchRef}
+          id="cat-search"
+          name="cat-search"
+          autoComplete="off"
           autoFocus
           className="flex-1 bg-transparent text-sm text-slate-800 outline-none placeholder:text-slate-400"
           placeholder="Buscar categoria…"
@@ -142,7 +145,7 @@ export function CategoryCombobox({
       </div>
 
       {/* List */}
-      <div className="flex-1 min-h-0 overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
+      <div className="overflow-y-auto" style={{ maxHeight: 300, scrollbarWidth: 'thin' }}>
         {grouped.length === 0 && (
           <p className="py-7 text-center text-sm text-slate-400">Nenhuma categoria encontrada.</p>
         )}
@@ -225,8 +228,7 @@ export function CategoryCombobox({
         <PopoverPrimitive.Content
           align="start"
           sideOffset={4}
-          style={{ '--cat-list-max': '320px' } as React.CSSProperties}
-          className="z-50 w-[var(--radix-popover-trigger-width)] max-h-[var(--radix-popover-content-available-height)] rounded-xl border border-slate-200 bg-white shadow-lg outline-none overflow-hidden flex flex-col"
+          className="z-50 w-[var(--radix-popover-trigger-width)] rounded-xl border border-slate-200 bg-white shadow-lg outline-none"
         >
           {ListContent}
         </PopoverPrimitive.Content>

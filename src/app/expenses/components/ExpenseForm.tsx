@@ -220,7 +220,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
 
           {/* ── Category ── */}
           <div className="space-y-1.5">
-            <Label htmlFor="category" className="text-sm font-medium text-slate-700">Categoria</Label>
+            <Label className="text-sm font-medium text-slate-700">Categoria</Label>
             <CategoryCombobox
               options={catOptions}
               value={formData.subcategoryId || formData.categoryId}
@@ -241,6 +241,8 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
             />
             {formData.categoryId === 'new' && (
               <Input
+                id="new-category-name"
+                name="new-category-name"
                 type="text"
                 placeholder="Nome da nova categoria"
                 value={formData.newCategoryName || ''}
