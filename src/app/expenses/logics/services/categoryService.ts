@@ -1,11 +1,13 @@
-interface Category {
+export interface Category {
   id: string;
   name: string;
   type: 'credit' | 'debit' | 'both';
+  parentId?: string | null;
   color?: string;
   icon?: string;
   createdAt: string;
   updatedAt: string;
+  subcategories?: Category[];
 }
 
 // Hardcoded production URL
@@ -24,7 +26,7 @@ export const categoryService = {
     return data.data || [];
   },
 
-  async createCategory(category: { name: string; type?: 'credit' | 'debit' | 'both'; color?: string; icon?: string }): Promise<Category> {
+  async createCategory(category: { name: string; type?: 'credit' | 'debit' | 'both'; parentId?: string; color?: string; icon?: string }): Promise<Category> {
     const response = await fetch(`${API_URL}/api/notes/categories`, {
       method: 'POST',
       headers: {

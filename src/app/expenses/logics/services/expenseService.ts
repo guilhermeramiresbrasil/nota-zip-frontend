@@ -75,7 +75,7 @@ export class ExpenseService {
     type: 'income' | 'expense',
     userId: string
   ): Promise<Transaction> {
-    let categoryId = formData.categoryId;
+    let categoryId = formData.subcategoryId || formData.categoryId;
 
     if (categoryId === 'new' && formData.newCategoryName) {
       const categoryType = type === 'income' ? 'credit' : 'debit';

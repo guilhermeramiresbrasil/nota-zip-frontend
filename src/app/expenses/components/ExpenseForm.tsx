@@ -18,20 +18,14 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { CurrencyInput } from '@/components/ui/currency-input';
-import { categoryService } from '../logics/services/categoryService';
+import { categoryService, Category } from '../logics/services/categoryService';
 import { cardService } from '@/app/cartoes/logics/cardService';
 import { useAuth } from '@/contexts/AuthContext';
-
-interface Category {
-  id: string;
-  name: string;
-  color?: string;
-  icon?: string;
-}
 
 interface FormData {
   amount: string;
   categoryId: string;
+  subcategoryId?: string;
   description: string;
   date: string;
   newCategoryName?: string;
@@ -78,6 +72,9 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
   const [categories, setCategories] = useState<Category[]>([]);
   const [cards, setCards] = useState<{ id: string; name: string; lastFourDigits?: string }[]>([]);
   const [loading, setLoading] = useState(false);
+
+  const selectedCategory = categories.find((c) => c.id === formData.categoryId);
+  const subcategories = selectedCategory?.subcategories ?? [];
 
   // Função auxiliar para converter valor formatado em reais para número
   const parseCurrencyToNumber = (formattedValue: string): number => {
@@ -156,13 +153,13 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
             <Select
               value={formData.categoryId}
               onValueChange={(value) => {
-                onChangeFormData({ ...formData, categoryId: value, newCategoryName: '' });
+                onChangeFormData({ ...formData, categoryId: value, subcategoryId: '', newCategoryName: '' });
               }}
               required
               disabled={loading}
             >
               <SelectTrigger>
-                <SelectValue placeholder={loading ? "Carregando..." : "Selecione a categoria"} />
+                <SelectValue placeholder={loading ? 'Carregando...' : 'Selecione a categoria'} />
               </SelectTrigger>
               <SelectContent>
                 {categories.map((category) => (
@@ -170,9 +167,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
                     {category.name}
                   </SelectItem>
                 ))}
-                <SelectItem value="new">
-                  + Nova categoria
-                </SelectItem>
+                <SelectItem value="new">+ Nova categoria</SelectItem>
               </SelectContent>
             </Select>
             {formData.categoryId === 'new' && (
@@ -187,6 +182,27 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
               />
             )}
           </div>
+
+          {subcategories.length > 0 && formData.categoryId && formData.categoryId !== 'new' && (
+            <div className="space-y-2">
+              <Label htmlFor="subcategory">Subcategoria <span className="text-muted-foreground text-xs">(opcional)</span></Label>
+              <Select
+                value={formData.subcategoryId || ''}
+                onValueChange={(value) => onChangeFormData({ ...formData, subcategoryId: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione (opcional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  {subcategories.map((sub) => (
+                    <SelectItem key={sub.id} value={sub.id}>
+                      {sub.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="description">Descrição</Label>

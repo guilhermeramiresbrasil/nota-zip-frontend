@@ -3,6 +3,7 @@ import { Transaction } from '@/app/home/types/dashboard.types';
 export interface ExpenseFormData {
   amount: string;
   categoryId: string;
+  subcategoryId?: string;
   description: string;
   date: string;
   newCategoryName?: string;

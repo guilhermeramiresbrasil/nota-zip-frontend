@@ -18,6 +18,7 @@ import { Transaction } from '@/app/home/types/dashboard.types';
 interface FormData {
   amount: string;
   categoryId: string;
+  subcategoryId?: string;
   description: string;
   date: string;
   newCategoryName?: string;
@@ -69,6 +70,7 @@ export default function ExpensesPage() {
     setFormData({
       amount: '',
       categoryId: '',
+      subcategoryId: '',
       description: '',
       date: new Date().toISOString().split('T')[0],
       payment_method: '',
