@@ -76,34 +76,41 @@ const ICON_MAP: Record<string, React.ReactNode> = {
   'building-2': <Building2 className="h-3 w-3" />,
 };
 
-function catToOption(cat: Category): ComboboxOption {
-  return {
-    value: cat.id,
-    label: cat.name,
-    groupColor: cat.color || undefined,
-    groupBg: cat.color ? `${cat.color}22` : undefined,
-    groupIcon: cat.icon ? (ICON_MAP[cat.icon] ?? <MoreHorizontal className="h-3 w-3" />) : undefined,
-  };
-}
-
-function catsToGroupedOptions(rootCategories: Category[], parentCat?: Category): ComboboxOption[] {
-  if (parentCat) {
-    return (parentCat.subcategories ?? []).map((sub) => ({
-      value: sub.id,
-      label: sub.name,
-      groupLabel: parentCat.name,
-      groupColor: parentCat.color || undefined,
-      groupBg: parentCat.color ? `${parentCat.color}22` : undefined,
-      groupIcon: parentCat.icon ? (ICON_MAP[parentCat.icon] ?? undefined) : undefined,
-    }));
+/**
+ * Constrói a lista unificada: cada categoria raiz vira um grupo (heading).
+ * Se tiver subcategorias → subcategorias são os itens selecionáveis.
+ * Se não tiver            → a própria categoria raiz é o item selecionável.
+ */
+function buildCategoryOptions(rootCategories: Category[]): ComboboxOption[] {
+  const opts: ComboboxOption[] = [];
+  for (const cat of rootCategories) {
+    const color = cat.color || undefined;
+    const bg    = cat.color ? `${cat.color}22` : undefined;
+    const icon  = cat.icon ? (ICON_MAP[cat.icon] ?? undefined) : undefined;
+    const subs  = cat.subcategories ?? [];
+    if (subs.length > 0) {
+      for (const sub of subs) {
+        opts.push({
+          value: sub.id,
+          label: sub.name,
+          groupLabel: cat.name,
+          groupColor: color,
+          groupBg: bg,
+          groupIcon: icon,
+        });
+      }
+    } else {
+      opts.push({
+        value: cat.id,
+        label: cat.name,
+        groupLabel: cat.name,
+        groupColor: color,
+        groupBg: bg,
+        groupIcon: icon,
+      });
+    }
   }
-  return rootCategories.map((c) => ({
-    value: c.id,
-    label: c.name,
-    groupColor: c.color || undefined,
-    groupBg: c.color ? `${c.color}22` : undefined,
-    groupIcon: c.icon ? (ICON_MAP[c.icon] ?? undefined) : undefined,
-  }));
+  return opts;
 }
 
 interface ExpenseFormProps {
@@ -132,9 +139,6 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
   const [cards, setCards] = useState<{ id: string; name: string; lastFourDigits?: string }[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const selectedCategory = categories.find((c) => c.id === formData.categoryId);
-  const subcategories = selectedCategory?.subcategories ?? [];
-
   const parseCurrencyToNumber = (v: string) => parseFloat(v.replace(/\./g, '').replace(',', '.')) || 0;
   const isReady = !!(formData.amount && (formData.categoryId && formData.categoryId !== 'new' || formData.newCategoryName));
 
@@ -159,9 +163,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
     formData.payment_method === 'vr_va' ||
     formData.payment_method === 'prepaid_debit';
 
-  // Category combobox options with color/icon metadata
-  const catOptions = catsToGroupedOptions(categories);
-  const subOptions = selectedCategory ? catsToGroupedOptions(categories, selectedCategory) : [];
+  const catOptions = buildCategoryOptions(categories);
 
   return (
     <Dialog open={dialogOpen} onOpenChange={onDialogOpenChange}>
@@ -221,8 +223,18 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
             <Label htmlFor="category" className="text-sm font-medium text-slate-700">Categoria</Label>
             <CategoryCombobox
               options={catOptions}
-              value={formData.categoryId}
-              onChange={(value) => onChangeFormData({ ...formData, categoryId: value, subcategoryId: '', newCategoryName: '' })}
+              value={formData.subcategoryId || formData.categoryId}
+              onChange={(value) => {
+                const rootCat = categories.find((c) =>
+                  c.id === value || (c.subcategories ?? []).some((s) => s.id === value)
+                );
+                onChangeFormData({
+                  ...formData,
+                  categoryId: rootCat?.id ?? value,
+                  subcategoryId: rootCat && rootCat.id !== value ? value : '',
+                  newCategoryName: '',
+                });
+              }}
               placeholder={loading ? 'Carregando…' : 'Selecione uma categoria…'}
               disabled={loading}
               extraOption={{ value: 'new', label: '+ Nova categoria' }}
@@ -238,21 +250,6 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
               />
             )}
           </div>
-
-          {/* ── Subcategory ── */}
-          {subcategories.length > 0 && formData.categoryId && formData.categoryId !== 'new' && (
-            <div className="space-y-1.5">
-              <Label className="text-sm font-medium text-slate-700">
-                Subcategoria <span className="text-slate-400 font-normal">(opcional)</span>
-              </Label>
-              <CategoryCombobox
-                options={subOptions}
-                value={formData.subcategoryId || ''}
-                onChange={(value) => onChangeFormData({ ...formData, subcategoryId: value })}
-                placeholder="Selecione a subcategoria…"
-              />
-            </div>
-          )}
 
           {/* ── Description ── */}
           <div className="space-y-1.5">
