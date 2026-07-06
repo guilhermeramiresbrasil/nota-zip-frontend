@@ -18,6 +18,9 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { CurrencyInput } from '@/components/ui/currency-input';
+import { TrendingUp, TrendingDown } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { CategoryCombobox } from './CategoryCombobox';
 import { categoryService, Category } from '../logics/services/categoryService';
 import { cardService } from '@/app/cartoes/logics/cardService';
 import { useAuth } from '@/contexts/AuthContext';
@@ -121,21 +124,40 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label>Tipo</Label>
-            <Select
-              value={transactionType}
-              onValueChange={(value: 'income' | 'expense') => {
-                onTransactionTypeChange(value);
-                onChangeFormData({ ...formData, categoryId: '' });
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o tipo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="expense">Despesa</SelectItem>
-                <SelectItem value="income">Receita</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  onTransactionTypeChange('expense');
+                  onChangeFormData({ ...formData, categoryId: '', subcategoryId: '' });
+                }}
+                className={cn(
+                  'flex items-center justify-center gap-2 rounded-md border px-3 py-2.5 text-sm font-medium transition-all',
+                  transactionType === 'expense'
+                    ? 'border-red-500 bg-red-50 text-red-600 dark:bg-red-950/30 dark:text-red-400'
+                    : 'border-input bg-background text-muted-foreground hover:bg-accent'
+                )}
+              >
+                <TrendingDown className={cn('h-4 w-4', transactionType === 'expense' ? 'text-red-500' : 'text-muted-foreground')} />
+                Despesa
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  onTransactionTypeChange('income');
+                  onChangeFormData({ ...formData, categoryId: '', subcategoryId: '' });
+                }}
+                className={cn(
+                  'flex items-center justify-center gap-2 rounded-md border px-3 py-2.5 text-sm font-medium transition-all',
+                  transactionType === 'income'
+                    ? 'border-green-500 bg-green-50 text-green-600 dark:bg-green-950/30 dark:text-green-400'
+                    : 'border-input bg-background text-muted-foreground hover:bg-accent'
+                )}
+              >
+                <TrendingUp className={cn('h-4 w-4', transactionType === 'income' ? 'text-green-500' : 'text-muted-foreground')} />
+                Receita
+              </button>
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -150,26 +172,16 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
 
           <div className="space-y-2">
             <Label htmlFor="category">Categoria</Label>
-            <Select
+            <CategoryCombobox
+              options={categories.map((c) => ({ value: c.id, label: c.name }))}
               value={formData.categoryId}
-              onValueChange={(value) => {
-                onChangeFormData({ ...formData, categoryId: value, subcategoryId: '', newCategoryName: '' });
-              }}
-              required
+              onChange={(value) =>
+                onChangeFormData({ ...formData, categoryId: value, subcategoryId: '', newCategoryName: '' })
+              }
+              placeholder={loading ? 'Carregando...' : 'Selecione a categoria'}
               disabled={loading}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder={loading ? 'Carregando...' : 'Selecione a categoria'} />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((category) => (
-                  <SelectItem key={category.id} value={category.id}>
-                    {category.name}
-                  </SelectItem>
-                ))}
-                <SelectItem value="new">+ Nova categoria</SelectItem>
-              </SelectContent>
-            </Select>
+              extraOption={{ value: 'new', label: '+ Nova categoria' }}
+            />
             {formData.categoryId === 'new' && (
               <Input
                 id="newCategoryName"
@@ -186,21 +198,12 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
           {subcategories.length > 0 && formData.categoryId && formData.categoryId !== 'new' && (
             <div className="space-y-2">
               <Label htmlFor="subcategory">Subcategoria <span className="text-muted-foreground text-xs">(opcional)</span></Label>
-              <Select
+              <CategoryCombobox
+                options={subcategories.map((s) => ({ value: s.id, label: s.name }))}
                 value={formData.subcategoryId || ''}
-                onValueChange={(value) => onChangeFormData({ ...formData, subcategoryId: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione (opcional)" />
-                </SelectTrigger>
-                <SelectContent>
-                  {subcategories.map((sub) => (
-                    <SelectItem key={sub.id} value={sub.id}>
-                      {sub.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                onChange={(value) => onChangeFormData({ ...formData, subcategoryId: value })}
+                placeholder="Selecione (opcional)"
+              />
             </div>
           )}
 
