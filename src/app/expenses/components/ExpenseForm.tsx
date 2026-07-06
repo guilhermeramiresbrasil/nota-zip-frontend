@@ -6,7 +6,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -16,11 +15,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import { CurrencyInput } from '@/components/ui/currency-input';
-import { TrendingUp, TrendingDown } from 'lucide-react';
+import {
+  ArrowDownLeft, ArrowUpRight,
+  Home, Utensils, Car, Heart, BookOpen, Music2,
+  ShoppingCart, TrendingUp, Briefcase, MoreHorizontal,
+  Shirt, Repeat, FileText, PawPrint,
+  Laptop, Building2,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { CategoryCombobox } from './CategoryCombobox';
+import { CategoryCombobox, ComboboxOption } from './CategoryCombobox';
 import { categoryService, Category } from '../logics/services/categoryService';
 import { cardService } from '@/app/cartoes/logics/cardService';
 import { useAuth } from '@/contexts/AuthContext';
@@ -49,6 +53,58 @@ const PAYMENT_METHOD_LABELS: Record<string, string> = {
 };
 
 const isCreditCardMethod = (method?: string) => method === 'credit_card';
+
+const ICON_MAP: Record<string, React.ReactNode> = {
+  home:         <Home className="h-3 w-3" />,
+  utensils:     <Utensils className="h-3 w-3" />,
+  car:          <Car className="h-3 w-3" />,
+  heart:        <Heart className="h-3 w-3" />,
+  book:         <BookOpen className="h-3 w-3" />,
+  'book-open':  <BookOpen className="h-3 w-3" />,
+  gamepad:      <Music2 className="h-3 w-3" />,
+  'shopping-cart': <ShoppingCart className="h-3 w-3" />,
+  'trending-up':<TrendingUp className="h-3 w-3" />,
+  briefcase:    <Briefcase className="h-3 w-3" />,
+  'plus-circle':<MoreHorizontal className="h-3 w-3" />,
+  'minus-circle':<MoreHorizontal className="h-3 w-3" />,
+  shirt:        <Shirt className="h-3 w-3" />,
+  repeat:       <Repeat className="h-3 w-3" />,
+  'file-text':  <FileText className="h-3 w-3" />,
+  'shopping-bag':<ShoppingCart className="h-3 w-3" />,
+  laptop:       <Laptop className="h-3 w-3" />,
+  'rotate-ccw': <Repeat className="h-3 w-3" />,
+  'building-2': <Building2 className="h-3 w-3" />,
+};
+
+function catToOption(cat: Category): ComboboxOption {
+  return {
+    value: cat.id,
+    label: cat.name,
+    groupColor: cat.color || undefined,
+    groupBg: cat.color ? `${cat.color}22` : undefined,
+    groupIcon: cat.icon ? (ICON_MAP[cat.icon] ?? <MoreHorizontal className="h-3 w-3" />) : undefined,
+  };
+}
+
+function catsToGroupedOptions(rootCategories: Category[], parentCat?: Category): ComboboxOption[] {
+  if (parentCat) {
+    return (parentCat.subcategories ?? []).map((sub) => ({
+      value: sub.id,
+      label: sub.name,
+      groupLabel: parentCat.name,
+      groupColor: parentCat.color || undefined,
+      groupBg: parentCat.color ? `${parentCat.color}22` : undefined,
+      groupIcon: parentCat.icon ? (ICON_MAP[parentCat.icon] ?? undefined) : undefined,
+    }));
+  }
+  return rootCategories.map((c) => ({
+    value: c.id,
+    label: c.name,
+    groupColor: c.color || undefined,
+    groupBg: c.color ? `${c.color}22` : undefined,
+    groupIcon: c.icon ? (ICON_MAP[c.icon] ?? undefined) : undefined,
+  }));
+}
 
 interface ExpenseFormProps {
   dialogOpen: boolean;
@@ -79,27 +135,18 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
   const selectedCategory = categories.find((c) => c.id === formData.categoryId);
   const subcategories = selectedCategory?.subcategories ?? [];
 
-  // Função auxiliar para converter valor formatado em reais para número
-  const parseCurrencyToNumber = (formattedValue: string): number => {
-    if (!formattedValue) return 0;
-    const cleanValue = formattedValue.replace(/\./g, '').replace(',', '.');
-    return parseFloat(cleanValue) || 0;
-  };
+  const parseCurrencyToNumber = (v: string) => parseFloat(v.replace(/\./g, '').replace(',', '.')) || 0;
+  const isReady = !!(formData.amount && (formData.categoryId && formData.categoryId !== 'new' || formData.newCategoryName));
 
   useEffect(() => {
-    const fetchCategories = async () => {
+    const fetch = async () => {
       try {
         setLoading(true);
         const apiType = transactionType === 'income' ? 'credit' : 'debit';
-        const data = await categoryService.fetchCategories(apiType);
-        setCategories(data);
-      } catch (error) {
-        console.error('Error fetching categories:', error);
-      } finally {
-        setLoading(false);
-      }
+        setCategories(await categoryService.fetchCategories(apiType));
+      } catch { /* silent */ } finally { setLoading(false); }
     };
-    fetchCategories();
+    fetch();
   }, [transactionType]);
 
   useEffect(() => {
@@ -112,56 +159,55 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
     formData.payment_method === 'vr_va' ||
     formData.payment_method === 'prepaid_debit';
 
+  // Category combobox options with color/icon metadata
+  const catOptions = catsToGroupedOptions(categories);
+  const subOptions = selectedCategory ? catsToGroupedOptions(categories, selectedCategory) : [];
+
   return (
     <Dialog open={dialogOpen} onOpenChange={onDialogOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Nova Transação</DialogTitle>
-          <DialogDescription>
-            Registre suas receitas e despesas para controle financeiro
+      <DialogContent className="sm:max-w-[440px] p-0 gap-0 overflow-hidden rounded-2xl">
+        <DialogHeader className="px-6 pt-6 pb-0">
+          <DialogTitle className="text-lg font-bold text-slate-800 tracking-tight">Nova Transação</DialogTitle>
+          <DialogDescription className="text-sm text-slate-500 mt-0.5">
+            Registre uma entrada ou saída financeira
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={onSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label>Tipo</Label>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  onTransactionTypeChange('expense');
-                  onChangeFormData({ ...formData, categoryId: '', subcategoryId: '' });
-                }}
-                className={cn(
-                  'flex items-center justify-center gap-2 rounded-md border px-3 py-2.5 text-sm font-medium transition-all',
-                  transactionType === 'expense'
-                    ? 'border-red-500 bg-red-50 text-red-600 dark:bg-red-950/30 dark:text-red-400'
-                    : 'border-input bg-background text-muted-foreground hover:bg-accent'
-                )}
-              >
-                <TrendingDown className={cn('h-4 w-4', transactionType === 'expense' ? 'text-red-500' : 'text-muted-foreground')} />
-                Despesa
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  onTransactionTypeChange('income');
-                  onChangeFormData({ ...formData, categoryId: '', subcategoryId: '' });
-                }}
-                className={cn(
-                  'flex items-center justify-center gap-2 rounded-md border px-3 py-2.5 text-sm font-medium transition-all',
-                  transactionType === 'income'
-                    ? 'border-green-500 bg-green-50 text-green-600 dark:bg-green-950/30 dark:text-green-400'
-                    : 'border-input bg-background text-muted-foreground hover:bg-accent'
-                )}
-              >
-                <TrendingUp className={cn('h-4 w-4', transactionType === 'income' ? 'text-green-500' : 'text-muted-foreground')} />
-                Receita
-              </button>
-            </div>
+
+        <form onSubmit={onSubmit} className="px-6 pb-6 pt-5 space-y-5">
+
+          {/* ── Type toggle pill ── */}
+          <div className="flex rounded-xl bg-slate-100 p-1 gap-1">
+            <button
+              type="button"
+              onClick={() => { onTransactionTypeChange('expense'); onChangeFormData({ ...formData, categoryId: '', subcategoryId: '' }); }}
+              className={cn(
+                'flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-semibold rounded-lg transition-all',
+                transactionType === 'expense'
+                  ? 'bg-white text-red-600 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-700'
+              )}
+            >
+              <ArrowDownLeft className="h-4 w-4" />
+              Despesa
+            </button>
+            <button
+              type="button"
+              onClick={() => { onTransactionTypeChange('income'); onChangeFormData({ ...formData, categoryId: '', subcategoryId: '' }); }}
+              className={cn(
+                'flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-semibold rounded-lg transition-all',
+                transactionType === 'income'
+                  ? 'bg-white text-green-600 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-700'
+              )}
+            >
+              <ArrowUpRight className="h-4 w-4" />
+              Receita
+            </button>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="amount">Valor</Label>
+          {/* ── Amount ── */}
+          <div className="space-y-1.5">
+            <Label htmlFor="amount" className="text-sm font-medium text-slate-700">Valor</Label>
             <CurrencyInput
               id="amount"
               value={formData.amount}
@@ -170,80 +216,81 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="category">Categoria</Label>
+          {/* ── Category ── */}
+          <div className="space-y-1.5">
+            <Label htmlFor="category" className="text-sm font-medium text-slate-700">Categoria</Label>
             <CategoryCombobox
-              options={categories.map((c) => ({ value: c.id, label: c.name }))}
+              options={catOptions}
               value={formData.categoryId}
-              onChange={(value) =>
-                onChangeFormData({ ...formData, categoryId: value, subcategoryId: '', newCategoryName: '' })
-              }
-              placeholder={loading ? 'Carregando...' : 'Selecione a categoria'}
+              onChange={(value) => onChangeFormData({ ...formData, categoryId: value, subcategoryId: '', newCategoryName: '' })}
+              placeholder={loading ? 'Carregando…' : 'Selecione uma categoria…'}
               disabled={loading}
               extraOption={{ value: 'new', label: '+ Nova categoria' }}
             />
             {formData.categoryId === 'new' && (
               <Input
-                id="newCategoryName"
                 type="text"
                 placeholder="Nome da nova categoria"
                 value={formData.newCategoryName || ''}
                 onChange={(e) => onChangeFormData({ ...formData, newCategoryName: e.target.value })}
                 required
-                className="mt-2"
+                className="mt-1.5"
               />
             )}
           </div>
 
+          {/* ── Subcategory ── */}
           {subcategories.length > 0 && formData.categoryId && formData.categoryId !== 'new' && (
-            <div className="space-y-2">
-              <Label htmlFor="subcategory">Subcategoria <span className="text-muted-foreground text-xs">(opcional)</span></Label>
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium text-slate-700">
+                Subcategoria <span className="text-slate-400 font-normal">(opcional)</span>
+              </Label>
               <CategoryCombobox
-                options={subcategories.map((s) => ({ value: s.id, label: s.name }))}
+                options={subOptions}
                 value={formData.subcategoryId || ''}
                 onChange={(value) => onChangeFormData({ ...formData, subcategoryId: value })}
-                placeholder="Selecione (opcional)"
+                placeholder="Selecione a subcategoria…"
               />
             </div>
           )}
 
-          <div className="space-y-2">
-            <Label htmlFor="description">Descrição</Label>
-            <Textarea
+          {/* ── Description ── */}
+          <div className="space-y-1.5">
+            <Label htmlFor="description" className="text-sm font-medium text-slate-700">
+              Descrição <span className="text-slate-400 font-normal">(opcional)</span>
+            </Label>
+            <Input
               id="description"
-              placeholder="Descrição opcional"
+              type="text"
+              placeholder="Ex: Conta de luz de junho"
               value={formData.description}
               onChange={(e) => onChangeFormData({ ...formData, description: e.target.value })}
+              className="h-10 border-slate-200 text-slate-700 placeholder:text-slate-400 focus-visible:ring-indigo-400"
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="date">Data</Label>
+          {/* ── Date ── */}
+          <div className="space-y-1.5">
+            <Label htmlFor="date" className="text-sm font-medium text-slate-700">Data</Label>
             <Input
               id="date"
               type="date"
               value={formData.date}
               onChange={(e) => onChangeFormData({ ...formData, date: e.target.value })}
               required
+              className="h-10 border-slate-200 text-slate-700 focus-visible:ring-indigo-400"
             />
           </div>
 
+          {/* ── Payment method (expense only) ── */}
           {transactionType === 'expense' && (
-            <div className="space-y-2">
-              <Label>Forma de pagamento</Label>
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium text-slate-700">Forma de pagamento</Label>
               <Select
                 value={formData.payment_method || ''}
-                onValueChange={(v) =>
-                  onChangeFormData({
-                    ...formData,
-                    payment_method: v,
-                    card_id: '',
-                    installments: '1',
-                    firstBillingMonth: new Date().toISOString().slice(0, 7),
-                  })
-                }
+                onValueChange={(v) => onChangeFormData({ ...formData, payment_method: v, card_id: '', installments: '1', firstBillingMonth: new Date().toISOString().slice(0, 7) })}
               >
-                <SelectTrigger>
+                <SelectTrigger className="h-10 border-slate-200 text-slate-700">
                   <SelectValue placeholder="Selecione (opcional)" />
                 </SelectTrigger>
                 <SelectContent>
@@ -255,97 +302,90 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
             </div>
           )}
 
+          {/* ── Credit card fields ── */}
           {transactionType === 'expense' && isCreditCardMethod(formData.payment_method) && (
             <>
-              <div className="space-y-2">
-                <Label>Cartão de crédito</Label>
-                <Select
-                  value={formData.card_id || ''}
-                  onValueChange={(v) => onChangeFormData({ ...formData, card_id: v })}
-                >
-                  <SelectTrigger>
+              <div className="space-y-1.5">
+                <Label className="text-sm font-medium text-slate-700">Cartão de crédito</Label>
+                <Select value={formData.card_id || ''} onValueChange={(v) => onChangeFormData({ ...formData, card_id: v })}>
+                  <SelectTrigger className="h-10 border-slate-200 text-slate-700">
                     <SelectValue placeholder={cards.length === 0 ? 'Nenhum cartão cadastrado' : 'Selecione o cartão'} />
                   </SelectTrigger>
                   <SelectContent>
                     {cards.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>
-                        {c.name}{c.lastFourDigits ? ` ····${c.lastFourDigits}` : ''}
-                      </SelectItem>
+                      <SelectItem key={c.id} value={c.id}>{c.name}{c.lastFourDigits ? ` ····${c.lastFourDigits}` : ''}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
-
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label htmlFor="installments">Parcelas</Label>
-                  <Input
-                    id="installments"
-                    type="number"
-                    min="1"
-                    max="48"
-                    value={formData.installments || '1'}
+                <div className="space-y-1.5">
+                  <Label htmlFor="installments" className="text-sm font-medium text-slate-700">Parcelas</Label>
+                  <Input id="installments" type="number" min="1" max="48" value={formData.installments || '1'}
                     onChange={(e) => onChangeFormData({ ...formData, installments: e.target.value })}
-                  />
+                    className="h-10 border-slate-200" />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="firstBillingMonth">1ª fatura</Label>
-                  <Input
-                    id="firstBillingMonth"
-                    type="month"
+                <div className="space-y-1.5">
+                  <Label htmlFor="firstBillingMonth" className="text-sm font-medium text-slate-700">1ª fatura</Label>
+                  <Input id="firstBillingMonth" type="month"
                     value={formData.firstBillingMonth || new Date().toISOString().slice(0, 7)}
                     onChange={(e) => onChangeFormData({ ...formData, firstBillingMonth: e.target.value })}
-                  />
+                    className="h-10 border-slate-200" />
                 </div>
               </div>
-
               {parseInt(formData.installments || '1') > 1 && (
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-slate-500">
                   {parseInt(formData.installments || '1')}x de{' '}
-                  <strong>
-                    {(parseCurrencyToNumber(formData.amount) / parseInt(formData.installments || '1'))
-                      .toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                  </strong>
+                  <strong>{(parseCurrencyToNumber(formData.amount) / parseInt(formData.installments || '1')).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</strong>
                   {' '}· Você pode ajustar o valor total para incluir juros.
                 </p>
               )}
             </>
           )}
 
+          {/* ── Other card ── */}
           {transactionType === 'expense' && showCardSelect && !isCreditCardMethod(formData.payment_method) && cards.length > 0 && (
-            <div className="space-y-2">
-              <Label>Cartão</Label>
-              <Select
-                value={formData.card_id || ''}
-                onValueChange={(v) => onChangeFormData({ ...formData, card_id: v })}
-              >
-                <SelectTrigger>
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium text-slate-700">Cartão</Label>
+              <Select value={formData.card_id || ''} onValueChange={(v) => onChangeFormData({ ...formData, card_id: v })}>
+                <SelectTrigger className="h-10 border-slate-200 text-slate-700">
                   <SelectValue placeholder="Selecione o cartão" />
                 </SelectTrigger>
                 <SelectContent>
                   {cards.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.name}{c.lastFourDigits ? ` ····${c.lastFourDigits}` : ''}
-                    </SelectItem>
+                    <SelectItem key={c.id} value={c.id}>{c.name}{c.lastFourDigits ? ` ····${c.lastFourDigits}` : ''}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
           )}
 
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              className="flex-1"
-              onClick={onCancel}
-            >
-              Cancelar
-            </Button>
-            <Button type="submit" className="flex-1">
-              Salvar
-            </Button>
-          </div>
+          {/* ── Submit ── */}
+          <button
+            type="submit"
+            disabled={!isReady}
+            className={cn(
+              'w-full h-11 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2',
+              isReady
+                ? transactionType === 'expense'
+                  ? 'bg-red-500 hover:bg-red-600 text-white shadow-sm cursor-pointer'
+                  : 'bg-green-500 hover:bg-green-600 text-white shadow-sm cursor-pointer'
+                : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+            )}
+          >
+            {transactionType === 'expense'
+              ? <ArrowDownLeft className="h-4 w-4" />
+              : <ArrowUpRight className="h-4 w-4" />}
+            {transactionType === 'expense' ? 'Registrar Despesa' : 'Registrar Receita'}
+          </button>
+
+          <button
+            type="button"
+            onClick={onCancel}
+            className="w-full text-sm text-slate-400 hover:text-slate-600 transition-colors py-1"
+          >
+            Cancelar
+          </button>
         </form>
       </DialogContent>
     </Dialog>
