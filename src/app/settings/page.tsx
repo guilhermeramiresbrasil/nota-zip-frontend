@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { PageHeader } from '@/components/PageHeader';
 import { ProfileSection } from './components/ProfileSection';
-import { PreferencesSection } from './components/PreferencesSection';
 import { CategoriesSection } from './components/CategoriesSection';
 import { DeleteAccountDialog } from './components/DeleteAccountDialog';
 import { IUser, useAuth } from '@/contexts/AuthContext';
@@ -80,13 +79,6 @@ export default function SettingsPage() {
             handleSave={handleSave}
             isLoading={isLoading}
           />
-          <PreferencesSection 
-            handleSavePreferences={handleSave} 
-            preferences={formUser}
-            onChangePreferences={setFormUser}
-            isLoading={isLoading}
-          />
-
           <CategoriesSection />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

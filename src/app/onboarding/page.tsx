@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Wallet, Mail, MessageCircle, Settings } from 'lucide-react';
+import { Wallet, Mail, MessageCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { IUser, useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -11,7 +11,6 @@ import { OnboardingProgress } from './components/OnboardingProgress';
 import { WelcomeStep } from './components/WelcomeStep';
 import { EmailVerificationStep } from './components/EmailVerificationStep';
 import { WhatsAppConnectionStep } from './components/WhatsAppConnectionStep';
-import { PreferencesStep } from './components/PreferencesStep';
 import { OnboardingNavigation } from './components/OnboardingNavigation';
 
 // Hardcoded production API URL
@@ -39,13 +38,6 @@ const steps = [
     icon: MessageCircle,
     skippable: true,
   },
-  {
-    id: 4,
-    title: 'Preferências',
-    description: 'Personalize sua experiência',
-    icon: Settings,
-    skippable: true,
-  },
 ];
 
 export default function OnboardingPage() {
@@ -57,9 +49,6 @@ export default function OnboardingPage() {
   const [formData, setFormData] = useState({
     emailCode: '',
     whatsappConnected: false,
-    currency: 'BRL',
-    language: 'pt-BR',
-    notifications: true,
   });
   const [qrCodeData, setQrCodeData] = useState<{ code: string; qrCode: string; expiresAt: string } | null>(null);
   const [loadingQrCode, setLoadingQrCode] = useState(false);
@@ -256,21 +245,6 @@ export default function OnboardingPage() {
             qrCodeData={qrCodeData}
             loadingQrCode={loadingQrCode}
             onGenerateQRCode={generateWhatsAppCode}
-          />
-        );
-
-      case 4:
-        return (
-          <PreferencesStep
-            title={currentStepData.title}
-            description={currentStepData.description}
-            icon={currentStepData.icon}
-            currency={formData.currency}
-            language={formData.language}
-            notifications={formData.notifications}
-            onCurrencyChange={(value) => handleChange('currency', value)}
-            onLanguageChange={(value) => handleChange('language', value)}
-            onNotificationsChange={(value) => handleChange('notifications', value)}
           />
         );
 
