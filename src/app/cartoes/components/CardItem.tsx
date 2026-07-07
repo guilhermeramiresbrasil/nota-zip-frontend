@@ -50,7 +50,7 @@ export function CardItem({ card, balance, selected, onSelect, onEdit, onDelete }
       onClick={() => onSelect(card)}
       className={cn(
         'overflow-hidden border-0 shadow-md hover:shadow-lg transition-all cursor-pointer',
-        selected && 'ring-2 ring-indigo-500 shadow-lg scale-[1.02]'
+        selected && 'ring-2 ring-indigo-500 shadow-lg'
       )}
     >
       <div className={`bg-gradient-to-br ${gradient} p-5 text-white`}>
