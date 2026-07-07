@@ -5,7 +5,7 @@ import { LoginLogo } from '../login/components/LoginLogo';
 import { ForgotPasswordForm } from './components/ForgotPasswordForm';
 
 // Hardcoded production URL
-const GATEWAY_URL = 'https://api.notazip.com.br';
+const GATEWAY_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');

@@ -1,7 +1,7 @@
 import { Plan, PlanUpgradeRequest, CreatePaymentLinkRequest } from '../app/plans/types/plan.types';
 import { generateCorrelationId } from '../lib/utils';
 
-const GATEWAY_URL = 'https://api.notazip.com.br';
+const GATEWAY_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 function getHeaders(): Record<string, string> {
   const accessToken = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;

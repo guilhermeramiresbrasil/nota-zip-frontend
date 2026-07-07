@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Wallet, PieChart, Shield, Home, Menu, X, Settings, LogOut, TrendingUp } from 'lucide-react';
+import { Wallet, PieChart, Shield, Home, Menu, X, Settings, LogOut, TrendingUp, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -12,6 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
 const navigation = [
   { name: 'Home', href: '/home', icon: Home },
   { name: 'Transações', href: '/expenses', icon: Wallet },
+  { name: 'Cartões', href: '/cartoes', icon: CreditCard },
   { name: 'Relatórios', href: '/reports', icon: PieChart },
   { name: 'Guarda Garantias', href: '/garantias', icon: Shield },
 ];

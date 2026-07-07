@@ -3,9 +3,15 @@ import { Transaction } from '@/app/home/types/dashboard.types';
 export interface ExpenseFormData {
   amount: string;
   categoryId: string;
+  subcategoryId?: string;
   description: string;
   date: string;
   newCategoryName?: string;
+  newParentCategoryId?: string;
+  payment_method?: string;
+  card_id?: string;
+  installments?: string;
+  firstBillingMonth?: string;
 }
 
 export interface Expense extends Transaction {

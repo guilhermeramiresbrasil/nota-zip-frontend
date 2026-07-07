@@ -2,7 +2,7 @@ import { Transaction, DashboardStats } from '../../types/dashboard.types';
 import { calculateDashboardStats } from '../calculations/financeCalculations';
 
 // Hardcoded production URL
-const GATEWAY_URL = 'https://api.notazip.com.br';
+const GATEWAY_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 function getAuthHeaders(): Record<string, string> {
   const accessToken = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
