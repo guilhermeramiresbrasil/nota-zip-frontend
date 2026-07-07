@@ -147,11 +147,11 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
       try {
         setLoading(true);
         const apiType = transactionType === 'income' ? 'credit' : 'debit';
-        setCategories(await categoryService.fetchCategories(apiType));
+        setCategories(await categoryService.fetchCategories(apiType, user?.id));
       } catch { /* silent */ } finally { setLoading(false); }
     };
     fetch();
-  }, [transactionType]);
+  }, [transactionType, user?.id]);
 
   useEffect(() => {
     if (!user?.id) return;
