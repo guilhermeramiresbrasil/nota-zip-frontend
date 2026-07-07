@@ -6,6 +6,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { ProfileSection } from './components/ProfileSection';
 import { CategoriesSection } from './components/CategoriesSection';
 import { WhatsAppSection } from './components/WhatsAppSection';
+import { SharedGroupSection } from './components/SharedGroupSection';
 import { DeleteAccountDialog } from './components/DeleteAccountDialog';
 import { IUser, useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -82,6 +83,7 @@ export default function SettingsPage() {
           />
           <CategoriesSection />
           <WhatsAppSection />
+          <SharedGroupSection />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <button

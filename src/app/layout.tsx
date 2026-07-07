@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import Navigation from "@/components/Navigation";
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ViewModeProvider } from "@/contexts/ViewModeContext";
 
 const inter = Inter({subsets:['latin'],variable:'--font-sans'});
 
@@ -35,11 +36,13 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-gray-50">
         <AuthProvider>
-          <Navigation />
-          <main className="flex-1">
-            {children}
-          </main>
-          <Toaster />
+          <ViewModeProvider>
+            <Navigation />
+            <main className="flex-1">
+              {children}
+            </main>
+            <Toaster />
+          </ViewModeProvider>
         </AuthProvider>
       </body>
     </html>

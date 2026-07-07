@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { ViewModeToggle } from '@/components/ViewModeToggle';
 
 const navigation = [
   { name: 'Home', href: '/home', icon: Home },
@@ -67,6 +68,8 @@ export default function Navigation() {
                     </Link>
                   );
                 })}
+                {/* ViewMode toggle for shared plan users */}
+                <ViewModeToggle />
                 {/* Upgrade button for free and basic users */}
                 {(user?.plan === 'free' || user?.plan === 'basic') && (
                   <Link href="/plans">
