@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { CategoryCombobox } from '@/app/expenses/components/CategoryCombobox';
 import { ReportFilters } from '../types/report.types';
 import { Filter, X } from 'lucide-react';
 
@@ -68,20 +69,15 @@ export const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
           </div>
           <div>
             <Label className="text-xs">Categoria</Label>
-            <Select
+            <CategoryCombobox
+              options={[
+                { value: 'all', label: 'Todas' },
+                ...categories.map((cat) => ({ value: cat, label: cat })),
+              ]}
               value={filters.categories.length === 1 ? filters.categories[0] : 'all'}
-              onValueChange={(v) => onFiltersChange({ categories: v === 'all' ? [] : [v] })}
-            >
-              <SelectTrigger className="h-8 text-xs">
-                <SelectValue placeholder="Todas" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas</SelectItem>
-                {categories.map((cat) => (
-                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              onChange={(v) => onFiltersChange({ categories: v === 'all' ? [] : [v] })}
+              placeholder="Todas"
+            />
           </div>
         </div>
 
