@@ -5,14 +5,16 @@ import { CreditCard, CardBalance } from '../types/card.types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit2, Trash2, Eye, CreditCard as CardIcon, Wallet } from 'lucide-react';
+import { Edit2, Trash2, CreditCard as CardIcon, Wallet } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface CardItemProps {
   card: CreditCard;
   balance?: CardBalance;
+  selected?: boolean;
+  onSelect: (card: CreditCard) => void;
   onEdit: (card: CreditCard) => void;
   onDelete: (id: string) => void;
-  onViewDetail: (card: CreditCard) => void;
 }
 
 const CARD_COLORS: Record<string, string> = {
@@ -35,7 +37,7 @@ const SUBTYPE_LABELS: Record<string, string> = {
   standard: '',
 };
 
-export function CardItem({ card, balance, onEdit, onDelete, onViewDetail }: CardItemProps) {
+export function CardItem({ card, balance, selected, onSelect, onEdit, onDelete }: CardItemProps) {
   const gradient = CARD_COLORS[card.color || 'default'] || CARD_COLORS.default;
   const usedPct = balance ? Math.min((balance.used / balance.limit) * 100, 100) : 0;
   const isOverLimit = balance && balance.available < 0;
@@ -44,7 +46,13 @@ export function CardItem({ card, balance, onEdit, onDelete, onViewDetail }: Card
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
 
   return (
-    <Card className="overflow-hidden border-0 shadow-md hover:shadow-lg transition-shadow">
+    <Card
+      onClick={() => onSelect(card)}
+      className={cn(
+        'overflow-hidden border-0 shadow-md hover:shadow-lg transition-all cursor-pointer',
+        selected && 'ring-2 ring-indigo-500 shadow-lg scale-[1.02]'
+      )}
+    >
       <div className={`bg-gradient-to-br ${gradient} p-5 text-white`}>
         <div className="flex justify-between items-start mb-4">
           <div>
@@ -95,23 +103,19 @@ export function CardItem({ card, balance, onEdit, onDelete, onViewDetail }: Card
         )}
 
         <div className="flex items-center gap-1 justify-between pt-1">
+          <Badge variant="secondary" className="text-xs">
+            Fatura: {formatCurrency(balance?.currentInvoice || 0)}
+          </Badge>
           <div className="flex gap-1">
-            <Badge variant="secondary" className="text-xs">
-              Fatura: {formatCurrency(balance?.currentInvoice || 0)}
-            </Badge>
-          </div>
-          <div className="flex gap-1">
-            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => onViewDetail(card)}>
-              <Eye className="h-3.5 w-3.5" />
-            </Button>
-            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => onEdit(card)}>
+            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); onEdit(card); }}>
               <Edit2 className="h-3.5 w-3.5" />
             </Button>
             <Button
               size="icon"
               variant="ghost"
               className="h-7 w-7 text-destructive hover:text-destructive"
-              onClick={() => {
+              onClick={(e) => {
+                e.stopPropagation();
                 if (confirm(`Desativar cartão "${card.name}"?`)) onDelete(card.id);
               }}
             >

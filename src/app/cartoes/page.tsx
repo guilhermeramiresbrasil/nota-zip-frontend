@@ -7,7 +7,7 @@ import { cardService } from './logics/cardService';
 import { CreditCard, CardBalance, CreateCardFormData } from './types/card.types';
 import { CardList } from './components/CardList';
 import { CardForm } from './components/CardForm';
-import { CardDetailModal } from './components/CardDetailModal';
+import { CardDetailPanel } from './components/CardDetailPanel';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, CreditCard as CreditCardIcon } from 'lucide-react';
 
@@ -28,7 +28,7 @@ function CartoesContent() {
   const [loading, setLoading] = useState(true);
   const [formOpen, setFormOpen] = useState(false);
   const [editCard, setEditCard] = useState<CreditCard | null>(null);
-  const [detailCard, setDetailCard] = useState<CreditCard | null>(null);
+  const [selectedCard, setSelectedCard] = useState<CreditCard | null>(null);
 
   const loadCards = useCallback(async () => {
     if (!userId) return;
@@ -47,6 +47,10 @@ function CartoesContent() {
         })
       );
       setBalances(balanceMap);
+      // Auto-selecionar o primeiro cartão
+      if (data.length > 0 && !selectedCard) {
+        setSelectedCard(data[0]);
+      }
     } catch (error) {
       console.error('Erro ao carregar cartões:', error);
     } finally {
@@ -57,6 +61,10 @@ function CartoesContent() {
   useEffect(() => {
     loadCards();
   }, [loadCards]);
+
+  const handleSelect = (card: CreditCard) => {
+    setSelectedCard((prev) => prev?.id === card.id ? null : card);
+  };
 
   const handleCreateCard = async (data: CreateCardFormData) => {
     await cardService.createCard(userId, data);
@@ -72,6 +80,7 @@ function CartoesContent() {
   };
 
   const handleDeleteCard = async (id: string) => {
+    if (selectedCard?.id === id) setSelectedCard(null);
     await cardService.deleteCard(id, userId);
     loadCards();
   };
@@ -84,7 +93,7 @@ function CartoesContent() {
             <CreditCardIcon className="h-8 w-8 text-primary" />
             <div>
               <h1 className="text-3xl font-bold text-foreground">Cartões</h1>
-              <p className="text-muted-foreground text-sm">Gerencie seus cartões e faturas</p>
+              <p className="text-muted-foreground text-sm">Clique em um cartão para ver detalhes</p>
             </div>
           </div>
           <Button onClick={() => setFormOpen(true)} className="gap-2">
@@ -108,13 +117,26 @@ function CartoesContent() {
             </Button>
           </div>
         ) : (
-          <CardList
-            cards={cards}
-            balances={balances}
-            onEdit={(card: CreditCard) => setEditCard(card)}
-            onDelete={handleDeleteCard}
-            onViewDetail={(card: CreditCard) => setDetailCard(card)}
-          />
+          <>
+            <CardList
+              cards={cards}
+              balances={balances}
+              selectedId={selectedCard?.id}
+              onSelect={handleSelect}
+              onEdit={(card: CreditCard) => setEditCard(card)}
+              onDelete={handleDeleteCard}
+            />
+
+            {selectedCard && (
+              <CardDetailPanel
+                key={selectedCard.id}
+                card={selectedCard}
+                userId={userId}
+                balance={balances[selectedCard.id] ?? null}
+                onReload={loadCards}
+              />
+            )}
+          </>
         )}
       </div>
 
@@ -125,16 +147,6 @@ function CartoesContent() {
         onSubmit={editCard ? handleEditCard : handleCreateCard}
         title={editCard ? 'Editar Cartão' : 'Novo Cartão'}
       />
-
-      {detailCard && (
-        <CardDetailModal
-          card={detailCard}
-          userId={userId}
-          open={!!detailCard}
-          onOpenChange={(open: boolean) => { if (!open) setDetailCard(null); }}
-          onReload={loadCards}
-        />
-      )}
     </div>
   );
 }
