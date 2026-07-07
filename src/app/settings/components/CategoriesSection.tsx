@@ -60,12 +60,13 @@ export function CategoriesSection() {
     if (!user?.id) return;
     setLoading(true);
     try {
-      // Busca tudo (globais + do usuário)
-      const all = await categoryService.fetchCategories(undefined, user.id);
+      // Busca tudo (globais + do usuário); API retorna raízes com subcategories[] aninhadas
+      const roots = await categoryService.fetchCategories(undefined, user.id);
       // Categorias raiz globais (sem userId = sistema)
-      setGlobalCats(all.filter((c) => !c.parentId && !c.userId));
-      // Subcategorias criadas pelo usuário (têm parentId e userId = user.id)
-      setUserSubs(all.filter((c) => c.parentId && c.userId === user.id));
+      setGlobalCats(roots.filter((c) => !c.userId));
+      // Achata todas as subcategories de todas as raízes e filtra as do usuário
+      const allSubs = roots.flatMap((c) => c.subcategories ?? []);
+      setUserSubs(allSubs.filter((s) => s.userId === user.id));
     } catch {
       showError('Erro', 'Não foi possível carregar as categorias.');
     } finally {
