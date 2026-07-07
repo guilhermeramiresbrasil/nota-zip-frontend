@@ -12,7 +12,7 @@ interface PlanLimits {
 export function usePlanLimits() {
   const { user } = useAuth();
 
-  const getPlanLimits = (plan?: 'free' | 'basic' | 'premium'): PlanLimits => {
+  const getPlanLimits = (plan?: 'free' | 'basic' | 'premium' | 'shared'): PlanLimits => {
     switch (plan || 'free') {
       case 'free':
         return {
@@ -33,6 +33,7 @@ export function usePlanLimits() {
           canUseWhatsApp: false,
         };
       case 'premium':
+      case 'shared':
         return {
           maxIncomePerWeek: Infinity,
           maxExpensePerWeek: Infinity,
@@ -61,32 +62,34 @@ export function usePlanLimits() {
     return weeklyCount < limits.maxExpensePerWeek;
   };
 
-  const canUpgrade = (currentPlan?: 'free' | 'basic' | 'premium'): boolean => {
+  const canUpgrade = (currentPlan?: 'free' | 'basic' | 'premium' | 'shared'): boolean => {
     if (!currentPlan) return true;
-    return currentPlan !== 'premium';
+    return currentPlan !== 'premium' && currentPlan !== 'shared';
   };
 
-  const canDowngrade = (currentPlan?: 'free' | 'basic' | 'premium'): boolean => {
+  const canDowngrade = (currentPlan?: 'free' | 'basic' | 'premium' | 'shared'): boolean => {
     if (!currentPlan) return false;
     return currentPlan !== 'free';
   };
 
-  const getNextPlan = (currentPlan?: 'free' | 'basic' | 'premium'): 'free' | 'basic' | 'premium' | null => {
+  const getNextPlan = (currentPlan?: 'free' | 'basic' | 'premium' | 'shared'): 'free' | 'basic' | 'premium' | 'shared' | null => {
     switch (currentPlan) {
       case 'free':
         return 'basic';
       case 'basic':
         return 'premium';
       case 'premium':
+      case 'shared':
         return null;
       default:
         return 'basic';
     }
   };
 
-  const getPreviousPlan = (currentPlan?: 'free' | 'basic' | 'premium'): 'free' | 'basic' | 'premium' | null => {
+  const getPreviousPlan = (currentPlan?: 'free' | 'basic' | 'premium' | 'shared'): 'free' | 'basic' | 'premium' | null => {
     switch (currentPlan) {
       case 'premium':
+      case 'shared':
         return 'basic';
       case 'basic':
         return 'free';

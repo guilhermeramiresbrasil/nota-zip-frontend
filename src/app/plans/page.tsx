@@ -37,7 +37,7 @@ export default function PlansPage() {
     fetchPlans();
   }, []);
 
-  const handleUpgrade = async (planId: 'free' | 'basic' | 'premium') => {
+  const handleUpgrade = async (planId: 'free' | 'basic' | 'premium' | 'shared') => {
     if (planId === 'free') {
       showSuccess('Plano Grátis ativado!');
       router.push('/home');
@@ -71,7 +71,11 @@ export default function PlansPage() {
         planId: selectedPlan.planUuid,
         billingCycle,
       });
-      window.location.href = checkoutUrl;
+      if (selectedPlan.id === 'shared') {
+        router.push('/shared-group/setup');
+      } else {
+        window.location.href = checkoutUrl;
+      }
     } catch (error: any) {
       showError(error.message || 'Erro ao gerar link de pagamento.');
       setCheckoutLoading(null);
@@ -126,7 +130,7 @@ export default function PlansPage() {
       )}
 
       {/* Plans Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
         {plans.map((plan) => (
           <PlanCard
             key={plan.id}

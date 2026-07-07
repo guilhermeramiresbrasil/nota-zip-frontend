@@ -55,7 +55,7 @@ const FALLBACK_PLANS: Plan[] = [
     id: 'premium',
     name: 'Premium',
     description: 'Experiência completa com todas as funcionalidades',
-    price: 'R$ 59,90',
+    price: 'R$ 49,90',
     period: '/mês',
     features: [
       'Transações ilimitadas',
@@ -69,6 +69,28 @@ const FALLBACK_PLANS: Plan[] = [
     popular: true,
     gradient: 'from-purple-500 to-purple-600',
     uploadLimit: 1024,
+  },
+  {
+    id: 'shared',
+    name: 'Compartilhado',
+    description: 'Controle financeiro para 2 pessoas — família, sócio e mais',
+    price: 'R$ 59,90',
+    period: '/mês',
+    features: [
+      'Transações ilimitadas',
+      'Relatórios',
+      'Guarda Garantia (notas salvas pelo tempo que você escolher)',
+      'WhatsApp para inserir notas em áudio, foto ou texto',
+      'Exportação de dados',
+      'Suporte prioritário',
+      'Visão compartilhada com outro membro',
+      '2 pessoas na mesma conta',
+    ],
+    notIncluded: [],
+    popular: false,
+    gradient: 'from-rose-500 to-pink-600',
+    uploadLimit: 1024,
+    isShared: true,
   },
 ];
 
@@ -89,19 +111,24 @@ export class PlanService {
       const response = await fetch(`${GATEWAY_URL}/api/subscriptions/plans`);
       const data = await response.json();
       if (data.success && Array.isArray(data.data) && data.data.length > 0) {
-        return data.data.map((p: any) => ({
-          id: p.name as 'free' | 'basic' | 'premium',
-          planUuid: p.id,
-          name: p.name === 'free' ? 'Grátis' : p.name === 'basic' ? 'Básico' : 'Premium',
-          description: FALLBACK_PLANS.find(f => f.id === p.name)?.description || '',
-          price: !p.price || p.price === 0 ? 'R$ 0' : `R$ ${parseFloat(p.price).toFixed(2).replace('.', ',')}`,
-          period: '/mês',
-          features: p.features || FALLBACK_PLANS.find(f => f.id === p.name)?.features || [],
-          notIncluded: FALLBACK_PLANS.find(f => f.id === p.name)?.notIncluded || [],
-          popular: p.name === 'premium',
-          gradient: FALLBACK_PLANS.find(f => f.id === p.name)?.gradient || 'from-gray-500 to-gray-600',
-          uploadLimit: FALLBACK_PLANS.find(f => f.id === p.name)?.uploadLimit || 0,
-        }));
+        const nameMap: Record<string, string> = { free: 'Grátis', basic: 'Básico', premium: 'Premium', shared: 'Compartilhado' };
+        return data.data.map((p: any) => {
+          const fallback = FALLBACK_PLANS.find(f => f.id === p.name);
+          return {
+            id: p.name as 'free' | 'basic' | 'premium' | 'shared',
+            planUuid: p.id,
+            name: nameMap[p.name] || p.name,
+            description: fallback?.description || '',
+            price: !p.price || p.price === 0 ? 'R$ 0' : `R$ ${parseFloat(p.price).toFixed(2).replace('.', ',')}`,
+            period: '/mês',
+            features: fallback?.features || [],
+            notIncluded: fallback?.notIncluded || [],
+            popular: p.name === 'premium',
+            gradient: fallback?.gradient || 'from-gray-500 to-gray-600',
+            uploadLimit: fallback?.uploadLimit || 0,
+            isShared: p.name === 'shared',
+          };
+        });
       }
     } catch (error) {
       console.error('Failed to fetch plans from API, using fallback:', error);

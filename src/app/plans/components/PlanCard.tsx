@@ -1,13 +1,13 @@
 import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Check, X, Star, ArrowRight } from 'lucide-react';
+import { Check, X, Star, ArrowRight, Link } from 'lucide-react';
 import { Plan } from '../types/plan.types';
 
 interface PlanCardProps {
   plan: Plan;
-  currentPlan?: 'free' | 'basic' | 'premium';
-  onUpgrade?: (planId: 'free' | 'basic' | 'premium') => void;
+  currentPlan?: 'free' | 'basic' | 'premium' | 'shared';
+  onUpgrade?: (planId: 'free' | 'basic' | 'premium' | 'shared') => void;
   isCurrentPlan?: boolean;
 }
 
@@ -26,6 +26,14 @@ export const PlanCard: React.FC<PlanCardProps> = ({
           <div className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-1.5 rounded-full text-sm font-semibold flex items-center gap-1 shadow-md">
             <Star className="h-4 w-4 fill-current" />
             Mais Popular
+          </div>
+        </div>
+      )}
+      {plan.isShared && (
+        <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 z-10">
+          <div className="bg-gradient-to-r from-rose-500 to-pink-600 text-white px-4 py-1.5 rounded-full text-sm font-semibold flex items-center gap-1 shadow-md">
+            <Link className="h-4 w-4" />
+            Plano Compartilhado — 2 pessoas
           </div>
         </div>
       )}
@@ -89,13 +97,15 @@ export const PlanCard: React.FC<PlanCardProps> = ({
             className={`w-full h-12 font-semibold text-base transition-all ${
               isCurrentPlan
                 ? 'bg-green-600 hover:bg-green-700 text-white shadow-lg hover:shadow-xl'
+                : plan.isShared
+                ? 'bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white shadow-lg hover:shadow-xl'
                 : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl'
             }`}
             onClick={() => onUpgrade?.(plan.id)}
           >
             {isCurrentPlan ? 'Plano Atual' : (
               <>
-                Escolher Plano <ArrowRight className="ml-2 h-4 w-4" />
+                {plan.isShared ? 'Convidar membro' : 'Escolher Plano'} <ArrowRight className="ml-2 h-4 w-4" />
               </>
             )}
           </Button>

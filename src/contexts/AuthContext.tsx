@@ -9,7 +9,7 @@ export interface IUser {
   id: string;
   name: string;
   email: string;
-  plan: 'free' | 'basic' | 'premium';
+  plan: 'free' | 'basic' | 'premium' | 'shared';
   createdAt: string;
   sessionId?: string;
   accessToken?: string;
@@ -20,6 +20,9 @@ export interface IUser {
   emailAlerts?: boolean;
   emailVerified?: boolean;
   phoneVerified?: boolean;
+  sharedGroupId?: string;
+  partnerNickname?: string;
+  selfNickname?: string;
 }
 
 interface AuthContextType {
@@ -169,6 +172,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         emailAlerts: userDetails.emailAlerts ?? true,
         emailVerified: userDetails.emailVerified ?? loginDetails.emailVerified ?? false,
         phoneVerified: userDetails.phoneVerified ?? loginDetails.phoneVerified ?? false,
+        sharedGroupId: userDetails.sharedGroupId ?? undefined,
+        partnerNickname: userDetails.partnerNickname ?? undefined,
+        selfNickname: userDetails.selfNickname ?? undefined,
       };
 
       setUser(userObj);
