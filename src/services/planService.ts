@@ -112,7 +112,7 @@ export class PlanService {
       const data = await response.json();
       if (data.success && Array.isArray(data.data) && data.data.length > 0) {
         const nameMap: Record<string, string> = { free: 'Grátis', basic: 'Básico', premium: 'Premium', shared: 'Compartilhado' };
-        return data.data.map((p: any) => {
+        const apiPlans: Plan[] = data.data.map((p: any) => {
           const fallback = FALLBACK_PLANS.find(f => f.id === p.name);
           return {
             id: p.name as 'free' | 'basic' | 'premium' | 'shared',
@@ -129,6 +129,14 @@ export class PlanService {
             isShared: p.name === 'shared',
           };
         });
+        // Garante que todos os planos do fallback existem (ex: shared pode não estar no banco ainda)
+        const merged = [...apiPlans];
+        for (const fallback of FALLBACK_PLANS) {
+          if (!merged.find(p => p.id === fallback.id)) {
+            merged.push(fallback);
+          }
+        }
+        return merged;
       }
     } catch (error) {
       console.error('Failed to fetch plans from API, using fallback:', error);
