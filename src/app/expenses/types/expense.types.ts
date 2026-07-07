@@ -7,6 +7,7 @@ export interface ExpenseFormData {
   description: string;
   date: string;
   newCategoryName?: string;
+  newParentCategoryId?: string;
   payment_method?: string;
   card_id?: string;
   installments?: string;

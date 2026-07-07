@@ -36,6 +36,7 @@ interface FormData {
   description: string;
   date: string;
   newCategoryName?: string;
+  newParentCategoryId?: string;
   payment_method?: string;
   card_id?: string;
   installments?: string;
@@ -140,7 +141,8 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
   const [loading, setLoading] = useState(false);
 
   const parseCurrencyToNumber = (v: string) => parseFloat(v.replace(/\./g, '').replace(',', '.')) || 0;
-  const isReady = !!(formData.amount && (formData.categoryId && formData.categoryId !== 'new' || formData.newCategoryName));
+  const isNewCategoryReady = !!(formData.newCategoryName && formData.newParentCategoryId);
+  const isReady = !!(formData.amount && (formData.categoryId && formData.categoryId !== 'new' || isNewCategoryReady));
 
   useEffect(() => {
     const fetch = async () => {
@@ -240,16 +242,38 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
               extraOption={{ value: 'new', label: '+ Nova categoria' }}
             />
             {formData.categoryId === 'new' && (
-              <Input
-                id="new-category-name"
-                name="new-category-name"
-                type="text"
-                placeholder="Nome da nova categoria"
-                value={formData.newCategoryName || ''}
-                onChange={(e) => onChangeFormData({ ...formData, newCategoryName: e.target.value })}
-                required
-                className="mt-1.5"
-              />
+              <div className="mt-1.5 space-y-2">
+                <Select
+                  value={formData.newParentCategoryId || ''}
+                  onValueChange={(v) => onChangeFormData({ ...formData, newParentCategoryId: v })}
+                >
+                  <SelectTrigger className="h-10 border-slate-200 text-slate-700">
+                    <SelectValue placeholder="Categoria pai (obrigatório)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.id}>
+                        <div className="flex items-center gap-2">
+                          <span
+                            className="h-2 w-2 rounded-full shrink-0 inline-block"
+                            style={{ backgroundColor: cat.color ?? '#94a3b8' }}
+                          />
+                          {cat.name}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Input
+                  id="new-category-name"
+                  name="new-category-name"
+                  type="text"
+                  placeholder="Nome da nova subcategoria"
+                  value={formData.newCategoryName || ''}
+                  onChange={(e) => onChangeFormData({ ...formData, newCategoryName: e.target.value })}
+                  required
+                />
+              </div>
             )}
           </div>
 
