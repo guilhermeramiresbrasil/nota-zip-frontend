@@ -27,7 +27,9 @@ import {
   CreditCardReload,
   CardBalance,
 } from '../types/card.types';
-import { categoryService } from '@/app/expenses/logics/services/categoryService';
+import { categoryService, Category } from '@/app/expenses/logics/services/categoryService';
+import { CategoryCombobox } from '@/app/expenses/components/CategoryCombobox';
+import { buildCategoryOptions } from '@/app/expenses/logics/categoryOptions';
 import { PlusCircle, Receipt, RefreshCw, Wallet } from 'lucide-react';
 
 interface CardDetailModalProps {
@@ -86,7 +88,7 @@ export function CardDetailModal({ card, userId, open, onOpenChange, onReload }: 
   const [payAmount, setPayAmount] = useState('');
   const [payCategoryId, setPayCategoryId] = useState('');
 
-  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -113,7 +115,7 @@ export function CardDetailModal({ card, userId, open, onOpenChange, onReload }: 
   useEffect(() => {
     if (open) {
       loadData();
-      categoryService.fetchCategories().then(setCategories).catch(() => {});
+      categoryService.fetchCategories('debit', userId).then(setCategories).catch(() => {});
     }
   }, [open, loadData]);
 
@@ -346,17 +348,14 @@ export function CardDetailModal({ card, userId, open, onOpenChange, onReload }: 
                     </div>
                     <div>
                       <Label className="text-xs">Categoria</Label>
-                      <Select
-                        value={purchaseForm.categoryId}
-                        onValueChange={(v) => setPurchaseForm((f) => ({ ...f, categoryId: v }))}
-                      >
-                        <SelectTrigger className="h-8 text-xs mt-1"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                        <SelectContent>
-                          {categories.map((c) => (
-                            <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <div className="mt-1">
+                        <CategoryCombobox
+                          options={buildCategoryOptions(categories)}
+                          value={purchaseForm.categoryId}
+                          onChange={(v) => setPurchaseForm((f) => ({ ...f, categoryId: v }))}
+                          placeholder="Selecione uma categoria"
+                        />
+                      </div>
                     </div>
                     <div className="flex gap-2">
                       <Button type="submit" size="sm" className="flex-1" disabled={actionLoading}>Adicionar</Button>

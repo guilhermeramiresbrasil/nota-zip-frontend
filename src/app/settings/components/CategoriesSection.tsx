@@ -6,13 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -21,6 +14,8 @@ import {
 } from '@/components/ui/dialog';
 import { Tag, Plus, Pencil, Trash2, ChevronRight } from 'lucide-react';
 import { categoryService, Category } from '@/app/expenses/logics/services/categoryService';
+import { CategoryCombobox } from '@/app/expenses/components/CategoryCombobox';
+import { buildCategoryOptions } from '@/app/expenses/logics/categoryOptions';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -250,28 +245,13 @@ export function CategoriesSection() {
             {/* Categoria pai */}
             <div className="space-y-1.5">
               <Label>Categoria pai</Label>
-              <Select
+              <CategoryCombobox
+                options={buildCategoryOptions(globalCats)}
                 value={form.parentId}
-                onValueChange={(v) => setForm((f) => ({ ...f, parentId: v }))}
+                onChange={(v) => setForm((f) => ({ ...f, parentId: v }))}
+                placeholder="Selecione uma categoria…"
                 disabled={!!editTarget}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione uma categoria…" />
-                </SelectTrigger>
-                <SelectContent>
-                  {globalCats.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.id}>
-                      <div className="flex items-center gap-2">
-                        <span
-                          className="h-2 w-2 rounded-full shrink-0"
-                          style={{ backgroundColor: cat.color ?? '#94a3b8' }}
-                        />
-                        {cat.name}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              />
               {selectedParent && (
                 <p className="text-[11px] text-slate-400">
                   Tipo herdado:{' '}
