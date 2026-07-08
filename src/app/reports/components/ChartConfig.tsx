@@ -4,7 +4,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Combobox } from '@/components/ui/combobox';
 import { ChartConfig as ChartConfigType, ChartType, ColorPalette } from '../types/report.types';
 import { Settings, RotateCcw } from 'lucide-react';
 
@@ -41,29 +41,21 @@ export const ChartConfigComponent: React.FC<ChartConfigProps> = ({ config, onCon
         <div className="grid grid-cols-2 gap-3">
           <div>
             <Label className="text-xs">Tipo</Label>
-            <Select value={config.chartType} onValueChange={(v) => onConfigChange({ chartType: v as ChartType })}>
-              <SelectTrigger className="h-8 text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {chartTypes.map((t) => (
-                  <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Combobox
+              searchable={false}
+              options={chartTypes}
+              value={config.chartType}
+              onChange={(v) => onConfigChange({ chartType: v as ChartType })}
+            />
           </div>
           <div>
             <Label className="text-xs">Cores</Label>
-            <Select value={config.colorPalette} onValueChange={(v) => onConfigChange({ colorPalette: v as ColorPalette })}>
-              <SelectTrigger className="h-8 text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {palettes.map((p) => (
-                  <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Combobox
+              searchable={false}
+              options={palettes}
+              value={config.colorPalette}
+              onChange={(v) => onConfigChange({ colorPalette: v as ColorPalette })}
+            />
           </div>
         </div>
 
@@ -84,15 +76,12 @@ export const ChartConfigComponent: React.FC<ChartConfigProps> = ({ config, onCon
 
         <div>
           <Label className="text-xs">Orientação</Label>
-          <Select value={config.orientation} onValueChange={(v) => onConfigChange({ orientation: v as 'horizontal' | 'vertical' })}>
-            <SelectTrigger className="h-8 text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="vertical">Vertical</SelectItem>
-              <SelectItem value="horizontal">Horizontal</SelectItem>
-            </SelectContent>
-          </Select>
+          <Combobox
+            searchable={false}
+            options={[{ value: 'vertical', label: 'Vertical' }, { value: 'horizontal', label: 'Horizontal' }]}
+            value={config.orientation}
+            onChange={(v) => onConfigChange({ orientation: v as 'horizontal' | 'vertical' })}
+          />
         </div>
 
         <Button variant="outline" size="sm" onClick={onReset} className="w-full text-xs">

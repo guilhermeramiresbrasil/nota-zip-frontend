@@ -1,5 +1,5 @@
 import React from 'react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Combobox } from '@/components/ui/combobox';
 import { ReportPeriod } from '../types/report.types';
 
 interface PeriodSelectorProps {
@@ -19,17 +19,14 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = ({
   onPeriodChange,
 }) => {
   return (
-    <Select value={selectedPeriod} onValueChange={onPeriodChange}>
-      <SelectTrigger className="w-[200px]">
-        <SelectValue placeholder="Selecione o período" />
-      </SelectTrigger>
-      <SelectContent>
-        {periods.map((period) => (
-          <SelectItem key={period.value} value={period.value}>
-            {period.label}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <div className="w-[200px]">
+      <Combobox
+        searchable={false}
+        placeholder="Selecione o período"
+        options={periods}
+        value={selectedPeriod}
+        onChange={onPeriodChange}
+      />
+    </div>
   );
 };

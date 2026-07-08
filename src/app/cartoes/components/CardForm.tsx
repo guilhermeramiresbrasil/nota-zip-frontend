@@ -11,13 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Combobox } from '@/components/ui/combobox';
 import { CreditCard, CreateCardFormData, CardType, CardOwner } from '../types/card.types';
 
 interface CardFormProps {
@@ -118,23 +112,21 @@ export function CardForm({ open, onOpenChange, initialData, onSubmit, title }: C
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label>Tipo</Label>
-              <Select value={form.type} onValueChange={(v) => set('type', v as CardType)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="credit">Crédito</SelectItem>
-                  <SelectItem value="prepaid">Pré-pago</SelectItem>
-                </SelectContent>
-              </Select>
+              <Combobox
+                searchable={false}
+                options={[{ value: 'credit', label: 'Crédito' }, { value: 'prepaid', label: 'Pré-pago' }]}
+                value={form.type}
+                onChange={(v) => set('type', v as CardType)}
+              />
             </div>
             <div className="space-y-2">
               <Label>Subtipo</Label>
-              <Select value={form.cardSubtype || 'standard'} onValueChange={(v) => set('cardSubtype', v)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="standard">Padrão</SelectItem>
-                  <SelectItem value="vr_va">VR / VA</SelectItem>
-                </SelectContent>
-              </Select>
+              <Combobox
+                searchable={false}
+                options={[{ value: 'standard', label: 'Padrão' }, { value: 'vr_va', label: 'VR / VA' }]}
+                value={form.cardSubtype || 'standard'}
+                onChange={(v) => set('cardSubtype', v)}
+              />
             </div>
           </div>
 
@@ -142,23 +134,21 @@ export function CardForm({ open, onOpenChange, initialData, onSubmit, title }: C
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label>Modo de débito</Label>
-                <Select value={form.debitMode || 'invoice'} onValueChange={(v) => set('debitMode', v)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="invoice">Fatura (pós)</SelectItem>
-                    <SelectItem value="direct">Débito direto</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Combobox
+                  searchable={false}
+                  options={[{ value: 'invoice', label: 'Fatura (pós)' }, { value: 'direct', label: 'Débito direto' }]}
+                  value={form.debitMode || 'invoice'}
+                  onChange={(v) => set('debitMode', v)}
+                />
               </div>
               <div className="space-y-2">
                 <Label>Tipo de recarga</Label>
-                <Select value={form.reloadType || 'manual'} onValueChange={(v) => set('reloadType', v)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="manual">Manual</SelectItem>
-                    <SelectItem value="periodic">Periódica</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Combobox
+                  searchable={false}
+                  options={[{ value: 'manual', label: 'Manual' }, { value: 'periodic', label: 'Periódica' }]}
+                  value={form.reloadType || 'manual'}
+                  onChange={(v) => set('reloadType', v)}
+                />
               </div>
             </div>
           )}
@@ -215,24 +205,21 @@ export function CardForm({ open, onOpenChange, initialData, onSubmit, title }: C
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label>Titular</Label>
-              <Select value={form.owner} onValueChange={(v) => set('owner', v as CardOwner)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="self">Meu cartão</SelectItem>
-                  <SelectItem value="borrowed">Emprestado</SelectItem>
-                </SelectContent>
-              </Select>
+              <Combobox
+                searchable={false}
+                options={[{ value: 'self', label: 'Meu cartão' }, { value: 'borrowed', label: 'Emprestado' }]}
+                value={form.owner}
+                onChange={(v) => set('owner', v as CardOwner)}
+              />
             </div>
             <div className="space-y-2">
               <Label>Cor</Label>
-              <Select value={form.color || 'blue'} onValueChange={(v) => set('color', v)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {COLORS.map((c) => (
-                    <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Combobox
+                searchable={false}
+                options={COLORS}
+                value={form.color || 'blue'}
+                onChange={(v) => set('color', v)}
+              />
             </div>
           </div>
 

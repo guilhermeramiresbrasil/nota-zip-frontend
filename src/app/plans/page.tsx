@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
 import { PlanCard } from './components/PlanCard';
 import { PlanComparison } from './components/PlanComparison';
@@ -21,6 +22,8 @@ export default function PlansPage() {
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
+  const [activeIndex, setActiveIndex] = useState(0);
+  const carouselRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchPlans = async () => {
@@ -36,6 +39,17 @@ export default function PlansPage() {
 
     fetchPlans();
   }, []);
+
+  const scrollToIndex = (index: number) => {
+    const clamped = Math.max(0, Math.min(index, plans.length - 1));
+    setActiveIndex(clamped);
+    const container = carouselRef.current;
+    if (!container) return;
+    const card = container.children[clamped] as HTMLElement;
+    if (card) {
+      container.scrollTo({ left: card.offsetLeft - container.offsetLeft, behavior: 'smooth' });
+    }
+  };
 
   const handleUpgrade = async (planId: 'free' | 'basic' | 'premium' | 'shared') => {
     if (planId === 'free') {
@@ -129,17 +143,64 @@ export default function PlansPage() {
         </div>
       )}
 
-      {/* Plans Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-        {plans.map((plan) => (
-          <PlanCard
-            key={plan.id}
-            plan={plan}
-            currentPlan={user?.plan}
-            isCurrentPlan={user?.plan === plan.id}
-            onUpgrade={handleUpgrade}
-          />
-        ))}
+      {/* Plans Carousel */}
+      <div className="relative mb-12 -mx-4 sm:mx-0">
+        {/* Seta esquerda */}
+        <button
+          onClick={() => scrollToIndex(activeIndex - 1)}
+          disabled={activeIndex === 0}
+          className="absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-white border shadow-md rounded-full p-2 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-50 transition-all hidden sm:flex"
+        >
+          <ChevronLeft className="h-5 w-5 text-gray-600" />
+        </button>
+
+        {/* Cards */}
+        <div
+          ref={carouselRef}
+          className="flex gap-3 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-4 px-4 sm:px-8"
+          style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
+          onScroll={(e) => {
+            const el = e.currentTarget;
+            const cardWidth = el.scrollWidth / plans.length;
+            setActiveIndex(Math.round(el.scrollLeft / cardWidth));
+          }}
+        >
+          {plans.map((plan) => (
+            <div
+              key={plan.id}
+              className="snap-start flex-shrink-0 w-[80vw] sm:w-[calc(50%-12px)] lg:w-[calc(25%-12px)]"
+            >
+              <PlanCard
+                plan={plan}
+                currentPlan={user?.plan}
+                isCurrentPlan={user?.plan === plan.id}
+                onUpgrade={handleUpgrade}
+              />
+            </div>
+          ))}
+        </div>
+
+        {/* Seta direita */}
+        <button
+          onClick={() => scrollToIndex(activeIndex + 1)}
+          disabled={activeIndex === plans.length - 1}
+          className="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-white border shadow-md rounded-full p-2 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-50 transition-all hidden sm:flex"
+        >
+          <ChevronRight className="h-5 w-5 text-gray-600" />
+        </button>
+
+        {/* Dots */}
+        <div className="flex justify-center gap-2 mt-2">
+          {plans.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => scrollToIndex(i)}
+              className={`rounded-full transition-all ${
+                i === activeIndex ? 'w-6 h-2 bg-blue-500' : 'w-2 h-2 bg-gray-300 hover:bg-gray-400'
+              }`}
+            />
+          ))}
+        </div>
       </div>
 
       {/* Comparison Table */}

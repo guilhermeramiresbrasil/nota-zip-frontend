@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Combobox } from '@/components/ui/combobox';
 import { Bell, Palette, CreditCard } from 'lucide-react';
 import { IUser } from '@/contexts/AuthContext';
 
@@ -28,58 +28,32 @@ export const PreferencesSection: React.FC<PreferencesSectionProps> = ({ preferen
       <CardContent className="space-y-6">
         <div className="space-y-2">
           <Label>Tema</Label>
-          <Select
-            value={preferences?.theme}
-            onValueChange={(value: 'light' | 'dark' | 'system') =>
-              onChangePreferences({ ...preferences, theme: value })
-            }
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="light">Claro</SelectItem>
-              <SelectItem value="dark">Escuro</SelectItem>
-              <SelectItem value="system">Sistema</SelectItem>
-            </SelectContent>
-          </Select>
+          <Combobox
+            searchable={false}
+            options={[{ value: 'light', label: 'Claro' }, { value: 'dark', label: 'Escuro' }, { value: 'system', label: 'Sistema' }]}
+            value={preferences?.theme || 'system'}
+            onChange={(v) => onChangePreferences({ ...preferences, theme: v as 'light' | 'dark' | 'system' })}
+          />
         </div>
 
         <div className="space-y-2">
           <Label>Moeda</Label>
-          <Select
-            value={preferences?.currency}
-            onValueChange={(value: 'BRL' | 'USD' | 'EUR') =>
-              onChangePreferences({ ...preferences, currency: value })
-            }
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="BRL">Real (BRL)</SelectItem>
-              <SelectItem value="USD">Dólar (USD)</SelectItem>
-              <SelectItem value="EUR">Euro (EUR)</SelectItem>
-            </SelectContent>
-          </Select>
+          <Combobox
+            searchable={false}
+            options={[{ value: 'BRL', label: 'Real (BRL)' }, { value: 'USD', label: 'Dólar (USD)' }, { value: 'EUR', label: 'Euro (EUR)' }]}
+            value={preferences?.currency || 'BRL'}
+            onChange={(v) => onChangePreferences({ ...preferences, currency: v as 'BRL' | 'USD' | 'EUR' })}
+          />
         </div>
 
         <div className="space-y-2">
           <Label>Idioma</Label>
-          <Select
-            value={preferences?.language}
-            onValueChange={(value: 'pt-BR' | 'en-US') =>
-              onChangePreferences({ ...preferences, language: value })
-            }
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="pt-BR">Português</SelectItem>
-              <SelectItem value="en-US">English</SelectItem>
-            </SelectContent>
-          </Select>
+          <Combobox
+            searchable={false}
+            options={[{ value: 'pt-BR', label: 'Português' }, { value: 'en-US', label: 'English' }]}
+            value={preferences?.language || 'pt-BR'}
+            onChange={(v) => onChangePreferences({ ...preferences, language: v as 'pt-BR' | 'en-US' })}
+          />
         </div>
 
         <div className="flex items-center justify-between">

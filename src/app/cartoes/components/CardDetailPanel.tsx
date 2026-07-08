@@ -5,13 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Combobox } from '@/components/ui/combobox';
 import {
   Receipt,
   ShoppingBag,
@@ -246,15 +240,15 @@ export function CardDetailPanel({ card, userId, balance, onReload }: Props) {
                             <>
                               {isPaying ? (
                                 <div className="space-y-2">
-                                  <Select value={payType} onValueChange={(v) => setPayType(v as 'full' | 'partial')}>
-                                    <SelectTrigger className="h-8 text-xs bg-white">
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="full">Pagar total — {fmt(inv.totalAmount)}</SelectItem>
-                                      <SelectItem value="partial">Pagar valor parcial</SelectItem>
-                                    </SelectContent>
-                                  </Select>
+                                  <Combobox
+                                    searchable={false}
+                                    options={[
+                                      { value: 'full', label: `Pagar total — ${fmt(inv.totalAmount)}` },
+                                      { value: 'partial', label: 'Pagar valor parcial' },
+                                    ]}
+                                    value={payType}
+                                    onChange={(v) => setPayType(v as 'full' | 'partial')}
+                                  />
                                   {payType === 'partial' && (
                                     <Input
                                       type="number"

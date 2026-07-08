@@ -1,12 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Combobox } from '@/components/ui/combobox';
 
 interface ExpenseFilterProps {
   onDateRangeChange?: (startDate: string, endDate: string) => void;
@@ -90,20 +84,18 @@ export const ExpenseFilter: React.FC<ExpenseFilterProps> = ({
   return (
     <div className="flex gap-4 items-center">
       <div className="flex-1">
-        <Select
+        <Combobox
+          searchable={false}
+          placeholder="Período"
+          options={[
+            { value: 'current', label: 'Mês Atual' },
+            { value: 'previous', label: 'Mês Anterior' },
+            { value: 'next', label: 'Mês Posterior' },
+            { value: 'custom', label: 'Personalizado' },
+          ]}
           value={datePreset}
-          onValueChange={(value: DatePreset) => handlePresetChange(value)}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Período" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="current">Mês Atual</SelectItem>
-            <SelectItem value="previous">Mês Anterior</SelectItem>
-            <SelectItem value="next">Mês Posterior</SelectItem>
-            <SelectItem value="custom">Personalizado</SelectItem>
-          </SelectContent>
-        </Select>
+          onChange={(v) => handlePresetChange(v as DatePreset)}
+        />
       </div>
 
       {datePreset === 'custom' && (

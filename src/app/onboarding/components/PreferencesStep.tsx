@@ -1,6 +1,6 @@
 import { LucideIcon } from 'lucide-react';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Combobox } from '@/components/ui/combobox';
 
 interface PreferencesStepProps {
   title: string;
@@ -39,28 +39,21 @@ export function PreferencesStep({
       <div className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="currency">Moeda</Label>
-          <Select value={currency} onValueChange={onCurrencyChange}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="BRL">R$ - Real Brasileiro</SelectItem>
-              <SelectItem value="USD">$ - Dólar Americano</SelectItem>
-              <SelectItem value="EUR">€ - Euro</SelectItem>
-            </SelectContent>
-          </Select>
+          <Combobox
+            searchable={false}
+            options={[{ value: 'BRL', label: 'R$ - Real Brasileiro' }, { value: 'USD', label: '$ - Dólar Americano' }, { value: 'EUR', label: '€ - Euro' }]}
+            value={currency}
+            onChange={onCurrencyChange}
+          />
         </div>
         <div className="space-y-2">
           <Label htmlFor="language">Idioma</Label>
-          <Select value={language} onValueChange={onLanguageChange}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="pt-BR">Português (Brasil)</SelectItem>
-              <SelectItem value="en-US">English (US)</SelectItem>
-            </SelectContent>
-          </Select>
+          <Combobox
+            searchable={false}
+            options={[{ value: 'pt-BR', label: 'Português (Brasil)' }, { value: 'en-US', label: 'English (US)' }]}
+            value={language}
+            onChange={onLanguageChange}
+          />
         </div>
         <div className="flex items-center space-x-2">
           <input

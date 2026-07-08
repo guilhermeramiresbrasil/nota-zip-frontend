@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Check, X, Star, ArrowRight, Link } from 'lucide-react';
+import { Check, X, Star, ArrowRight, Users } from 'lucide-react';
 import { Plan } from '../types/plan.types';
 
 interface PlanCardProps {
@@ -13,104 +13,83 @@ interface PlanCardProps {
 
 export const PlanCard: React.FC<PlanCardProps> = ({
   plan,
-  currentPlan,
   onUpgrade,
   isCurrentPlan,
 }) => {
+  const hasBadge = plan.popular || plan.isShared;
+
   return (
-    <Card className={`relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:scale-105 ${
-      plan.popular ? 'border-2 border-blue-500 shadow-lg' : 'shadow-md'
-    }`}>
+    <div className={`relative flex flex-col h-full ${hasBadge ? 'pt-5' : ''}`}>
       {plan.popular && (
-        <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 z-10">
-          <div className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-1.5 rounded-full text-sm font-semibold flex items-center gap-1 shadow-md">
-            <Star className="h-4 w-4 fill-current" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 z-10 whitespace-nowrap">
+          <div className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 shadow">
+            <Star className="h-3 w-3 fill-current" />
             Mais Popular
           </div>
         </div>
       )}
       {plan.isShared && (
-        <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 z-10">
-          <div className="bg-gradient-to-r from-rose-500 to-pink-600 text-white px-4 py-1.5 rounded-full text-sm font-semibold flex items-center gap-1 shadow-md">
-            <Link className="h-4 w-4" />
-            Plano Compartilhado — 2 pessoas
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 z-10 whitespace-nowrap">
+          <div className="bg-gradient-to-r from-rose-500 to-pink-600 text-white px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 shadow">
+            <Users className="h-3 w-3" />
+            2 pessoas
           </div>
         </div>
       )}
-      <div className={`bg-gradient-to-br ${plan.gradient} p-6 text-white relative overflow-hidden`}>
-        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16" />
-        <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-12 -mb-12" />
-        <h3 className="text-2xl font-bold relative z-10">{plan.name}</h3>
-        <p className="text-white/90 text-sm mt-2 relative z-10">
-          {plan.description}
-        </p>
-        <div className="mt-6 flex items-baseline relative z-10">
-          <span className="text-4xl font-bold">{plan.price}</span>
-          <span className="text-white/90 text-lg ml-2">{plan.period}</span>
-        </div>
-      </div>
-      <CardContent className="pt-8 pb-6">
-        <div className="space-y-5">
-          <div>
-            <h4 className="font-semibold mb-4 text-sm text-gray-900 uppercase tracking-wide">
-              Incluído
-            </h4>
-            <ul className="space-y-3">
-              {plan.features.map((feature) => (
-                <li key={feature} className="flex items-start gap-3 text-sm">
-                  <div className="flex-shrink-0 w-5 h-5 rounded-full bg-green-100 flex items-center justify-center mt-0.5">
-                    <Check className="h-3 w-3 text-green-600" />
-                  </div>
-                  <span className="text-gray-700">{feature}</span>
-                </li>
-              ))}
-              <li className="flex items-start gap-3 text-sm">
-                <div className="flex-shrink-0 w-5 h-5 rounded-full bg-green-100 flex items-center justify-center mt-0.5">
-                  <Check className="h-3 w-3 text-green-600" />
-                </div>
-                <span className="text-gray-700">
-                  Upload de {plan.uploadLimit === 0 ? '0 MB (não permitido)' : plan.uploadLimit >= 1024 ? `${(plan.uploadLimit / 1024).toFixed(0)} GB` : `${plan.uploadLimit} MB`}
-                </span>
-              </li>
-            </ul>
-          </div>
 
-          {plan.notIncluded.length > 0 && (
-            <div>
-              <h4 className="font-semibold mb-4 text-sm text-gray-900 uppercase tracking-wide">
-                Não incluído
-              </h4>
-              <ul className="space-y-3">
-                {plan.notIncluded.map((feature) => (
-                  <li key={feature} className="flex items-start gap-3 text-sm">
-                    <div className="flex-shrink-0 w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center mt-0.5">
-                      <X className="h-3 w-3 text-gray-400" />
-                    </div>
-                    <span className="text-gray-500">{feature}</span>
-                  </li>
-                ))}
-              </ul>
+      <Card className={`flex flex-col h-full overflow-hidden transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 ${
+        plan.popular ? 'border-2 border-blue-500 shadow-md' :
+        plan.isShared ? 'border-2 border-rose-400 shadow-md' : 'border shadow-sm'
+      }`}>
+        {/* Header colorido */}
+        <div className={`bg-gradient-to-br ${plan.gradient} px-5 py-4 text-white relative overflow-hidden`}>
+          <div className="absolute -right-6 -top-6 w-20 h-20 bg-white/10 rounded-full" />
+          <div className="relative z-10">
+            <p className="text-xs font-medium text-white/80 uppercase tracking-wider">{plan.description}</p>
+            <h3 className="text-xl font-bold mt-0.5">{plan.name}</h3>
+            <div className="mt-2 flex items-baseline gap-1">
+              <span className="text-3xl font-bold">{plan.price}</span>
+              <span className="text-white/80 text-sm">{plan.period}</span>
             </div>
-          )}
+          </div>
+        </div>
+
+        {/* Features */}
+        <CardContent className="flex-1 flex flex-col pt-4 pb-4 px-4">
+          <ul className="space-y-2 flex-1">
+            {plan.features.map((feature) => (
+              <li key={feature} className="flex items-start gap-2 text-sm">
+                <Check className="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
+                <span className="text-gray-700 leading-snug">{feature}</span>
+              </li>
+            ))}
+            {plan.notIncluded.map((feature) => (
+              <li key={feature} className="flex items-start gap-2 text-sm">
+                <X className="h-4 w-4 text-gray-300 flex-shrink-0 mt-0.5" />
+                <span className="text-gray-400 leading-snug">{feature}</span>
+              </li>
+            ))}
+          </ul>
 
           <Button
-            className={`w-full h-12 font-semibold text-base transition-all ${
+            className={`w-full mt-4 font-semibold transition-all ${
               isCurrentPlan
-                ? 'bg-green-600 hover:bg-green-700 text-white shadow-lg hover:shadow-xl'
+                ? 'bg-green-600 hover:bg-green-700 text-white'
                 : plan.isShared
-                ? 'bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white shadow-lg hover:shadow-xl'
-                : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl'
+                ? 'bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white'
+                : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white'
             }`}
             onClick={() => onUpgrade?.(plan.id)}
           >
             {isCurrentPlan ? 'Plano Atual' : (
-              <>
-                {plan.isShared ? 'Convidar membro' : 'Escolher Plano'} <ArrowRight className="ml-2 h-4 w-4" />
-              </>
+              <span className="flex items-center justify-center gap-1">
+                {plan.isShared ? 'Compartilhar' : plan.id === 'free' ? 'Continuar grátis' : 'Assinar'}
+                <ArrowRight className="h-4 w-4" />
+              </span>
             )}
           </Button>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
