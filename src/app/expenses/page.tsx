@@ -10,6 +10,7 @@ import { StatsCard } from '../home/components/StatsCard';
 import { ExpenseFilter } from './components/ExpenseFilter';
 import { ExpenseList } from './components/ExpenseList';
 import { ExpenseForm } from './components/ExpenseForm';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { expenseService } from './logics/services/expenseService';
 import { calculateTotalByType } from './logics/calculations/expenseCalculations';
 import { useAuth } from '@/contexts/AuthContext';
@@ -35,6 +36,9 @@ export default function ExpensesPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [transactionType, setTransactionType] = useState<'income' | 'expense'>('expense');
   const [dateRange, setDateRange] = useState({ startDate: '', endDate: '' });
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [transactionToDelete, setTransactionToDelete] = useState<string | null>(null);
   const [formData, setFormData] = useState<FormData>({
     amount: '',
     categoryId: '',
@@ -67,6 +71,7 @@ export default function ExpensesPage() {
   const balance = totalIncome - totalExpenses;
 
   const handleAddTransaction = () => {
+    setEditingTransaction(null);
     setFormData({
       amount: '',
       categoryId: '',
@@ -81,25 +86,66 @@ export default function ExpensesPage() {
     setDialogOpen(true);
   };
 
+  const handleEditTransaction = (id: string) => {
+    const transaction = transactions.find(t => t.id === id);
+    if (transaction) {
+      setEditingTransaction(transaction);
+      setFormData({
+        amount: transaction.amount.toString(),
+        categoryId: transaction.category,
+        subcategoryId: '',
+        description: transaction.description || '',
+        date: transaction.date,
+        payment_method: '',
+        card_id: '',
+        installments: '1',
+        firstBillingMonth: new Date().toISOString().slice(0, 7),
+      });
+      setTransactionType(transaction.type as 'income' | 'expense');
+      setDialogOpen(true);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user?.id) return;
 
     try {
-      const newTransaction = await expenseService.createTransaction(formData, transactionType, user.id);
+      if (editingTransaction) {
+        // Update existing transaction
+        const updatedTransaction = await expenseService.updateTransaction(
+          editingTransaction.id,
+          formData,
+          user.id
+        );
+        setTransactions((prev) =>
+          prev.map((t) => (t.id === editingTransaction.id ? updatedTransaction : t))
+        );
+      } else {
+        // Create new transaction
+        const newTransaction = await expenseService.createTransaction(formData, transactionType, user.id);
+        setTransactions((prev) => [newTransaction, ...prev]);
+      }
       setDialogOpen(false);
-      setTransactions((prev) => [newTransaction, ...prev]);
+      setEditingTransaction(null);
     } catch (error) {
-      console.error('Error creating transaction:', error);
+      console.error('Error saving transaction:', error);
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!user?.id) return;
+  const handleDeleteClick = (id: string) => {
+    setTransactionToDelete(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!user?.id || !transactionToDelete) return;
 
     try {
-      await expenseService.deleteTransaction(id, user.id);
-      setTransactions((prev) => prev.filter((t) => t.id !== id));
+      await expenseService.deleteTransaction(transactionToDelete, user.id);
+      setTransactions((prev) => prev.filter((t) => t.id !== transactionToDelete));
+      setDeleteDialogOpen(false);
+      setTransactionToDelete(null);
     } catch (error) {
       console.error('Error deleting transaction:', error);
     }
@@ -140,21 +186,33 @@ export default function ExpensesPage() {
             ) : (
               <ExpenseList
                 transactions={transactions}
-                onDelete={handleDelete}
+                onEdit={handleEditTransaction}
+                onDelete={handleDeleteClick}
               />
             )}
           </CardContent>
         </Card>
 
-        <ExpenseForm 
-          dialogOpen={dialogOpen} 
-          onDialogOpenChange={setDialogOpen} 
+        <ExpenseForm
+          dialogOpen={dialogOpen}
+          onDialogOpenChange={setDialogOpen}
           transactionType={transactionType}
           onTransactionTypeChange={setTransactionType}
           formData={formData}
           onChangeFormData={setFormData}
           onSubmit={handleSubmit}
           onCancel={handleCancel}
+        />
+
+        <ConfirmDialog
+          open={deleteDialogOpen}
+          onOpenChange={setDeleteDialogOpen}
+          title="Excluir Transação"
+          description="Tem certeza que deseja excluir esta transação? Esta ação não pode ser desfeita."
+          confirmText="Excluir"
+          cancelText="Cancelar"
+          onConfirm={handleDeleteConfirm}
+          variant="destructive"
         />
       </div>
     </ProtectedRoute>

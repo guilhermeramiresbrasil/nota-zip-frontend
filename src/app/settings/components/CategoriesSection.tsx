@@ -19,6 +19,7 @@ import { buildCategoryOptions } from '@/app/expenses/logics/categoryOptions';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 const TYPE_COLORS: Record<string, string> = {
   credit: 'text-green-600 bg-green-50',
@@ -48,6 +49,7 @@ export function CategoriesSection() {
   const [editTarget, setEditTarget] = useState<Category | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm);
 
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Category | null>(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -114,12 +116,18 @@ export function CategoriesSection() {
     }
   };
 
-  const handleDelete = async () => {
+  const handleDeleteClick = (cat: Category) => {
+    setDeleteTarget(cat);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
     if (!user?.id || !deleteTarget) return;
     setDeleting(true);
     try {
       await categoryService.deleteCategory(deleteTarget.id, user.id);
       showSuccess('Subcategoria excluída.');
+      setDeleteDialogOpen(false);
       setDeleteTarget(null);
       await load();
     } catch {
@@ -213,7 +221,7 @@ export function CategoriesSection() {
                           </button>
                           <button
                             type="button"
-                            onClick={() => setDeleteTarget(sub)}
+                            onClick={() => handleDeleteClick(sub)}
                             className="p-1.5 rounded-md text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
                             aria-label="Excluir"
                           >
@@ -291,24 +299,16 @@ export function CategoriesSection() {
       </Dialog>
 
       {/* Delete Confirm Modal */}
-      <Dialog open={!!deleteTarget} onOpenChange={(v) => !v && setDeleteTarget(null)}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Excluir subcategoria</DialogTitle>
-            <DialogDescription>
-              Tem certeza que deseja excluir <strong>{deleteTarget?.name}</strong>? Transações existentes não serão afetadas.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex gap-2 pt-2">
-            <Button variant="outline" className="flex-1" onClick={() => setDeleteTarget(null)} disabled={deleting}>
-              Cancelar
-            </Button>
-            <Button variant="destructive" className="flex-1" onClick={handleDelete} disabled={deleting}>
-              {deleting ? 'Excluindo…' : 'Excluir'}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Excluir subcategoria"
+        description={`Tem certeza que deseja excluir "${deleteTarget?.name}"? Transações existentes não serão afetadas.`}
+        confirmText="Excluir"
+        cancelText="Cancelar"
+        onConfirm={handleDeleteConfirm}
+        variant="destructive"
+      />
     </>
   );
 }

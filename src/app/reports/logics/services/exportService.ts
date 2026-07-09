@@ -13,12 +13,15 @@ export class ExportService {
   }
 
   exportToCSV(data: DetailedTransaction[], filename: string): void {
-    const headers = ['Data', 'Descri\u00e7\u00e3o', 'Categoria', 'Tipo', 'Valor'];
+    const headers = ['Data', 'Descri\u00e7\u00e3o', 'Categoria', 'Tipo', 'Pagamento', 'Cart\u00e3o', 'Parcelas', 'Valor'];
     const rows = data.map((t) => [
       t.date,
       `"${t.description.replace(/"/g, '""')}"`,
       t.category,
       t.type === 'credit' ? 'Receita' : 'Despesa',
+      t.payment_method === 'credit_card' ? 'Cartão' : t.payment_method === 'debit' ? 'Débito' : t.payment_method || '-',
+      t.card_name || '-',
+      t.installments && t.installments > 1 ? `${t.installments}x` : '-',
       t.amount.toFixed(2),
     ]);
 

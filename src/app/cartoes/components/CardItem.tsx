@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Edit2, Trash2, CreditCard as CardIcon, Wallet } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 interface CardItemProps {
   card: CreditCard;
@@ -41,89 +42,112 @@ export function CardItem({ card, balance, selected, onSelect, onEdit, onDelete }
   const gradient = CARD_COLORS[card.color || 'default'] || CARD_COLORS.default;
   const usedPct = balance ? Math.min((balance.used / balance.limit) * 100, 100) : 0;
   const isOverLimit = balance && balance.available < 0;
+  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
 
   const formatCurrency = (v: number) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
 
+  const handleDeleteClick = () => {
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    onDelete(card.id);
+    setDeleteDialogOpen(false);
+  };
+
   return (
-    <Card
-      onClick={() => onSelect(card)}
-      className={cn(
-        'overflow-hidden border-0 shadow-md hover:shadow-lg transition-all cursor-pointer',
-        selected && 'ring-2 ring-indigo-500 shadow-lg'
-      )}
-    >
-      <div className={`bg-gradient-to-br ${gradient} p-5 text-white`}>
-        <div className="flex justify-between items-start mb-4">
-          <div>
-            <p className="text-xs text-white/70 uppercase tracking-wide">
-              {TYPE_LABELS[card.type]}
-              {card.cardSubtype === 'vr_va' ? ' · ' + SUBTYPE_LABELS.vr_va : ''}
-              {card.owner === 'borrowed' ? ' · Emprestado' : ''}
-            </p>
-            <h3 className="font-semibold text-lg leading-tight">{card.name}</h3>
-          </div>
-          {card.type === 'credit' ? (
-            <CardIcon className="h-8 w-8 text-white/50" />
-          ) : (
-            <Wallet className="h-8 w-8 text-white/50" />
-          )}
-        </div>
-        <p className="text-white/60 text-sm font-mono">
-          {card.lastFourDigits ? `•••• •••• •••• ${card.lastFourDigits}` : 'Sem número'}
-        </p>
-        <div className="flex justify-between mt-3 text-sm">
-          <span className="text-white/60">Fecha dia {card.closingDay}</span>
-          <span className="text-white/60">Vence dia {card.dueDay}</span>
-        </div>
-      </div>
-
-      <CardContent className="p-4 space-y-3">
-        {balance && (
-          <div>
-            <div className="flex justify-between text-xs text-muted-foreground mb-1">
-              <span>Utilizado</span>
-              <span className={isOverLimit ? 'text-red-500 font-medium' : ''}>
-                {formatCurrency(balance.used)} / {formatCurrency(balance.limit)}
-              </span>
-            </div>
-            <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
-              <div
-                className={`h-2 rounded-full transition-all ${isOverLimit ? 'bg-red-500' : usedPct > 80 ? 'bg-yellow-500' : 'bg-primary'}`}
-                style={{ width: `${Math.min(usedPct, 100)}%` }}
-              />
-            </div>
-            <div className="flex justify-between text-xs mt-1">
-              <span className="text-muted-foreground">Disponível</span>
-              <span className={`font-medium ${isOverLimit ? 'text-red-500' : 'text-green-600'}`}>
-                {formatCurrency(balance.available)}
-              </span>
-            </div>
-          </div>
+    <>
+      <Card
+        onClick={() => onSelect(card)}
+        className={cn(
+          'overflow-hidden border-0 shadow-md hover:shadow-lg transition-all cursor-pointer',
+          selected && 'ring-2 ring-indigo-500 shadow-lg'
         )}
-
-        <div className="flex items-center gap-1 justify-between pt-1">
-          <Badge variant="secondary" className="text-xs">
-            Fatura: {formatCurrency(balance?.currentInvoice || 0)}
-          </Badge>
-          <div className="flex gap-1">
-            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); onEdit(card); }}>
-              <Edit2 className="h-3.5 w-3.5" />
-            </Button>
-            <Button
-              size="icon"
-              variant="ghost"
-              className="h-7 w-7 text-destructive hover:text-destructive"
-              onClick={(e) => {
-                e.stopPropagation();
-                if (confirm(`Desativar cartão "${card.name}"?`)) onDelete(card.id);
-              }}
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-            </Button>
+      >
+        <div className={`bg-gradient-to-br ${gradient} p-5 text-white`}>
+          <div className="flex justify-between items-start mb-4">
+            <div>
+              <p className="text-xs text-white/70 uppercase tracking-wide">
+                {TYPE_LABELS[card.type]}
+                {card.cardSubtype === 'vr_va' ? ' · ' + SUBTYPE_LABELS.vr_va : ''}
+                {card.owner === 'borrowed' ? ' · Emprestado' : ''}
+              </p>
+              <h3 className="font-semibold text-lg leading-tight">{card.name}</h3>
+            </div>
+            {card.type === 'credit' ? (
+              <CardIcon className="h-8 w-8 text-white/50" />
+            ) : (
+              <Wallet className="h-8 w-8 text-white/50" />
+            )}
+          </div>
+          <p className="text-white/60 text-sm font-mono">
+            {card.lastFourDigits ? `•••• •••• •••• ${card.lastFourDigits}` : 'Sem número'}
+          </p>
+          <div className="flex justify-between mt-3 text-sm">
+            <span className="text-white/60">Fecha dia {card.closingDay}</span>
+            <span className="text-white/60">Vence dia {card.dueDay}</span>
           </div>
         </div>
-      </CardContent>
-    </Card>
+
+        <CardContent className="p-4 space-y-3">
+          {balance && (
+            <div>
+              <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                <span>Utilizado</span>
+                <span className={isOverLimit ? 'text-red-500 font-medium' : ''}>
+                  {formatCurrency(balance.used)} / {formatCurrency(balance.limit)}
+                </span>
+              </div>
+              <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
+                <div
+                  className={`h-2 rounded-full transition-all ${isOverLimit ? 'bg-red-500' : usedPct > 80 ? 'bg-yellow-500' : 'bg-primary'}`}
+                  style={{ width: `${Math.min(usedPct, 100)}%` }}
+                />
+              </div>
+              <div className="flex justify-between text-xs mt-1">
+                <span className="text-muted-foreground">Disponível</span>
+                <span className={`font-medium ${isOverLimit ? 'text-red-500' : 'text-green-600'}`}>
+                  {formatCurrency(balance.available)}
+                </span>
+              </div>
+            </div>
+          )}
+
+          <div className="flex items-center gap-1 justify-between pt-1">
+            <Badge variant="secondary" className="text-xs">
+              Fatura: {formatCurrency(balance?.currentInvoice || 0)}
+            </Badge>
+            <div className="flex gap-1">
+              <Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); onEdit(card); }}>
+                <Edit2 className="h-3.5 w-3.5" />
+              </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-7 w-7 text-destructive hover:text-destructive"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDeleteClick();
+                }}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Desativar Cartão"
+        description={`Tem certeza que deseja desativar o cartão "${card.name}"? Esta ação não pode ser desfeita.`}
+        confirmText="Desativar"
+        cancelText="Cancelar"
+        onConfirm={handleDeleteConfirm}
+        variant="destructive"
+      />
+    </>
   );
 }

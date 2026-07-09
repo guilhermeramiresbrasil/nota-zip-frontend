@@ -10,7 +10,7 @@ interface DataTableProps {
   data: DetailedTransaction[];
 }
 
-type SortField = 'date' | 'description' | 'category' | 'type' | 'amount';
+type SortField = 'date' | 'description' | 'category' | 'type' | 'amount' | 'payment_method' | 'card_name' | 'installments';
 
 const PAGE_SIZE = 10;
 
@@ -67,11 +67,14 @@ export const DataTable: React.FC<DataTableProps> = ({ data }) => {
                       ['description', 'Descrição'],
                       ['category', 'Categoria'],
                       ['type', 'Tipo'],
+                      ['payment_method', 'Pagamento'],
+                      ['card_name', 'Cartão'],
+                      ['installments', 'Parcelas'],
                       ['amount', 'Valor'],
                     ] as [SortField, string][]).map(([field, label]) => (
                       <th
                         key={field}
-                        className="py-2 px-2 cursor-pointer hover:bg-gray-50 text-xs font-medium"
+                        className="py-2 px-2 cursor-pointer hover:bg-gray-50 text-xs font-medium whitespace-nowrap"
                         onClick={() => toggleSort(field)}
                       >
                         {label} <SortIcon field={field} />
@@ -89,6 +92,13 @@ export const DataTable: React.FC<DataTableProps> = ({ data }) => {
                         <span className={t.type === 'credit' ? 'text-green-600' : 'text-red-600'}>
                           {t.type === 'credit' ? 'Receita' : 'Despesa'}
                         </span>
+                      </td>
+                      <td className="py-2 px-2 text-xs">
+                        {t.payment_method === 'credit_card' ? 'Cartão' : t.payment_method === 'debit' ? 'Débito' : t.payment_method || '-'}
+                      </td>
+                      <td className="py-2 px-2 text-xs">{t.card_name || '-'}</td>
+                      <td className="py-2 px-2 text-xs">
+                        {t.installments && t.installments > 1 ? `${t.installments}x` : '-'}
                       </td>
                       <td className={`py-2 px-2 text-xs font-medium ${t.type === 'credit' ? 'text-green-600' : 'text-red-600'}`}>
                         R$ {t.amount.toFixed(2)}

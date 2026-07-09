@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Combobox } from '@/components/ui/combobox';
+import { CurrencyInput } from '@/components/ui/currency-input';
 import { CreditCard, CreateCardFormData, CardType, CardOwner } from '../types/card.types';
 
 interface CardFormProps {
@@ -50,13 +51,21 @@ export function CardForm({ open, onOpenChange, initialData, onSubmit, title }: C
 
   useEffect(() => {
     if (initialData) {
+      // Format creditLimit as currency
+      const formattedLimit = initialData.creditLimit
+        ? initialData.creditLimit.toLocaleString('pt-BR', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })
+        : '';
+
       setForm({
         name: initialData.name,
         type: initialData.type,
         cardSubtype: initialData.cardSubtype,
         debitMode: initialData.debitMode,
         lastFourDigits: initialData.lastFourDigits || '',
-        creditLimit: String(initialData.creditLimit),
+        creditLimit: formattedLimit,
         reloadType: initialData.reloadType,
         closingDay: String(initialData.closingDay),
         dueDay: String(initialData.dueDay),
@@ -78,10 +87,14 @@ export function CardForm({ open, onOpenChange, initialData, onSubmit, title }: C
     e.preventDefault();
     setError('');
     if (!form.name.trim()) { setError('Nome é obrigatório'); return; }
-    if (!form.creditLimit || parseFloat(form.creditLimit) <= 0) { setError('Limite inválido'); return; }
+
+    // Convert currency string to number
+    const numericLimit = parseFloat(form.creditLimit.replace(/\./g, '').replace(',', '.')) || 0;
+    if (numericLimit <= 0) { setError('Limite inválido'); return; }
+
     setLoading(true);
     try {
-      await onSubmit(form);
+      await onSubmit({ ...form, creditLimit: numericLimit.toString() });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao salvar cartão');
     } finally {
@@ -155,13 +168,10 @@ export function CardForm({ open, onOpenChange, initialData, onSubmit, title }: C
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label>{isPrepaid ? 'Saldo inicial' : 'Limite (R$)'}</Label>
-              <Input
-                type="number"
-                min="0"
-                step="0.01"
+              <Label>{isPrepaid ? 'Saldo inicial' : 'Limite'}</Label>
+              <CurrencyInput
                 value={form.creditLimit}
-                onChange={(e) => set('creditLimit', e.target.value)}
+                onChange={(v) => set('creditLimit', v)}
                 required
               />
             </div>
