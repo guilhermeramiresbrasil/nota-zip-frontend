@@ -48,13 +48,13 @@ interface ReportsState {
   detailedTransactions: DetailedTransaction[];
   summaryStats: SummaryStats | null;
 
-  fetchReportData: (userId: string, period: ReportPeriod['value']) => Promise<void>;
+  fetchReportData: (userId: string, period: ReportPeriod['value'], partnerId?: string | null) => Promise<void>;
   setSelectedPeriod: (userId: string, period: ReportPeriod['value']) => void;
   updateChartConfig: (config: Partial<ChartConfig>) => void;
   resetChartConfig: () => void;
   updateFilters: (filters: Partial<ReportFilters>) => void;
   resetFilters: () => void;
-  fetchDetailedTransactions: (userId: string) => Promise<void>;
+  fetchDetailedTransactions: (userId: string, partnerId?: string | null, userNickname?: string, partnerNickname?: string) => Promise<void>;
 }
 
 export const useReportsStore = create<ReportsState>((set, get) => ({
@@ -67,11 +67,44 @@ export const useReportsStore = create<ReportsState>((set, get) => ({
   detailedTransactions: [],
   summaryStats: null,
 
-  fetchReportData: async (userId, period) => {
+  fetchReportData: async (userId, period, partnerId) => {
     if (!userId) return;
     set({ loading: true, error: null });
     try {
-      const data = await reportService.fetchReportData(userId, period);
+      let data = await reportService.fetchReportData(userId, period);
+
+      // If partnerId is provided, fetch partner's data and combine
+      if (partnerId) {
+        const partnerData = await reportService.fetchReportData(partnerId, period);
+
+        // Combine the data
+        data = {
+          totalIncome: data.totalIncome + partnerData.totalIncome,
+          totalExpenses: data.totalExpenses + partnerData.totalExpenses,
+          avgExpenses: (data.avgExpenses + partnerData.avgExpenses) / 2,
+          categoryData: [
+            ...data.categoryData.map(c => ({ ...c, userId })),
+            ...partnerData.categoryData.map(c => ({ ...c, userId: partnerId })),
+          ],
+          monthlyData: [
+            ...data.monthlyData.map(m => ({ ...m, userId })),
+            ...partnerData.monthlyData.map(m => ({ ...m, userId: partnerId })),
+          ],
+        };
+
+        // Merge category data by name
+        const categoryMap = new Map();
+        data.categoryData.forEach(c => {
+          const existing = categoryMap.get(c.name);
+          if (existing) {
+            existing.value += c.value;
+          } else {
+            categoryMap.set(c.name, { ...c });
+          }
+        });
+        data.categoryData = Array.from(categoryMap.values());
+      }
+
       set({ reportData: data, loading: false });
 
       const stats: SummaryStats = {
@@ -123,10 +156,17 @@ export const useReportsStore = create<ReportsState>((set, get) => ({
     set({ filters: DEFAULT_FILTERS });
   },
 
-  fetchDetailedTransactions: async (userId) => {
+  fetchDetailedTransactions: async (userId, partnerId) => {
     if (!userId) return;
     try {
-      const data = await reportService.fetchDetailedTransactions(userId, get().filters);
+      let data = await reportService.fetchDetailedTransactions(userId, get().filters);
+
+      // If partnerId is provided, fetch partner's transactions and combine
+      if (partnerId) {
+        const partnerData = await reportService.fetchDetailedTransactions(partnerId, get().filters);
+        data = [...data, ...partnerData];
+      }
+
       set({ detailedTransactions: data });
     } catch (error) {
       console.error('Failed to fetch detailed transactions:', error);

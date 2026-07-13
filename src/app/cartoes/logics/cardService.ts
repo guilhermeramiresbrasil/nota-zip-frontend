@@ -36,33 +36,61 @@ class CardService {
     const res = await fetch(`${GATEWAY_URL}/api/credit-cards/?userId=${userId}`, {
       headers: this.getHeaders(),
     });
-    if (!res.ok) throw new Error('Erro ao listar cartões');
+    if (!res.ok) { 
+      const err = await res.json(); 
+      console.error('List cards error:', err);
+      throw new Error(err.error || err.message || 'Erro ao listar cartões'); 
+    }
     const result = await res.json();
     return result.data || [];
   }
 
   async createCard(userId: string, data: CreateCardFormData): Promise<CreditCard> {
+    const parseCurrencyToNumber = (v: string) => parseFloat(v.replace(/\./g, '').replace(',', '.')) || 0;
+    
     const res = await fetch(`${GATEWAY_URL}/api/credit-cards/`, {
       method: 'POST',
       headers: this.getHeaders(),
       body: JSON.stringify({
         ...data,
         userId,
-        creditLimit: parseFloat(data.creditLimit),
+        creditLimit: parseCurrencyToNumber(data.creditLimit),
         closingDay: parseInt(data.closingDay),
         dueDay: parseInt(data.dueDay),
       }),
     });
-    if (!res.ok) { const err = await res.json(); throw new Error(err.error || 'Erro ao criar cartão'); }
+    if (!res.ok) { 
+      const err = await res.json(); 
+      console.error('Card creation error:', err);
+      throw new Error(err.error || err.message || 'Erro ao criar cartão'); 
+    }
     const result = await res.json();
     return result.data;
   }
 
   async patchCard(id: string, userId: string, data: Partial<CreateCardFormData>): Promise<CreditCard> {
+    const parseCurrencyToNumber = (v: string) => parseFloat(v.replace(/\./g, '').replace(',', '.')) || 0;
+
+    const processedData: any = {};
+
+    if (data.name !== undefined) processedData.name = data.name;
+    if (data.type !== undefined) processedData.type = data.type;
+    if (data.cardSubtype !== undefined && data.cardSubtype !== null) processedData.cardSubtype = data.cardSubtype;
+    if (data.debitMode !== undefined && data.debitMode !== null) processedData.debitMode = data.debitMode;
+    if (data.lastFourDigits !== undefined) processedData.lastFourDigits = data.lastFourDigits;
+    if (data.creditLimit !== undefined) processedData.creditLimit = parseCurrencyToNumber(data.creditLimit);
+    if (data.reloadType !== undefined && data.reloadType !== null) processedData.reloadType = data.reloadType;
+    if (data.closingDay !== undefined) processedData.closingDay = parseInt(data.closingDay);
+    if (data.dueDay !== undefined) processedData.dueDay = parseInt(data.dueDay);
+    if (data.owner !== undefined) processedData.owner = data.owner;
+    if (data.ownerName !== undefined) processedData.ownerName = data.ownerName;
+    if (data.color !== undefined && data.color !== null) processedData.color = data.color;
+    if (data.icon !== undefined && data.icon !== null) processedData.icon = data.icon;
+
     const res = await fetch(`${GATEWAY_URL}/api/credit-cards/${id}?userId=${userId}`, {
       method: 'PATCH',
       headers: this.getHeaders(),
-      body: JSON.stringify(data),
+      body: JSON.stringify(processedData),
     });
     if (!res.ok) { const err = await res.json(); throw new Error(err.error || 'Erro ao atualizar cartão'); }
     const result = await res.json();
@@ -122,6 +150,22 @@ class CardService {
     if (!res.ok) { const err = await res.json(); throw new Error(err.error || 'Erro ao deletar compra'); }
   }
 
+  async updatePurchase(id: string, userId: string, data: CreatePurchaseFormData): Promise<void> {
+    const res = await fetch(`${GATEWAY_URL}/api/credit-cards/purchases/${id}?userId=${userId}`, {
+      method: 'PATCH',
+      headers: this.getHeaders(),
+      body: JSON.stringify({
+        categoryId: data.categoryId,
+        description: data.description,
+        totalAmount: parseFloat(data.totalAmount),
+        installments: parseInt(data.installments) || 1,
+        purchaseDate: data.purchaseDate,
+        firstBillingMonth: data.firstBillingMonth,
+      }),
+    });
+    if (!res.ok) { const err = await res.json(); throw new Error(err.error || 'Erro ao atualizar compra'); }
+  }
+
   async listInvoices(cardId: string, userId: string): Promise<CreditCardInvoice[]> {
     const res = await fetch(`${GATEWAY_URL}/api/credit-cards/${cardId}/invoices?userId=${userId}`, {
       headers: this.getHeaders(),
@@ -153,6 +197,24 @@ class CardService {
       body: JSON.stringify({ userId, paymentType, paidAmount, categoryId }),
     });
     if (!res.ok) { const err = await res.json(); throw new Error(err.error || 'Erro ao pagar fatura'); }
+  }
+
+  async updateInvoice(id: string, userId: string, data: any): Promise<void> {
+    const res = await fetch(`${GATEWAY_URL}/api/credit-cards/invoices/${id}`, {
+      method: 'PATCH',
+      headers: this.getHeaders(),
+      body: JSON.stringify({ userId, ...data }),
+    });
+    if (!res.ok) { const err = await res.json(); throw new Error(err.error || 'Erro ao atualizar fatura'); }
+  }
+
+  async updateReload(id: string, userId: string, data: any): Promise<void> {
+    const res = await fetch(`${GATEWAY_URL}/api/credit-cards/reloads/${id}`, {
+      method: 'PATCH',
+      headers: this.getHeaders(),
+      body: JSON.stringify({ userId, ...data }),
+    });
+    if (!res.ok) { const err = await res.json(); throw new Error(err.error || 'Erro ao atualizar recarga'); }
   }
 
   async addReload(cardId: string, userId: string, amount: number, notes?: string): Promise<CreditCardReload> {

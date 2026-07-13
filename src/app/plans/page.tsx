@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/PageHeader';
 import { PlanCard } from './components/PlanCard';
 import { PlanComparison } from './components/PlanComparison';
+import { StripePricingTable } from './components/StripePricingTable';
 import { planService } from '../../services/planService';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -37,7 +38,7 @@ export default function PlansPage() {
     fetchPlans();
   }, []);
 
-  const handleUpgrade = async (planId: 'free' | 'basic' | 'premium') => {
+  const handleUpgrade = async (planId: 'free' | 'basic' | 'premium' | 'shared') => {
     if (planId === 'free') {
       showSuccess('Plano Grátis ativado!');
       router.push('/home');
@@ -92,61 +93,17 @@ export default function PlansPage() {
         title="Planos e Preços"
         description="Escolha o plano ideal para suas necessidades"
       />
-
-      <div className="flex justify-end mb-4">
-        <Button variant="ghost" onClick={() => router.push('/home')}>
-          Pular por enquanto
-        </Button>
+      {/* Stripe Pricing Table */}
+      <div className="mt-12">
+        <h2 className="text-2xl font-bold mb-6">Assinar Plano</h2>
+        <StripePricingTable
+          pricingTableId="prctbl_1TqyyS7ZGxkJBfmcxJlfeIGA"
+          publishableKey="pk_test_51TXREK7ZGxkJBfmch0Ltz9BeQ9D9q3PD1BygSFZ0tM1rlSDkbAK8fmqvkW6wS4zzlREVn0IVM4e3vz5yP8FX1ay700sXOu9Zhx"
+          customerEmail={user?.email}
+          clientReferenceId={user?.id}
+          successUrl="http://localhost:3000/home"
+        />
       </div>
-
-      {/* Checkout Modal */}
-      {selectedPlan && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <Card className="w-full max-w-md">
-            <CardHeader>
-              <CardTitle>Assinar {selectedPlan.name}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-5">
-              <div>
-                <p className="text-sm font-medium mb-2">Ciclo de cobrança</p>
-                <div className="flex gap-2">
-                  <Button variant={billingCycle === 'monthly' ? 'default' : 'outline'} className="flex-1" onClick={() => setBillingCycle('monthly')}>Mensal</Button>
-                  <Button variant={billingCycle === 'yearly' ? 'default' : 'outline'} className="flex-1" onClick={() => setBillingCycle('yearly')}>Anual <span className="ml-1 text-xs opacity-70">-10%</span></Button>
-                </div>
-              </div>
-              <div className="flex gap-2 pt-2">
-                <Button variant="outline" className="flex-1" onClick={() => setSelectedPlan(null)}>Cancelar</Button>
-                <Button className="flex-1" disabled={!!checkoutLoading} onClick={handleCheckout}>
-                  {checkoutLoading ? 'Aguarde...' : 'Ir para pagamento'}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Plans Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-        {plans.map((plan) => (
-          <PlanCard
-            key={plan.id}
-            plan={plan}
-            currentPlan={user?.plan}
-            isCurrentPlan={user?.plan === plan.id}
-            onUpgrade={handleUpgrade}
-          />
-        ))}
-      </div>
-
-      {/* Comparison Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Comparação de Planos</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <PlanComparison plans={plans} />
-        </CardContent>
-      </Card>
     </div>
   );
 }

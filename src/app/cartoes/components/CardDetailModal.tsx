@@ -247,7 +247,7 @@ export function CardDetailModal({ card, userId, open, onOpenChange, onReload }: 
                         {showPayForm === inv.id ? (
                           <div className="space-y-2 pt-1">
                             <Select value={payType} onValueChange={(v) => setPayType(v as 'full' | 'partial')}>
-                              <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                              <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="full">Pagar total ({fmt(inv.totalAmount)})</SelectItem>
                                 <SelectItem value="partial">Pagar parcial</SelectItem>
@@ -350,7 +350,7 @@ export function CardDetailModal({ card, userId, open, onOpenChange, onReload }: 
                         value={purchaseForm.categoryId}
                         onValueChange={(v) => setPurchaseForm((f) => ({ ...f, categoryId: v }))}
                       >
-                        <SelectTrigger className="h-8 text-xs mt-1"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <SelectTrigger className="h-9 mt-1"><SelectValue placeholder="Selecione" /></SelectTrigger>
                         <SelectContent>
                           {categories.map((c) => (
                             <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>

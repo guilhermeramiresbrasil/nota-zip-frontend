@@ -70,6 +70,26 @@ const FALLBACK_PLANS: Plan[] = [
     gradient: 'from-purple-500 to-purple-600',
     uploadLimit: 1024,
   },
+  {
+    id: 'shared',
+    name: 'Compartilhado',
+    description: 'Plano compartilhado para casais',
+    price: 'R$ 79,90',
+    period: '/mês',
+    features: [
+      'Transações ilimitadas',
+      'Relatórios',
+      'Guarda Garantia (notas salvas pelo tempo que você escolher)',
+      'WhatsApp para inserir notas em áudio, foto ou texto',
+      'Exportação de dados',
+      'Suporte prioritário',
+      'Grupo compartilhado',
+    ],
+    notIncluded: [],
+    popular: false,
+    gradient: 'from-pink-500 to-rose-600',
+    uploadLimit: 1024,
+  },
 ];
 
 export class PlanService {
@@ -90,9 +110,9 @@ export class PlanService {
       const data = await response.json();
       if (data.success && Array.isArray(data.data) && data.data.length > 0) {
         return data.data.map((p: any) => ({
-          id: p.name as 'free' | 'basic' | 'premium',
+          id: p.name as 'free' | 'basic' | 'premium' | 'shared',
           planUuid: p.id,
-          name: p.name === 'free' ? 'Grátis' : p.name === 'basic' ? 'Básico' : 'Premium',
+          name: p.name === 'free' ? 'Grátis' : p.name === 'basic' ? 'Básico' : p.name === 'premium' ? 'Premium' : 'Compartilhado',
           description: FALLBACK_PLANS.find(f => f.id === p.name)?.description || '',
           price: !p.price || p.price === 0 ? 'R$ 0' : `R$ ${parseFloat(p.price).toFixed(2).replace('.', ',')}`,
           period: '/mês',

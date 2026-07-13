@@ -6,8 +6,8 @@ import { Plan } from '../types/plan.types';
 
 interface PlanCardProps {
   plan: Plan;
-  currentPlan?: 'free' | 'basic' | 'premium';
-  onUpgrade?: (planId: 'free' | 'basic' | 'premium') => void;
+  currentPlan?: 'free' | 'basic' | 'premium' | 'shared';
+  onUpgrade?: (planId: 'free' | 'basic' | 'premium' | 'shared') => void;
   isCurrentPlan?: boolean;
 }
 

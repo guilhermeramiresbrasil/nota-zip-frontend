@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { TrendingUp, TrendingDown } from 'lucide-react';
+import { TrendingUp, TrendingDown, Wallet, ArrowUpRight, PiggyBank } from 'lucide-react';
 import { StatsCardProps } from '../types/dashboard.types';
 
 export const StatsCard: React.FC<StatsCardProps> = ({
@@ -12,35 +12,30 @@ export const StatsCard: React.FC<StatsCardProps> = ({
   const getVariantClasses = () => {
     switch (variant) {
       case 'balance':
-        return 'bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0';
+        return 'bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 text-white border-0 shadow-lg shadow-blue-500/30';
       case 'income':
-        return 'text-green-600';
+        return 'bg-gradient-to-br from-emerald-400 to-emerald-600 text-white border-0 shadow-lg shadow-emerald-500/30';
       case 'expense':
-        return 'text-red-600';
+        return 'bg-gradient-to-br from-rose-400 to-rose-600 text-white border-0 shadow-lg shadow-rose-500/30';
       case 'savings':
-        return 'text-purple-600';
+        return 'bg-gradient-to-br from-violet-400 to-purple-600 text-white border-0 shadow-lg shadow-purple-500/30';
       default:
         return '';
     }
   };
 
-  const getTitleClasses = () => {
-    if (variant === 'balance') {
-      return 'text-sm font-medium text-blue-100';
-    }
-    return 'text-sm font-medium text-gray-600';
-  };
-
-  const getValueClasses = () => {
+  const getIcon = () => {
     switch (variant) {
+      case 'balance':
+        return <Wallet className="h-5 w-5" />;
       case 'income':
-        return 'text-3xl font-bold text-green-600';
+        return <ArrowUpRight className="h-5 w-5" />;
       case 'expense':
-        return 'text-3xl font-bold text-red-600';
+        return <TrendingDown className="h-5 w-5" />;
       case 'savings':
-        return 'text-3xl font-bold text-purple-600';
+        return <PiggyBank className="h-5 w-5" />;
       default:
-        return 'text-3xl font-bold';
+        return null;
     }
   };
 
@@ -51,11 +46,7 @@ export const StatsCard: React.FC<StatsCardProps> = ({
     const Icon = isPositive ? TrendingUp : TrendingDown;
 
     return (
-      <p
-        className={`text-sm mt-1 flex items-center ${
-          variant === 'balance' ? 'text-blue-100' : 'text-gray-500'
-        }`}
-      >
+      <p className="text-sm mt-2 flex items-center text-white/90 font-medium">
         <Icon className="h-4 w-4 mr-1" />
         {isPositive ? '+' : ''}{trend}% este mês
       </p>
@@ -65,10 +56,15 @@ export const StatsCard: React.FC<StatsCardProps> = ({
   return (
     <Card className={getVariantClasses()}>
       <CardHeader className="pb-3">
-        <CardTitle className={getTitleClasses()}>{title}</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-sm font-medium text-white/90">{title}</CardTitle>
+          <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+            {getIcon()}
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
-        <div className={getValueClasses()}>
+        <div className="text-3xl font-bold text-white">
           R$ {value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
         </div>
         {renderTrend()}

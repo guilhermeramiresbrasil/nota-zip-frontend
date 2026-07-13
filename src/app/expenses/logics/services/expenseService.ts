@@ -56,13 +56,20 @@ export class ExpenseService {
       const result = await response.json();
       const data = result.data || [];
 
-      return data.map((t: { id: string; description: string; amount: number; type: string; category: string; date: string }) => ({
+      return data.map((t: any) => ({
         id: t.id,
         name: t.description,
+        description: t.description,
         amount: t.type === 'debit' ? -Math.abs(t.amount) : Math.abs(t.amount),
         category: t.category,
+        categoryId: t.categoryId,
+        subcategoryId: t.subcategoryId,
         date: t.date,
         type: t.type === 'credit' ? 'income' : 'expense',
+        payment_method: t.payment_method || undefined,
+        cardId: t.card_id || undefined,
+        installments: t.installments || undefined,
+        firstBillingMonth: t.firstBillingMonth || undefined,
       }));
     } catch (error) {
       console.error('Error fetching transactions:', error);
@@ -154,10 +161,18 @@ export class ExpenseService {
     userId: string
   ): Promise<Transaction> {
     const body: Record<string, unknown> = {};
-    if (formData.amount !== undefined) body.amount = parseFloat(formData.amount);
+    if (formData.amount !== undefined) {
+      const parseCurrencyToNumber = (v: string) => parseFloat(v.replace(/\./g, '').replace(',', '.')) || 0;
+      body.amount = parseCurrencyToNumber(formData.amount);
+    }
     if (formData.categoryId !== undefined) body.categoryId = formData.categoryId;
+    if (formData.subcategoryId !== undefined) body.subcategoryId = formData.subcategoryId;
     if (formData.description !== undefined) body.description = formData.description;
     if (formData.date !== undefined) body.date = formData.date;
+    if (formData.payment_method !== undefined) body.payment_method = formData.payment_method;
+    if (formData.card_id !== undefined) body.card_id = formData.card_id;
+    if (formData.installments !== undefined) body.installments = parseInt(formData.installments);
+    if (formData.firstBillingMonth !== undefined) body.firstBillingMonth = formData.firstBillingMonth;
 
     const response = await fetch(`${GATEWAY_URL}/api/transactions/${id}?userId=${userId}`, {
       method: 'PUT',
@@ -176,10 +191,17 @@ export class ExpenseService {
     return {
       id: t.id,
       name: t.description,
+      description: t.description,
       amount: t.type === 'debit' ? -Math.abs(t.amount) : Math.abs(t.amount),
-      category: t.categoryId,
+      category: t.category,
+      categoryId: t.categoryId,
+      subcategoryId: t.subcategoryId,
       date: t.date,
       type: t.type === 'credit' ? 'income' : 'expense',
+      payment_method: t.payment_method,
+      cardId: t.card_id,
+      installments: t.installments,
+      firstBillingMonth: t.firstBillingMonth,
     };
   }
 

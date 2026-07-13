@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
+import { useViewMode } from '@/contexts/ViewModeContext';
 import { cardService } from './logics/cardService';
 import { CreditCard, CardBalance, CreateCardFormData } from './types/card.types';
 import { CardList } from './components/CardList';
@@ -10,6 +11,7 @@ import { CardForm } from './components/CardForm';
 import { CardDetailPanel } from './components/CardDetailPanel';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, CreditCard as CreditCardIcon } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function CartoesPage() {
   return (
@@ -21,6 +23,7 @@ export default function CartoesPage() {
 
 function CartoesContent() {
   const { user } = useAuth();
+  const { isSharedView } = useViewMode();
   const userId = user?.id || '';
 
   const [cards, setCards] = useState<CreditCard[]>([]);
@@ -29,25 +32,68 @@ function CartoesContent() {
   const [formOpen, setFormOpen] = useState(false);
   const [editCard, setEditCard] = useState<CreditCard | null>(null);
   const [selectedCard, setSelectedCard] = useState<CreditCard | null>(null);
+  const [partnerId, setPartnerId] = useState<string | null>(null);
+  const [direction, setDirection] = useState(0);
+
+  // Fetch shared group info to get partner ID
+  useEffect(() => {
+    if (!user?.id || user?.plan !== 'shared') return;
+    const fetchSharedGroup = async () => {
+      try {
+        const accessToken = localStorage.getItem('accessToken');
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/shared-groups/${user.id}`, {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+          },
+        });
+
+        const data = await res.json();
+        if (data.success && data.data) {
+          const group = data.data;
+          // Set partner ID based on whether user is owner or partner
+          if (group.ownerId === user.id) {
+            setPartnerId(group.partnerId);
+          } else if (group.partnerId === user.id) {
+            setPartnerId(group.ownerId);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching shared group:', error);
+      }
+    };
+    fetchSharedGroup();
+  }, [user?.id, user?.plan]);
 
   const loadCards = useCallback(async () => {
     if (!userId) return;
     setLoading(true);
     try {
-      const data = await cardService.listCards(userId);
+      let data: CreditCard[] = [];
+
+      // Fetch user's cards
+      const userCards = await cardService.listCards(userId);
+      data = [...userCards];
+
+      // If in shared view and partner exists, fetch partner's cards
+      if (isSharedView && partnerId) {
+        const partnerCards = await cardService.listCards(partnerId);
+        data = [...data, ...partnerCards];
+      }
+
       setCards(data);
       const balanceMap: Record<string, CardBalance> = {};
       await Promise.all(
         data.map(async (card) => {
           try {
-            balanceMap[card.id] = await cardService.getCardBalance(card.id, userId);
+            const cardUserId = userCards.find(c => c.id === card.id) ? userId : partnerId || userId;
+            balanceMap[card.id] = await cardService.getCardBalance(card.id, cardUserId);
           } catch {
             balanceMap[card.id] = { limit: card.creditLimit, used: 0, available: card.creditLimit, currentInvoice: 0 };
           }
         })
       );
       setBalances(balanceMap);
-      // Auto-selecionar o primeiro cartão
+      // Auto-selecionar o primeiro cartão apenas se não houver nenhum selecionado
       if (data.length > 0 && !selectedCard) {
         setSelectedCard(data[0]);
       }
@@ -56,14 +102,19 @@ function CartoesContent() {
     } finally {
       setLoading(false);
     }
-  }, [userId]);
+  }, [userId, isSharedView, partnerId]);
 
   useEffect(() => {
     loadCards();
   }, [loadCards]);
 
   const handleSelect = (card: CreditCard) => {
-    setSelectedCard((prev) => prev?.id === card.id ? null : card);
+    if (selectedCard?.id !== card.id) {
+      const currentIndex = cards.findIndex(c => c.id === selectedCard?.id);
+      const newIndex = cards.findIndex(c => c.id === card.id);
+      setDirection(newIndex > currentIndex ? 1 : -1);
+      setSelectedCard(card);
+    }
   };
 
   const handleCreateCard = async (data: CreateCardFormData) => {
@@ -127,15 +178,24 @@ function CartoesContent() {
               onDelete={handleDeleteCard}
             />
 
-            {selectedCard && (
-              <CardDetailPanel
-                key={selectedCard.id}
-                card={selectedCard}
-                userId={userId}
-                balance={balances[selectedCard.id] ?? null}
-                onReload={loadCards}
-              />
-            )}
+            <AnimatePresence mode="wait">
+              {selectedCard && userId && (
+                <motion.div
+                  initial={{ opacity: 0, x: direction * 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: direction * -20 }}
+                  transition={{ duration: 0.15, ease: 'easeOut' }}
+                >
+                  <CardDetailPanel
+                    key={selectedCard.id}
+                    card={selectedCard}
+                    userId={userId}
+                    balance={balances[selectedCard.id] ?? null}
+                    onReload={loadCards}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
           </>
         )}
       </div>

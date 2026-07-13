@@ -13,6 +13,7 @@ import { ExpenseForm } from './components/ExpenseForm';
 import { expenseService } from './logics/services/expenseService';
 import { calculateTotalByType } from './logics/calculations/expenseCalculations';
 import { useAuth } from '@/contexts/AuthContext';
+import { useViewMode } from '@/contexts/ViewModeContext';
 import { Transaction } from '@/app/home/types/dashboard.types';
 
 interface FormData {
@@ -30,11 +31,15 @@ interface FormData {
 
 export default function ExpensesPage() {
   const { user } = useAuth();
+  const { isSharedView } = useViewMode();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [transactionType, setTransactionType] = useState<'income' | 'expense'>('expense');
   const [dateRange, setDateRange] = useState({ startDate: '', endDate: '' });
+  const [editingTransactionId, setEditingTransactionId] = useState<string | null>(null);
+  const [partnerId, setPartnerId] = useState<string | null>(null);
+
   const [formData, setFormData] = useState<FormData>({
     amount: '',
     categoryId: '',
@@ -42,12 +47,52 @@ export default function ExpensesPage() {
     date: new Date().toISOString().split('T')[0],
   });
 
+  // Fetch shared group info to get partner ID
+  useEffect(() => {
+    if (!user?.id || user?.plan !== 'shared') return;
+    const fetchSharedGroup = async () => {
+      try {
+        const accessToken = localStorage.getItem('accessToken');
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/shared-groups/${user.id}`, {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+          },
+        });
+
+        const data = await res.json();
+        if (data.success && data.data) {
+          const group = data.data;
+          // Set partner ID based on whether user is owner or partner
+          if (group.ownerId === user.id) {
+            setPartnerId(group.partnerId);
+          } else if (group.partnerId === user.id) {
+            setPartnerId(group.ownerId);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching shared group:', error);
+      }
+    };
+    fetchSharedGroup();
+  }, [user?.id, user?.plan]);
+
   useEffect(() => {
     if (!user?.id || !dateRange.startDate) return;
     const fetchTransactions = async () => {
       try {
         setLoading(true);
-        const transactionsData = await expenseService.fetchTransactions(user.id, dateRange.startDate, dateRange.endDate);
+        let transactionsData: Transaction[] = [];
+
+        // Fetch user's transactions
+        const userTransactions = await expenseService.fetchTransactions(user.id, dateRange.startDate, dateRange.endDate);
+        transactionsData = [...userTransactions];
+
+        // If in shared view and partner exists, fetch partner's transactions
+        if (isSharedView && partnerId) {
+          const partnerTransactions = await expenseService.fetchTransactions(partnerId, dateRange.startDate, dateRange.endDate);
+          transactionsData = [...transactionsData, ...partnerTransactions];
+        }
+
         setTransactions(transactionsData);
       } catch (error) {
         console.error('Error fetching transactions:', error);
@@ -56,7 +101,7 @@ export default function ExpensesPage() {
       }
     };
     fetchTransactions();
-  }, [user?.id, dateRange]);
+  }, [user?.id, dateRange, isSharedView, partnerId]);
 
   const handleDateRangeChange = (startDate: string, endDate: string) => {
     setDateRange({ startDate, endDate });
@@ -85,12 +130,31 @@ export default function ExpensesPage() {
     e.preventDefault();
     if (!user?.id) return;
 
+    if (!formData.amount || parseFloat(formData.amount) <= 0) {
+      alert('Valor é obrigatório');
+      return;
+    }
+    if (!formData.categoryId) {
+      alert('Categoria é obrigatória');
+      return;
+    }
+    if (transactionType === 'expense' && !formData.payment_method) {
+      alert('Forma de pagamento é obrigatória');
+      return;
+    }
+
     try {
-      const newTransaction = await expenseService.createTransaction(formData, transactionType, user.id);
+      if (editingTransactionId) {
+        const updatedTransaction = await expenseService.updateTransaction(editingTransactionId, formData, user.id);
+        setTransactions((prev) => prev.map((t) => t.id === editingTransactionId ? updatedTransaction : t));
+        setEditingTransactionId(null);
+      } else {
+        const newTransaction = await expenseService.createTransaction(formData, transactionType, user.id);
+        setTransactions((prev) => [newTransaction, ...prev]);
+      }
       setDialogOpen(false);
-      setTransactions((prev) => [newTransaction, ...prev]);
     } catch (error) {
-      console.error('Error creating transaction:', error);
+      console.error('Error saving transaction:', error);
     }
   };
 
@@ -103,6 +167,26 @@ export default function ExpensesPage() {
     } catch (error) {
       console.error('Error deleting transaction:', error);
     }
+  };
+
+  const handleEdit = (id: string) => {
+    const transaction = transactions.find((t) => t.id === id);
+    if (!transaction) return;
+
+    setFormData({
+      amount: String(Math.abs(transaction.amount)),
+      categoryId: transaction.categoryId || transaction.category || '',
+      subcategoryId: transaction.subcategoryId || '',
+      description: transaction.description || transaction.name || '',
+      date: transaction.date || new Date().toISOString().split('T')[0],
+      payment_method: transaction.payment_method || undefined,
+      card_id: transaction.cardId || undefined,
+      installments: String(transaction.installments || 1),
+      firstBillingMonth: transaction.firstBillingMonth || new Date().toISOString().slice(0, 7),
+    });
+    setTransactionType(transaction.type === 'income' ? 'income' : 'expense');
+    setEditingTransactionId(id);
+    setDialogOpen(true);
   };
 
   const handleCancel = () => {
@@ -140,6 +224,7 @@ export default function ExpensesPage() {
             ) : (
               <ExpenseList
                 transactions={transactions}
+                onEdit={handleEdit}
                 onDelete={handleDelete}
               />
             )}

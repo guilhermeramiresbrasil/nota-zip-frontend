@@ -1,5 +1,5 @@
 export interface Plan {
-  id: 'free' | 'basic' | 'premium';
+  id: 'free' | 'basic' | 'premium' | 'shared';
   planUuid?: string; // UUID real do banco
   name: string;
   description: string;
@@ -20,7 +20,7 @@ export interface PlanComparison {
 }
 
 export interface PlanUpgradeRequest {
-  planId: 'free' | 'basic' | 'premium';
+  planId: 'free' | 'basic' | 'premium' | 'shared';
 }
 
 export interface CreatePaymentLinkRequest {

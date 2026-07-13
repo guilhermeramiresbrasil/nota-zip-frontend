@@ -8,21 +8,22 @@ import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
 
 interface DataTableProps {
   data: DetailedTransaction[];
+  isSharedView?: boolean;
 }
 
-type SortField = 'date' | 'description' | 'category' | 'type' | 'amount';
+type SortField = 'date' | 'description' | 'category' | 'type' | 'amount' | 'userNickname';
 
 const PAGE_SIZE = 10;
 
-export const DataTable: React.FC<DataTableProps> = ({ data }) => {
+export const DataTable: React.FC<DataTableProps> = ({ data, isSharedView = false }) => {
   const [sortField, setSortField] = useState<SortField>('date');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [page, setPage] = useState(0);
 
   const sorted = useMemo(() => {
     return [...data].sort((a, b) => {
-      const aVal = a[sortField];
-      const bVal = b[sortField];
+      const aVal = a[sortField as keyof DetailedTransaction] || '';
+      const bVal = b[sortField as keyof DetailedTransaction] || '';
       const cmp = typeof aVal === 'number' && typeof bVal === 'number'
         ? aVal - bVal
         : String(aVal).localeCompare(String(bVal));
@@ -66,6 +67,7 @@ export const DataTable: React.FC<DataTableProps> = ({ data }) => {
                       ['date', 'Data'],
                       ['description', 'Descrição'],
                       ['category', 'Categoria'],
+                      ...(isSharedView ? [['userNickname', 'Fonte'] as [SortField, string]] : []),
                       ['type', 'Tipo'],
                       ['amount', 'Valor'],
                     ] as [SortField, string][]).map(([field, label]) => (
@@ -83,8 +85,13 @@ export const DataTable: React.FC<DataTableProps> = ({ data }) => {
                   {paged.map((t) => (
                     <tr key={t.id} className="border-b hover:bg-gray-50">
                       <td className="py-2 px-2 text-xs">{new Date(t.date).toLocaleDateString('pt-BR')}</td>
-                      <td className="py-2 px-2 text-xs">{t.description}</td>
+                      <td className="py-2 px-2 text-xs">
+                        {t.description.replace(/^(Receita|Despesa) \d+ - /, '')}
+                      </td>
                       <td className="py-2 px-2 text-xs">{t.category}</td>
+                      {isSharedView && (
+                        <td className="py-2 px-2 text-xs">{t.userNickname || '-'}</td>
+                      )}
                       <td className="py-2 px-2 text-xs">
                         <span className={t.type === 'credit' ? 'text-green-600' : 'text-red-600'}>
                           {t.type === 'credit' ? 'Receita' : 'Despesa'}

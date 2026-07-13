@@ -7,15 +7,12 @@ interface CurrencyInputProps extends Omit<React.ComponentProps<"input">, "type" 
 }
 
 function CurrencyInput({ className, value, onChange, ...props }: CurrencyInputProps) {
-  const formatCurrency = (rawValue: string): string => {
-    // Remove tudo que não é dígito
-    const digitsOnly = rawValue.replace(/\D/g, '');
-    
+  const formatCurrency = (digitsOnly: string): string => {
     if (digitsOnly === '') return '';
-    
+
     // Converte para número e divide por 100 para considerar centavos
     const numericValue = parseInt(digitsOnly, 10) / 100;
-    
+
     // Formata em reais
     return numericValue.toLocaleString('pt-BR', {
       minimumFractionDigits: 2,
@@ -31,22 +28,26 @@ function CurrencyInput({ className, value, onChange, ...props }: CurrencyInputPr
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawValue = e.target.value;
-    
+
+    // Remove tudo que não é dígito
+    const digitsOnly = rawValue.replace(/\D/g, '');
+
     // Se o usuário apagar tudo, limpa o valor
-    if (rawValue === '') {
+    if (digitsOnly === '') {
       onChange('');
       return;
     }
-    
+
     // Formata o valor
-    const formatted = formatCurrency(rawValue);
+    const formatted = formatCurrency(digitsOnly);
     onChange(formatted);
   };
 
   const handleBlur = () => {
     // Ao sair do campo, garante que o valor está formatado
     if (value && value !== '') {
-      const formatted = formatCurrency(value.replace(/\D/g, ''));
+      const digitsOnly = value.replace(/\D/g, '');
+      const formatted = formatCurrency(digitsOnly);
       onChange(formatted);
     }
   };

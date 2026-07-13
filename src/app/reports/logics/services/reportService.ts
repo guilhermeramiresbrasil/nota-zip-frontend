@@ -48,16 +48,35 @@ export class ReportService {
 
   async fetchDetailedTransactions(userId: string, filters: ReportFilters): Promise<DetailedTransaction[]> {
     try {
-      const response = await fetch(`${GATEWAY_URL}/api/transactions/detailed`, {
+      const response = await fetch(`${GATEWAY_URL}/api/transactions/list`, {
         method: 'POST',
         headers: this.getHeaders(),
-        body: JSON.stringify({ userId, ...filters }),
+        body: JSON.stringify({
+          userId,
+          limit: 1000,
+          offset: 0,
+          ...(filters.startDate && { startDate: filters.startDate }),
+          ...(filters.endDate && { endDate: filters.endDate }),
+        }),
       });
 
       if (!response.ok) return [];
 
       const json = await response.json();
-      return json.data ?? [];
+      const data = json.data ?? [];
+
+      return data.map((t: any) => ({
+        id: t.id,
+        date: t.date,
+        description: t.description,
+        category: t.category || t.categoryId,
+        categoryId: t.categoryId,
+        type: t.type === 'credit' ? 'credit' : 'debit',
+        amount: t.amount,
+        payment_method: t.payment_method,
+        userId: t.userId,
+        userNickname: t.userNickname,
+      }));
     } catch {
       return [];
     }

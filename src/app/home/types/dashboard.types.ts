@@ -6,8 +6,14 @@ export interface Transaction {
   description?: string;
   amount: number;
   category: string;
+  categoryId?: string;
+  subcategoryId?: string;
   date: string;
   type: TransactionType;
+  payment_method?: string;
+  cardId?: string;
+  installments?: number;
+  firstBillingMonth?: string;
 }
 
 export interface DashboardStats {

@@ -13,6 +13,15 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { CurrencyInput } from '@/components/ui/currency-input';
+import {
   Receipt,
   ShoppingBag,
   RefreshCw,
@@ -22,6 +31,8 @@ import {
   AlertCircle,
   ChevronDown,
   ChevronUp,
+  Pencil,
+  Trash2,
 } from 'lucide-react';
 import { cardService } from '../logics/cardService';
 import {
@@ -63,7 +74,6 @@ export function CardDetailPanel({ card, userId, balance, onReload }: Props) {
   const [invoices, setInvoices] = useState<CreditCardInvoice[]>([]);
   const [purchases, setPurchases] = useState<CreditCardPurchase[]>([]);
   const [reloads, setReloads] = useState<CreditCardReload[]>([]);
-  const [loading, setLoading] = useState(false);
 
   const [payingId, setPayingId] = useState<string | null>(null);
   const [payType, setPayType] = useState<'full' | 'partial'>('full');
@@ -75,9 +85,22 @@ export function CardDetailPanel({ card, userId, balance, onReload }: Props) {
   const [reloadNotes, setReloadNotes] = useState('');
 
   const [expandedInvoice, setExpandedInvoice] = useState<string | null>(null);
+  const [editingInvoice, setEditingInvoice] = useState<CreditCardInvoice | null>(null);
+  const [editingPurchase, setEditingPurchase] = useState<CreditCardPurchase | null>(null);
+  const [editingReload, setEditingReload] = useState<CreditCardReload | null>(null);
+  const [deleteConfirmPurchase, setDeleteConfirmPurchase] = useState<CreditCardPurchase | null>(null);
+  const [editingLimit, setEditingLimit] = useState(false);
+  const [editingLimitAmount, setEditingLimitAmount] = useState('');
+  const [editingPurchaseAmount, setEditingPurchaseAmount] = useState('');
+  const [editingInvoiceAmount, setEditingInvoiceAmount] = useState('');
+  const [editingInvoiceStatus, setEditingInvoiceStatus] = useState('');
+  const [editingInvoicePaidAmount, setEditingInvoicePaidAmount] = useState('');
+  const [editingInvoicePaymentDate, setEditingInvoicePaymentDate] = useState('');
+  const [editingReloadAmount, setEditingReloadAmount] = useState('');
+  const [editingReloadDate, setEditingReloadDate] = useState('');
+  const [editingReloadNotes, setEditingReloadNotes] = useState('');
 
   const loadData = useCallback(async () => {
-    setLoading(true);
     try {
       const [inv, pur, rel] = await Promise.all([
         cardService.listInvoices(card.id, userId),
@@ -89,12 +112,53 @@ export function CardDetailPanel({ card, userId, balance, onReload }: Props) {
       setReloads(rel);
     } catch (e) {
       console.error(e);
-    } finally {
-      setLoading(false);
     }
   }, [card.id, userId, card.type]);
 
   useEffect(() => { loadData(); }, [loadData]);
+
+  useEffect(() => {
+    if (editingPurchase) {
+      const amount = editingPurchase.totalAmount;
+      setEditingPurchaseAmount(amount.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+    } else {
+      setEditingPurchaseAmount('');
+    }
+  }, [editingPurchase]);
+
+  useEffect(() => {
+    if (editingLimit && balance) {
+      setEditingLimitAmount(balance.limit.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+    } else {
+      setEditingLimitAmount('');
+    }
+  }, [editingLimit, balance]);
+
+  useEffect(() => {
+    if (editingInvoice) {
+      setEditingInvoiceAmount(editingInvoice.totalAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+      setEditingInvoiceStatus(editingInvoice.status);
+      setEditingInvoicePaidAmount(editingInvoice.paidAmount?.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '');
+      setEditingInvoicePaymentDate(editingInvoice.paymentDate || '');
+    } else {
+      setEditingInvoiceAmount('');
+      setEditingInvoiceStatus('');
+      setEditingInvoicePaidAmount('');
+      setEditingInvoicePaymentDate('');
+    }
+  }, [editingInvoice]);
+
+  useEffect(() => {
+    if (editingReload) {
+      setEditingReloadAmount(editingReload.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+      setEditingReloadDate(editingReload.reloadDate);
+      setEditingReloadNotes(editingReload.notes || '');
+    } else {
+      setEditingReloadAmount('');
+      setEditingReloadDate('');
+      setEditingReloadNotes('');
+    }
+  }, [editingReload]);
 
   const handlePayInvoice = async (invoiceId: string, totalAmount: number) => {
     setActionLoading(true);
@@ -133,6 +197,124 @@ export function CardDetailPanel({ card, userId, balance, onReload }: Props) {
     }
   };
 
+  const handleDeletePurchase = async (purchase: CreditCardPurchase) => {
+    if (!userId || userId === '') {
+      console.error('userId is undefined or empty:', userId);
+      return;
+    }
+    setActionLoading(true);
+    try {
+      await cardService.deletePurchase(purchase.id, userId);
+      setDeleteConfirmPurchase(null);
+      await loadData();
+      onReload();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleUpdatePurchase = async (data: any) => {
+    if (!editingPurchase || !userId || userId === '') {
+      console.error('editingPurchase or userId is undefined/empty:', { editingPurchase, userId });
+      return;
+    }
+    setActionLoading(true);
+    try {
+      const parseCurrencyToNumber = (v: string) => parseFloat(v.replace(/\./g, '').replace(',', '.')) || 0;
+      const processedData = {
+        ...data,
+        totalAmount: parseCurrencyToNumber(editingPurchaseAmount),
+      };
+      await cardService.updatePurchase(editingPurchase.id, userId, processedData);
+      setEditingPurchase(null);
+      setEditingPurchaseAmount('');
+      await loadData();
+      onReload();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleUpdateLimit = async () => {
+    if (!userId || userId === '') {
+      console.error('userId is undefined or empty:', userId);
+      return;
+    }
+    setActionLoading(true);
+    try {
+      const parseCurrencyToNumber = (v: string) => parseFloat(v.replace(/\./g, '').replace(',', '.')) || 0;
+      await cardService.patchCard(card.id, userId, { creditLimit: parseCurrencyToNumber(editingLimitAmount) });
+      setEditingLimit(false);
+      setEditingLimitAmount('');
+      await loadData();
+      onReload();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleUpdateInvoice = async () => {
+    if (!editingInvoice || !userId || userId === '') {
+      console.error('editingInvoice or userId is undefined/empty:', { editingInvoice, userId });
+      return;
+    }
+    setActionLoading(true);
+    try {
+      const parseCurrencyToNumber = (v: string) => parseFloat(v.replace(/\./g, '').replace(',', '.')) || 0;
+      const data: any = {};
+      if (editingInvoiceAmount) data.totalAmount = parseCurrencyToNumber(editingInvoiceAmount);
+      if (editingInvoiceStatus) data.status = editingInvoiceStatus;
+      if (editingInvoicePaidAmount) data.paidAmount = parseCurrencyToNumber(editingInvoicePaidAmount);
+      if (editingInvoicePaymentDate) data.paymentDate = editingInvoicePaymentDate;
+      
+      await cardService.updateInvoice(editingInvoice.id, userId, data);
+      setEditingInvoice(null);
+      setEditingInvoiceAmount('');
+      setEditingInvoiceStatus('');
+      setEditingInvoicePaidAmount('');
+      setEditingInvoicePaymentDate('');
+      await loadData();
+      onReload();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleUpdateReload = async () => {
+    if (!editingReload || !userId || userId === '') {
+      console.error('editingReload or userId is undefined/empty:', { editingReload, userId });
+      return;
+    }
+    setActionLoading(true);
+    try {
+      const parseCurrencyToNumber = (v: string) => parseFloat(v.replace(/\./g, '').replace(',', '.')) || 0;
+      const data: any = {};
+      if (editingReloadAmount) data.amount = parseCurrencyToNumber(editingReloadAmount);
+      if (editingReloadDate) data.reloadDate = editingReloadDate;
+      if (editingReloadNotes !== undefined) data.notes = editingReloadNotes;
+      
+      await cardService.updateReload(editingReload.id, userId, data);
+      setEditingReload(null);
+      setEditingReloadAmount('');
+      setEditingReloadDate('');
+      setEditingReloadNotes('');
+      await loadData();
+      onReload();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const tabs: { key: Tab; label: string; icon: React.ReactNode; count?: number }[] = [
     { key: 'invoices',  label: 'Faturas',  icon: <Receipt className="h-3.5 w-3.5" />,     count: invoices.length },
     { key: 'purchases', label: 'Compras',  icon: <ShoppingBag className="h-3.5 w-3.5" />, count: purchases.length },
@@ -147,8 +329,43 @@ export function CardDetailPanel({ card, userId, balance, onReload }: Props) {
       {balance && (
         <div className="grid grid-cols-3 divide-x divide-slate-100 bg-slate-50 border-b border-slate-200">
           <div className="px-5 py-3">
-            <p className="text-[11px] text-slate-400 uppercase tracking-wide mb-0.5">Limite</p>
-            <p className="text-sm font-semibold text-slate-800">{fmt(balance.limit)}</p>
+            <div className="flex items-center gap-2">
+              <p className="text-[11px] text-slate-400 uppercase tracking-wide mb-0.5">Limite</p>
+              <button
+                type="button"
+                onClick={() => setEditingLimit(true)}
+                className="text-slate-400 hover:text-slate-600 transition-colors"
+                title="Editar limite"
+              >
+                <Pencil className="h-3 w-3" />
+              </button>
+            </div>
+            {editingLimit ? (
+              <div className="flex items-center gap-1">
+                <CurrencyInput
+                  value={editingLimitAmount}
+                  onChange={setEditingLimitAmount}
+                  className="h-6 text-xs w-20"
+                />
+                <button
+                  type="button"
+                  onClick={handleUpdateLimit}
+                  disabled={actionLoading}
+                  className="text-xs text-green-600 hover:text-green-700 font-medium"
+                >
+                  {actionLoading ? '...' : '✓'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setEditingLimit(false); setEditingLimitAmount(''); }}
+                  className="text-xs text-slate-400 hover:text-slate-600"
+                >
+                  ✕
+                </button>
+              </div>
+            ) : (
+              <p className="text-sm font-semibold text-slate-800">{fmt(balance.limit)}</p>
+            )}
           </div>
           <div className="px-5 py-3">
             <p className="text-[11px] text-slate-400 uppercase tracking-wide mb-0.5">Fatura atual</p>
@@ -192,14 +409,8 @@ export function CardDetailPanel({ card, userId, balance, onReload }: Props) {
 
       {/* Content */}
       <div className="p-5 min-h-[200px]">
-        {loading ? (
-          <div className="flex justify-center items-center py-12">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-500" />
-          </div>
-        ) : (
-          <>
-            {/* ── FATURAS ── */}
-            {tab === 'invoices' && (
+        {/* ── FATURAS ── */}
+        {tab === 'invoices' && (
               <div className="space-y-2.5">
                 {invoices.length === 0 ? (
                   <div className="text-center py-10 text-slate-400">
@@ -225,13 +436,20 @@ export function CardDetailPanel({ card, userId, balance, onReload }: Props) {
                         </div>
                         <div className="flex items-center gap-3">
                           <span className="text-sm font-bold text-slate-900">{fmt(inv.totalAmount)}</span>
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); setEditingInvoice(inv); }}
+                            className="p-1 hover:bg-slate-200 rounded transition-colors"
+                          >
+                            <Pencil className="h-3.5 w-3.5 text-slate-400" />
+                          </button>
                           {isExpanded ? <ChevronUp className="h-4 w-4 text-slate-400" /> : <ChevronDown className="h-4 w-4 text-slate-400" />}
                         </div>
                       </button>
 
                       {isExpanded && (
                         <div className="px-4 pb-4 pt-1 border-t border-slate-100 bg-slate-50/50 space-y-3">
-                          {inv.installments && inv.installments.length > 0 && (
+                          {inv.installments && inv.installments.length > 0 ? (
                             <div className="space-y-1">
                               {inv.installments.map((inst) => (
                                 <div key={inst.id} className="flex justify-between text-xs text-slate-600">
@@ -240,14 +458,16 @@ export function CardDetailPanel({ card, userId, balance, onReload }: Props) {
                                 </div>
                               ))}
                             </div>
+                          ) : (
+                            <p className="text-xs text-slate-400">Nenhuma parcela encontrada</p>
                           )}
 
-                          {inv.status === 'open' && (
+                          {inv.status === 'closed' && (
                             <>
                               {isPaying ? (
                                 <div className="space-y-2">
                                   <Select value={payType} onValueChange={(v) => setPayType(v as 'full' | 'partial')}>
-                                    <SelectTrigger className="h-8 text-xs bg-white">
+                                    <SelectTrigger className="h-9 bg-white">
                                       <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -308,8 +528,8 @@ export function CardDetailPanel({ card, userId, balance, onReload }: Props) {
                     <p className="text-xs mt-1">Use o botão "Nova Transação" para registrar uma compra neste cartão.</p>
                   </div>
                 ) : purchases.map((p) => (
-                  <div key={p.id} className="flex items-center justify-between px-4 py-3 rounded-xl border border-slate-100 hover:bg-slate-50/60 transition-colors">
-                    <div className="min-w-0">
+                  <div key={p.id} className="flex items-center justify-between px-4 py-3 rounded-xl border border-slate-100 hover:bg-slate-50/60 transition-colors group">
+                    <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium text-slate-800 truncate">{p.description}</p>
                       <p className="text-xs text-slate-400 mt-0.5">
                         {p.installments}x · {new Date(p.purchaseDate).toLocaleDateString('pt-BR')}
@@ -318,6 +538,24 @@ export function CardDetailPanel({ card, userId, balance, onReload }: Props) {
                     <div className="text-right shrink-0 ml-4">
                       <p className="text-sm font-bold text-slate-900">{fmt(p.totalAmount)}</p>
                       <p className="text-xs text-slate-400">{fmt(p.installmentAmount)}/mês</p>
+                    </div>
+                    <div className="flex items-center gap-1 ml-3 opacity-100 transition-opacity">
+                      <button
+                        type="button"
+                        onClick={() => setEditingPurchase(p)}
+                        className="p-1.5 rounded-lg hover:bg-slate-200 text-slate-500 hover:text-slate-700 transition-colors"
+                        title="Editar compra"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDeleteConfirmPurchase(p)}
+                        className="p-1.5 rounded-lg hover:bg-red-100 text-slate-500 hover:text-red-600 transition-colors"
+                        title="Excluir compra"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -378,14 +616,210 @@ export function CardDetailPanel({ card, userId, balance, onReload }: Props) {
                       <p className="text-sm font-semibold text-slate-800">{fmt(r.amount)}</p>
                       {r.notes && <p className="text-xs text-slate-400 mt-0.5">{r.notes}</p>}
                     </div>
-                    <p className="text-xs text-slate-400">{new Date(r.reloadDate).toLocaleDateString('pt-BR')}</p>
+                    <div className="flex items-center gap-3">
+                      <p className="text-xs text-slate-400">{new Date(r.reloadDate).toLocaleDateString('pt-BR')}</p>
+                      <button
+                        type="button"
+                        onClick={() => setEditingReload(r)}
+                        className="p-1 hover:bg-slate-200 rounded transition-colors"
+                      >
+                        <Pencil className="h-3.5 w-3.5 text-slate-400" />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
             )}
-          </>
-        )}
       </div>
+
+      {/* Edit Purchase Modal */}
+      <Dialog open={!!editingPurchase} onOpenChange={(open) => !open && setEditingPurchase(null)}>
+        <DialogContent className="sm:max-w-[440px]">
+          <DialogHeader>
+            <DialogTitle>Editar Compra</DialogTitle>
+            <DialogDescription>Altere os detalhes da compra do cartão</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={(e) => { e.preventDefault(); handleUpdatePurchase({ description: editingPurchase?.description, installments: editingPurchase?.installments.toString(), purchaseDate: editingPurchase?.purchaseDate, firstBillingMonth: editingPurchase?.firstBillingMonth, categoryId: editingPurchase?.categoryId }); }} className="space-y-4">
+            <div className="space-y-1.5">
+              <Label>Descrição</Label>
+              <Input
+                value={editingPurchase?.description || ''}
+                onChange={(e) => setEditingPurchase(prev => prev ? { ...prev, description: e.target.value } : null)}
+                required
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Valor Total</Label>
+              <CurrencyInput
+                value={editingPurchaseAmount}
+                onChange={setEditingPurchaseAmount}
+                required
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Parcelas</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  max="48"
+                  value={editingPurchase?.installments || 1}
+                  onChange={(e) => setEditingPurchase(prev => prev ? { ...prev, installments: parseInt(e.target.value) || 1 } : null)}
+                  required
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Data da Compra</Label>
+                <Input
+                  type="date"
+                  value={editingPurchase?.purchaseDate || ''}
+                  onChange={(e) => setEditingPurchase(prev => prev ? { ...prev, purchaseDate: e.target.value } : null)}
+                  required
+                />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label>1ª Fatura</Label>
+              <Input
+                type="month"
+                value={editingPurchase?.firstBillingMonth || ''}
+                onChange={(e) => setEditingPurchase(prev => prev ? { ...prev, firstBillingMonth: e.target.value } : null)}
+                required
+              />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setEditingPurchase(null)}>
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={actionLoading}>
+                {actionLoading ? 'Salvando...' : 'Salvar'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Invoice Modal */}
+      <Dialog open={!!editingInvoice} onOpenChange={(open) => !open && setEditingInvoice(null)}>
+        <DialogContent className="sm:max-w-[440px]">
+          <DialogHeader>
+            <DialogTitle>Editar Fatura</DialogTitle>
+            <DialogDescription>Altere os detalhes da fatura</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={(e) => { e.preventDefault(); handleUpdateInvoice(); }} className="space-y-4">
+            <div className="space-y-1.5">
+              <Label>Valor Total</Label>
+              <CurrencyInput
+                value={editingInvoiceAmount}
+                onChange={setEditingInvoiceAmount}
+                required
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Status</Label>
+              <Select value={editingInvoiceStatus} onValueChange={setEditingInvoiceStatus}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="open">Aberta</SelectItem>
+                  <SelectItem value="closed">Fechada</SelectItem>
+                  <SelectItem value="paid">Paga</SelectItem>
+                  <SelectItem value="partial">Parcialmente Paga</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Valor Pago</Label>
+              <CurrencyInput
+                value={editingInvoicePaidAmount}
+                onChange={setEditingInvoicePaidAmount}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Data de Pagamento</Label>
+              <Input
+                type="date"
+                value={editingInvoicePaymentDate}
+                onChange={(e) => setEditingInvoicePaymentDate(e.target.value)}
+              />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setEditingInvoice(null)}>
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={actionLoading}>
+                {actionLoading ? 'Salvando...' : 'Salvar'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Reload Modal */}
+      <Dialog open={!!editingReload} onOpenChange={(open) => !open && setEditingReload(null)}>
+        <DialogContent className="sm:max-w-[440px]">
+          <DialogHeader>
+            <DialogTitle>Editar Recarga</DialogTitle>
+            <DialogDescription>Altere os detalhes da recarga</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={(e) => { e.preventDefault(); handleUpdateReload(); }} className="space-y-4">
+            <div className="space-y-1.5">
+              <Label>Valor</Label>
+              <CurrencyInput
+                value={editingReloadAmount}
+                onChange={setEditingReloadAmount}
+                required
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Data</Label>
+              <Input
+                type="date"
+                value={editingReloadDate}
+                onChange={(e) => setEditingReloadDate(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Observações</Label>
+              <Input
+                value={editingReloadNotes}
+                onChange={(e) => setEditingReloadNotes(e.target.value)}
+                placeholder="Ex: recarga mensal"
+              />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setEditingReload(null)}>
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={actionLoading}>
+                {actionLoading ? 'Salvando...' : 'Salvar'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={!!deleteConfirmPurchase} onOpenChange={(open) => !open && setDeleteConfirmPurchase(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Excluir Compra</DialogTitle>
+            <DialogDescription>
+              Tem certeza que deseja excluir a compra "{deleteConfirmPurchase?.description}"? Esta ação não pode ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteConfirmPurchase(null)}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={() => deleteConfirmPurchase && handleDeletePurchase(deleteConfirmPurchase)} disabled={actionLoading}>
+              {actionLoading ? 'Excluindo...' : 'Excluir'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

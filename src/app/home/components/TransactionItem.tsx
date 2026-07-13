@@ -1,5 +1,5 @@
 import React from 'react';
-import { TrendingUp, TrendingDown } from 'lucide-react';
+import { TrendingUp, TrendingDown, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
 import { TransactionItemProps } from '../types/dashboard.types';
 
 export const TransactionItem: React.FC<TransactionItemProps> = ({ transaction }) => {
@@ -7,22 +7,22 @@ export const TransactionItem: React.FC<TransactionItemProps> = ({ transaction })
   const displayName = transaction.name || transaction.description || transaction.category || '—';
 
   return (
-    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-      <div className="flex items-center gap-4">
-        <div className={`p-2 rounded-full ${isIncome ? 'bg-green-100' : 'bg-red-100'}`}>
+    <div className="flex items-center justify-between py-1 px-2 bg-white rounded border border-slate-100 hover:border-slate-200 hover:shadow-sm transition-all duration-200">
+      <div className="flex items-center gap-2">
+        <div className={`p-1.5 rounded ${isIncome ? 'bg-emerald-50' : 'bg-rose-50'}`}>
           {isIncome
-            ? <TrendingUp className="h-5 w-5 text-green-600" />
-            : <TrendingDown className="h-5 w-5 text-red-600" />
+            ? <ArrowUpRight className="h-3.5 w-3.5 text-emerald-600" />
+            : <ArrowDownLeft className="h-3.5 w-3.5 text-rose-600" />
           }
         </div>
         <div>
-          <p className="font-medium text-gray-900">{displayName}</p>
-          <p className="text-sm text-gray-500">
+          <p className="font-medium text-xs text-slate-800">{displayName}</p>
+          <p className="text-[10px] text-slate-500">
             {transaction.category} • {transaction.date}
           </p>
         </div>
       </div>
-      <p className={`font-semibold ${isIncome ? 'text-green-600' : 'text-red-600'}`}>
+      <p className={`font-semibold text-xs ${isIncome ? 'text-emerald-600' : 'text-rose-600'}`}>
         {isIncome ? '+' : '-'}R$ {Math.abs(transaction.amount).toFixed(2)}
       </p>
     </div>

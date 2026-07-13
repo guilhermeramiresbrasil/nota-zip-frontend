@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { PageHeader } from '@/components/PageHeader';
 import { GarantiaSearch } from './components/GarantiaSearch';
-import { GarantiaTags } from './components/GarantiaTags';
 import { GarantiaList } from './components/GarantiaList';
 import { GarantiaForm } from './components/GarantiaForm';
 import { StorageUsageBar } from './components/StorageUsageBar';
@@ -20,7 +19,7 @@ export default function GarantiasPage() {
   const [uploadLimit, setUploadLimit] = useState(0);
   const [storageUsed, setStorageUsed] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedTag, setSelectedTag] = useState('');
+  const [editingGarantia, setEditingGarantia] = useState<Garantia | null>(null);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -48,7 +47,7 @@ export default function GarantiasPage() {
   }, [user?.id, user?.plan]);
 
   const handleEdit = (garantia: Garantia) => {
-    console.log('Edit garantia:', garantia);
+    setEditingGarantia(garantia);
   };
 
   const handleDelete = async (id: string) => {
@@ -80,10 +79,27 @@ export default function GarantiasPage() {
     }
   };
 
+  const handleEditComplete = async () => {
+    if (!user?.id) return;
+    setEditingGarantia(null);
+    setLoading(true);
+    try {
+      const [garantiasData, storageData] = await Promise.all([
+        garantiaService.fetchGarantias(user.id),
+        garantiaService.fetchStorageUsage(user.id),
+      ]);
+      setGarantias(garantiasData);
+      setStorageUsed(storageData.usedBytes / (1024 * 1024));
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const filteredGarantias = garantias.filter(garantia => {
     const matchesSearch = garantia.nome.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesTag = selectedTag === '' || garantia.tags.includes(selectedTag);
-    return matchesSearch && matchesTag;
+    return matchesSearch;
   });
 
   return (
@@ -91,13 +107,19 @@ export default function GarantiasPage() {
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         <div className="flex justify-between items-center mb-6">
           <PageHeader title="Guarda Garantias" description="Armazene suas notas fiscais e documentos de garantia" />
-          <GarantiaForm uploadLimit={uploadLimit} userPlan={user?.plan || 'free'} userId={user?.id || ''} onGarantiaCreated={handleGarantiaCreated} />
+          <GarantiaForm
+            uploadLimit={uploadLimit}
+            userPlan={user?.plan || 'free'}
+            userId={user?.id || ''}
+            onGarantiaCreated={handleGarantiaCreated}
+            editingGarantia={editingGarantia}
+            onEditComplete={handleEditComplete}
+          />
         </div>
 
         <div className="space-y-4 mb-6">
           <StorageUsageBar used={storageUsed} limit={uploadLimit} />
           <GarantiaSearch searchQuery={searchQuery} onSearchQueryChange={setSearchQuery} />
-          <GarantiaTags selectedTag={selectedTag} onTagSelect={setSelectedTag} />
         </div>
 
         {loading ? (

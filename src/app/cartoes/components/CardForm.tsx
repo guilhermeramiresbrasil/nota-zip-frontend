@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { CurrencyInput } from '@/components/ui/currency-input';
 import { CreditCard, CreateCardFormData, CardType, CardOwner } from '../types/card.types';
 
 interface CardFormProps {
@@ -80,11 +81,14 @@ export function CardForm({ open, onOpenChange, initialData, onSubmit, title }: C
   const set = (key: keyof CreateCardFormData, value: string) =>
     setForm((prev) => ({ ...prev, [key]: value }));
 
+  const parseCurrencyToNumber = (v: string) => parseFloat(v.replace(/\./g, '').replace(',', '.')) || 0;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     if (!form.name.trim()) { setError('Nome é obrigatório'); return; }
-    if (!form.creditLimit || parseFloat(form.creditLimit) <= 0) { setError('Limite inválido'); return; }
+    const limitValue = parseCurrencyToNumber(form.creditLimit);
+    if (!form.creditLimit || limitValue <= 0) { setError('Limite inválido'); return; }
     setLoading(true);
     try {
       await onSubmit(form);
@@ -119,7 +123,7 @@ export function CardForm({ open, onOpenChange, initialData, onSubmit, title }: C
             <div className="space-y-2">
               <Label>Tipo</Label>
               <Select value={form.type} onValueChange={(v) => set('type', v as CardType)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="credit">Crédito</SelectItem>
                   <SelectItem value="prepaid">Pré-pago</SelectItem>
@@ -129,7 +133,7 @@ export function CardForm({ open, onOpenChange, initialData, onSubmit, title }: C
             <div className="space-y-2">
               <Label>Subtipo</Label>
               <Select value={form.cardSubtype || 'standard'} onValueChange={(v) => set('cardSubtype', v)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="standard">Padrão</SelectItem>
                   <SelectItem value="vr_va">VR / VA</SelectItem>
@@ -143,7 +147,7 @@ export function CardForm({ open, onOpenChange, initialData, onSubmit, title }: C
               <div className="space-y-2">
                 <Label>Modo de débito</Label>
                 <Select value={form.debitMode || 'invoice'} onValueChange={(v) => set('debitMode', v)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="invoice">Fatura (pós)</SelectItem>
                     <SelectItem value="direct">Débito direto</SelectItem>
@@ -153,7 +157,7 @@ export function CardForm({ open, onOpenChange, initialData, onSubmit, title }: C
               <div className="space-y-2">
                 <Label>Tipo de recarga</Label>
                 <Select value={form.reloadType || 'manual'} onValueChange={(v) => set('reloadType', v)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="manual">Manual</SelectItem>
                     <SelectItem value="periodic">Periódica</SelectItem>
@@ -165,13 +169,10 @@ export function CardForm({ open, onOpenChange, initialData, onSubmit, title }: C
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label>{isPrepaid ? 'Saldo inicial' : 'Limite (R$)'}</Label>
-              <Input
-                type="number"
-                min="0"
-                step="0.01"
+              <Label>{isPrepaid ? 'Saldo inicial' : 'Limite'}</Label>
+              <CurrencyInput
                 value={form.creditLimit}
-                onChange={(e) => set('creditLimit', e.target.value)}
+                onChange={(value) => set('creditLimit', value)}
                 required
               />
             </div>
@@ -216,7 +217,7 @@ export function CardForm({ open, onOpenChange, initialData, onSubmit, title }: C
             <div className="space-y-2">
               <Label>Titular</Label>
               <Select value={form.owner} onValueChange={(v) => set('owner', v as CardOwner)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="self">Meu cartão</SelectItem>
                   <SelectItem value="borrowed">Emprestado</SelectItem>
@@ -226,7 +227,7 @@ export function CardForm({ open, onOpenChange, initialData, onSubmit, title }: C
             <div className="space-y-2">
               <Label>Cor</Label>
               <Select value={form.color || 'blue'} onValueChange={(v) => set('color', v)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {COLORS.map((c) => (
                     <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>

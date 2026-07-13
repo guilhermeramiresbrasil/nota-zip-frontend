@@ -9,7 +9,7 @@ export interface IUser {
   id: string;
   name: string;
   email: string;
-  plan: 'free' | 'basic' | 'premium';
+  plan: 'free' | 'basic' | 'premium' | 'shared';
   createdAt: string;
   sessionId?: string;
   accessToken?: string;
@@ -20,6 +20,10 @@ export interface IUser {
   emailAlerts?: boolean;
   emailVerified?: boolean;
   phoneVerified?: boolean;
+  isTemporaryPassword?: boolean;
+  sharedGroupId?: string;
+  partnerNickname?: string;
+  selfNickname?: string;
 }
 
 interface AuthContextType {
@@ -72,7 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       id: userData.id,
       name: userData.name,
       email: userData.email,
-      plan: userData.plan || 'free',
+      plan: userData.planId || userData.plan || 'free',
       createdAt: userData.createdAt,
       sessionId: parsedUser.sessionId,
       accessToken: storedAccessToken,
@@ -83,11 +87,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       emailAlerts: userData.emailAlerts ?? true,
       emailVerified: userData.emailVerified ?? false,
       phoneVerified: userData.phoneVerified ?? false,
+      isTemporaryPassword: userData.isTemporaryPassword ?? false,
+      sharedGroupId: userData.sharedGroupId,
+      partnerNickname: userData.partnerNickname,
+      selfNickname: userData.selfNickname,
     };
   };
 
   const shouldRedirectToOnboarding = (updatedUser: IUser): boolean => {
-    return (!updatedUser.emailVerified || !updatedUser.phoneVerified) && window.location.pathname !== '/onboarding';
+    return false;
   };
 
   const fetchFreshUserData = async (userId: string) => {
@@ -169,13 +177,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         emailAlerts: userDetails.emailAlerts ?? true,
         emailVerified: userDetails.emailVerified ?? loginDetails.emailVerified ?? false,
         phoneVerified: userDetails.phoneVerified ?? loginDetails.phoneVerified ?? false,
+        isTemporaryPassword: userDetails.isTemporaryPassword ?? false,
       };
 
       setUser(userObj);
       localStorage.setItem('user', JSON.stringify(userObj));
 
-      // Redirect to onboarding if email or phone not verified
-      if (!userObj.emailVerified || !userObj.phoneVerified) {
+      // Redirect to change password if temporary password
+      if (userObj.isTemporaryPassword) {
+        router.push('/change-password');
+      } else if (!userObj.emailVerified || !userObj.phoneVerified) {
         router.push('/onboarding');
       } else {
         router.push('/home');

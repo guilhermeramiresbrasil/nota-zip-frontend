@@ -308,13 +308,13 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
           {/* ── Payment method (expense only) ── */}
           {transactionType === 'expense' && (
             <div className="space-y-1.5">
-              <Label className="text-sm font-medium text-slate-700">Forma de pagamento</Label>
+              <Label className="text-sm font-medium text-slate-700">Forma de pagamento *</Label>
               <Select
                 value={formData.payment_method || ''}
                 onValueChange={(v) => onChangeFormData({ ...formData, payment_method: v, card_id: '', installments: '1', firstBillingMonth: new Date().toISOString().slice(0, 7) })}
               >
                 <SelectTrigger className="h-10 border-slate-200 text-slate-700">
-                  <SelectValue placeholder="Selecione (opcional)" />
+                  <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent>
                   {Object.entries(PAYMENT_METHOD_LABELS).map(([value, label]) => (

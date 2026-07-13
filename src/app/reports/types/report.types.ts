@@ -52,6 +52,9 @@ export interface DetailedTransaction {
   category: string;
   type: 'credit' | 'debit';
   amount: number;
+  payment_method?: string;
+  userId?: string;
+  userNickname?: string;
 }
 
 export interface SummaryStats {
