@@ -20,6 +20,7 @@ export interface IUser {
   emailAlerts?: boolean;
   emailVerified?: boolean;
   phoneVerified?: boolean;
+  isTemporaryPassword?: boolean;
 }
 
 interface AuthContextType {
