@@ -130,16 +130,13 @@
 }
 
 @media print {
-  /* Hide navigation during print */
-  nav,
-  header,
-  .no-print,
-  [class*="navigation"],
-  [class*="Navigation"] {
+  /* Hide only navigation bar during print */
+  nav[class*="navigation"],
+  nav[class*="Navigation"] {
     display: none !important;
   }
   
-  /* Hide sticky elements */
+  /* Hide sticky positioning */
   .sticky,
   [class*="sticky"] {
     position: static !important;
