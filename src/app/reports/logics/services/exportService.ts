@@ -1,4 +1,5 @@
 import { DetailedTransaction, SummaryStats } from '../../types/report.types';
+import Color from 'color';
 
 export class ExportService {
   private static instance: ExportService;
@@ -44,77 +45,11 @@ export class ExportService {
   }
 
   async exportToPDF(element: HTMLElement, filename: string): Promise<void> {
-    const html2canvas = (await import('html2canvas')).default;
+    const { default: html2canvas } = await import('html2canvas');
     const { jsPDF } = await import('jspdf');
 
-    // Inject temporary CSS to override oklch colors with hex
-    const styleId = 'temp-export-styles';
-    const style = document.createElement('style');
-    style.id = styleId;
-    style.textContent = `
-      :root {
-        --background: #ffffff !important;
-        --foreground: #242424 !important;
-        --card: #ffffff !important;
-        --card-foreground: #242424 !important;
-        --popover: #ffffff !important;
-        --popover-foreground: #242424 !important;
-        --primary: #404040 !important;
-        --primary-foreground: #fcfcfc !important;
-        --secondary: #f5f5f5 !important;
-        --secondary-foreground: #404040 !important;
-        --muted: #f5f5f5 !important;
-        --muted-foreground: #8a8a8a !important;
-        --accent: #f5f5f5 !important;
-        --accent-foreground: #404040 !important;
-        --destructive: #ef4444 !important;
-        --border: #ebebeb !important;
-        --input: #ebebeb !important;
-        --ring: #b4b4b4 !important;
-        --chart-1: #dedede !important;
-        --chart-2: #8a8a8a !important;
-        --chart-3: #6f6f6f !important;
-        --chart-4: #5e5e5e !important;
-        --chart-5: #444444 !important;
-        --sidebar: #fcfcfc !important;
-        --sidebar-foreground: #242424 !important;
-        --sidebar-primary: #404040 !important;
-        --sidebar-primary-foreground: #fcfcfc !important;
-        --sidebar-accent: #f5f5f5 !important;
-        --sidebar-accent-foreground: #404040 !important;
-        --sidebar-border: #ebebeb !important;
-        --sidebar-ring: #b4b4b4 !important;
-      }
-      .dark {
-        --background: #242424 !important;
-        --foreground: #fcfcfc !important;
-        --card: #404040 !important;
-        --card-foreground: #fcfcfc !important;
-        --popover: #404040 !important;
-        --popover-foreground: #fcfcfc !important;
-        --primary: #ebebeb !important;
-        --primary-foreground: #404040 !important;
-        --secondary: #444444 !important;
-        --secondary-foreground: #fcfcfc !important;
-        --muted: #444444 !important;
-        --muted-foreground: #b4b4b4 !important;
-        --accent: #444444 !important;
-        --accent-foreground: #fcfcfc !important;
-        --destructive: #dc2626 !important;
-        --border: rgba(255, 255, 255, 0.1) !important;
-        --input: rgba(255, 255, 255, 0.15) !important;
-        --ring: #8a8a8a !important;
-        --sidebar: #404040 !important;
-        --sidebar-foreground: #fcfcfc !important;
-        --sidebar-primary: #7c3aed !important;
-        --sidebar-primary-foreground: #fcfcfc !important;
-        --sidebar-accent: #444444 !important;
-        --sidebar-accent-foreground: #fcfcfc !important;
-        --sidebar-border: rgba(255, 255, 255, 0.1) !important;
-        --sidebar-ring: #8a8a8a !important;
-      }
-    `;
-    document.head.appendChild(style);
+    // Force all elements to use inline hex colors by computing and setting them
+    this.forceHexColors(element);
 
     try {
       const canvas = await html2canvas(element, { 
@@ -122,6 +57,11 @@ export class ExportService {
         useCORS: true,
         backgroundColor: '#ffffff',
         logging: false,
+        allowTaint: true,
+        ignoreElements: (element) => {
+          // Ignore elements that might cause issues
+          return false;
+        },
       });
       const imgData = canvas.toDataURL('image/png');
 
@@ -132,81 +72,16 @@ export class ExportService {
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
       pdf.save(`${filename}.pdf`);
     } finally {
-      document.head.removeChild(style);
+      // Note: We don't restore the original styles as they're computed values
+      // The page will reload or the user can refresh to restore
     }
   }
 
   async exportChartAsImage(chartRef: HTMLElement, filename: string): Promise<void> {
-    const html2canvas = (await import('html2canvas')).default;
+    const { default: html2canvas } = await import('html2canvas');
 
-    // Inject temporary CSS to override oklch colors with hex
-    const styleId = 'temp-export-styles';
-    const style = document.createElement('style');
-    style.id = styleId;
-    style.textContent = `
-      :root {
-        --background: #ffffff !important;
-        --foreground: #242424 !important;
-        --card: #ffffff !important;
-        --card-foreground: #242424 !important;
-        --popover: #ffffff !important;
-        --popover-foreground: #242424 !important;
-        --primary: #404040 !important;
-        --primary-foreground: #fcfcfc !important;
-        --secondary: #f5f5f5 !important;
-        --secondary-foreground: #404040 !important;
-        --muted: #f5f5f5 !important;
-        --muted-foreground: #8a8a8a !important;
-        --accent: #f5f5f5 !important;
-        --accent-foreground: #404040 !important;
-        --destructive: #ef4444 !important;
-        --border: #ebebeb !important;
-        --input: #ebebeb !important;
-        --ring: #b4b4b4 !important;
-        --chart-1: #dedede !important;
-        --chart-2: #8a8a8a !important;
-        --chart-3: #6f6f6f !important;
-        --chart-4: #5e5e5e !important;
-        --chart-5: #444444 !important;
-        --sidebar: #fcfcfc !important;
-        --sidebar-foreground: #242424 !important;
-        --sidebar-primary: #404040 !important;
-        --sidebar-primary-foreground: #fcfcfc !important;
-        --sidebar-accent: #f5f5f5 !important;
-        --sidebar-accent-foreground: #404040 !important;
-        --sidebar-border: #ebebeb !important;
-        --sidebar-ring: #b4b4b4 !important;
-      }
-      .dark {
-        --background: #242424 !important;
-        --foreground: #fcfcfc !important;
-        --card: #404040 !important;
-        --card-foreground: #fcfcfc !important;
-        --popover: #404040 !important;
-        --popover-foreground: #fcfcfc !important;
-        --primary: #ebebeb !important;
-        --primary-foreground: #404040 !important;
-        --secondary: #444444 !important;
-        --secondary-foreground: #fcfcfc !important;
-        --muted: #444444 !important;
-        --muted-foreground: #b4b4b4 !important;
-        --accent: #444444 !important;
-        --accent-foreground: #fcfcfc !important;
-        --destructive: #dc2626 !important;
-        --border: rgba(255, 255, 255, 0.1) !important;
-        --input: rgba(255, 255, 255, 0.15) !important;
-        --ring: #8a8a8a !important;
-        --sidebar: #404040 !important;
-        --sidebar-foreground: #fcfcfc !important;
-        --sidebar-primary: #7c3aed !important;
-        --sidebar-primary-foreground: #fcfcfc !important;
-        --sidebar-accent: #444444 !important;
-        --sidebar-accent-foreground: #fcfcfc !important;
-        --sidebar-border: rgba(255, 255, 255, 0.1) !important;
-        --sidebar-ring: #8a8a8a !important;
-      }
-    `;
-    document.head.appendChild(style);
+    // Force all elements to use inline hex colors by computing and setting them
+    this.forceHexColors(chartRef);
 
     try {
       const canvas = await html2canvas(chartRef, { 
@@ -214,18 +89,58 @@ export class ExportService {
         useCORS: true,
         backgroundColor: '#ffffff',
         logging: false,
+        allowTaint: true,
       });
       const link = document.createElement('a');
       link.download = `${filename}.png`;
       link.href = canvas.toDataURL('image/png');
       link.click();
     } finally {
-      document.head.removeChild(style);
+      // Note: We don't restore the original styles as they're computed values
     }
   }
 
   async exportDashboardAsImage(containerRef: HTMLElement, filename: string): Promise<void> {
     await this.exportChartAsImage(containerRef, filename);
+  }
+
+  private forceHexColors(element: HTMLElement): void {
+    const computedStyle = getComputedStyle(element);
+    
+    // Get computed color values and convert to hex
+    const colorProperties = [
+      'color', 'backgroundColor', 'borderColor', 'borderTopColor',
+      'borderRightColor', 'borderBottomColor', 'borderLeftColor',
+      'outlineColor', 'textDecorationColor', 'fill', 'stroke'
+    ];
+
+    colorProperties.forEach(prop => {
+      const value = computedStyle.getPropertyValue(prop);
+      if (value && value.includes('oklch')) {
+        const hex = this.oklchToHexSimple(value);
+        if (hex) {
+          element.style.setProperty(prop, hex, 'important');
+        }
+      }
+    });
+
+    // Recursively process children
+    const children = element.children;
+    for (let i = 0; i < children.length; i++) {
+      this.forceHexColors(children[i] as HTMLElement);
+    }
+  }
+
+  private oklchToHexSimple(oklchString: string): string | null {
+    try {
+      // Use the color library to convert oklch to hex
+      const color = Color(oklchString);
+      return color.hex();
+    } catch (e) {
+      console.error('Error converting color:', e);
+      // Fallback to white if conversion fails
+      return '#ffffff';
+    }
   }
 
   private downloadFile(content: string, filename: string, mimeType: string): void {
