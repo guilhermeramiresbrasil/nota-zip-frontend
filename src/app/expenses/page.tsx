@@ -173,8 +173,15 @@ export default function ExpensesPage() {
     const transaction = transactions.find((t) => t.id === id);
     if (!transaction) return;
 
+    // Format amount to Brazilian currency format for CurrencyInput
+    const amountValue = Math.abs(transaction.amount);
+    const formattedAmount = amountValue.toLocaleString('pt-BR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+
     setFormData({
-      amount: String(Math.abs(transaction.amount)),
+      amount: formattedAmount,
       categoryId: transaction.categoryId || transaction.category || '',
       subcategoryId: transaction.subcategoryId || '',
       description: transaction.description || transaction.name || '',
