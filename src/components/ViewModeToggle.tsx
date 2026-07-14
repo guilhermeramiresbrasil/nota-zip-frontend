@@ -63,7 +63,7 @@ export function ViewModeToggle() {
     >
       <button
         onClick={() => setViewMode('individual')}
-        className={`flex items-center gap-1 px-2 py-1 rounded-full transition-all font-medium ${
+        className={`flex items-center justify-center px-2 py-1 rounded-full transition-all font-medium ${
           !isShared
             ? 'bg-white text-gray-900 shadow-sm'
             : 'text-gray-500 hover:text-gray-700'
@@ -71,11 +71,10 @@ export function ViewModeToggle() {
         title="Minha visão"
       >
         <User className="h-3 w-3" />
-        <span className="hidden lg:inline">Minha</span>
       </button>
       <button
         onClick={() => setViewMode('shared')}
-        className={`flex items-center gap-1 px-2 py-1 rounded-full transition-all font-medium ${
+        className={`flex items-center justify-center px-2 py-1 rounded-full transition-all font-medium ${
           isShared
             ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-sm'
             : 'text-gray-500 hover:text-gray-700'
@@ -83,7 +82,6 @@ export function ViewModeToggle() {
         title="Visão compartilhada"
       >
         <Users className="h-3 w-3" />
-        <span className="hidden lg:inline">Compartilhada</span>
       </button>
     </div>
   );
