@@ -423,10 +423,9 @@ export function CardDetailPanel({ card, userId, balance, onReload }: Props) {
                   const isPaying = payingId === inv.id;
                   return (
                     <div key={inv.id} className="rounded-xl border border-slate-100 overflow-hidden">
-                      <button
-                        type="button"
+                      <div
                         onClick={() => setExpandedInvoice(isExpanded ? null : inv.id)}
-                        className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 transition-colors"
+                        className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 transition-colors cursor-pointer"
                       >
                         <div className="flex items-center gap-3">
                           <span className={cn('flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full border', cfg.color)}>
@@ -445,7 +444,7 @@ export function CardDetailPanel({ card, userId, balance, onReload }: Props) {
                           </button>
                           {isExpanded ? <ChevronUp className="h-4 w-4 text-slate-400" /> : <ChevronDown className="h-4 w-4 text-slate-400" />}
                         </div>
-                      </button>
+                      </div>
 
                       {isExpanded && (
                         <div className="px-4 pb-4 pt-1 border-t border-slate-100 bg-slate-50/50 space-y-3">
