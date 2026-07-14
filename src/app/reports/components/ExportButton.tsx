@@ -38,12 +38,12 @@ export const ExportButton: React.FC<ExportButtonProps> = ({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" disabled={exporting}>
+        <Button variant="outline" size="sm" disabled={exporting} className="no-print">
           {exporting ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Download className="h-4 w-4 mr-1" />}
           Exportar
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent>
+      <DropdownMenuContent className="no-print">
         <DropdownMenuItem onClick={onExportCSV}>CSV (dados brutos)</DropdownMenuItem>
         <DropdownMenuItem onClick={onExportSummaryCSV}>CSV (resumo)</DropdownMenuItem>
         <DropdownMenuItem onClick={() => handleAsync(onExportPDF)}>PDF (relatório)</DropdownMenuItem>
