@@ -128,3 +128,25 @@
     @apply font-sans;
   }
 }
+
+@media print {
+  /* Hide navigation during print */
+  nav,
+  header,
+  .no-print {
+    display: none !important;
+  }
+  
+  /* Ensure content takes full width */
+  body {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  
+  /* Remove backgrounds and shadows for cleaner print */
+  * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+}
