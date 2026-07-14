@@ -255,8 +255,7 @@ export function CardDetailPanel({ card, userId, balance, onReload }: Props) {
     }
     setActionLoading(true);
     try {
-      const parseCurrencyToNumber = (v: string) => parseFloat(v.replace(/\./g, '').replace(',', '.')) || 0;
-      await cardService.patchCard(card.id, userId, { creditLimit: parseCurrencyToNumber(editingLimitAmount) });
+      await cardService.patchCard(card.id, userId, { creditLimit: editingLimitAmount });
       setEditingLimit(false);
       setEditingLimitAmount('');
       await loadData();
