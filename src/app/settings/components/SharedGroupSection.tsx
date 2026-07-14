@@ -5,15 +5,18 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 import { sharedGroupService, SharedGroup } from '@/services/sharedGroupService';
-import { Link, Users, Copy, Check, UserPlus } from 'lucide-react';
+import { Link, Users, Copy, Check, UserPlus, LogOut } from 'lucide-react';
 
 export function SharedGroupSection() {
-  const { user } = useAuth();
+  const { user, updatedUser } = useAuth();
   const router = useRouter();
+  const { showSuccess, showError } = useToast();
   const [group, setGroup] = useState<SharedGroup | null>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [leaving, setLeaving] = useState(false);
 
   useEffect(() => {
     if (!user?.id || user.plan !== 'shared') {
@@ -31,6 +34,29 @@ export function SharedGroupSection() {
     await navigator.clipboard.writeText(group.inviteCode);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleLeaveGroup = async () => {
+    if (!user?.id) return;
+    if (!confirm('Tem certeza que deseja sair do grupo compartilhado? Esta ação não pode ser desfeita.')) {
+      return;
+    }
+    setLeaving(true);
+    try {
+      await sharedGroupService.leave(user.id);
+      await updatedUser({
+        ...user,
+        sharedGroupId: undefined,
+        partnerNickname: undefined,
+        selfNickname: undefined,
+      });
+      setGroup(null);
+      showSuccess('Você saiu do grupo compartilhado.');
+    } catch (err: any) {
+      showError(err.message || 'Erro ao sair do grupo.');
+    } finally {
+      setLeaving(false);
+    }
   };
 
   if (user?.plan !== 'shared') return null;
@@ -97,13 +123,24 @@ export function SharedGroupSection() {
                 <p className="font-medium">{user?.partnerNickname || '—'}</p>
               </div>
             </div>
-            <Button
-              variant="outline"
-              className="w-full text-sm"
-              onClick={() => router.push('/shared-group/setup')}
-            >
-              Atualizar apelidos
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                className="flex-1 text-sm"
+                onClick={() => router.push('/shared-group/setup')}
+              >
+                Atualizar apelidos
+              </Button>
+              <Button
+                variant="outline"
+                className="flex-1 text-sm text-red-600 hover:text-red-700 hover:bg-red-50"
+                onClick={handleLeaveGroup}
+                disabled={leaving}
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                {leaving ? 'Saindo...' : 'Sair do grupo'}
+              </Button>
+            </div>
           </div>
         )}
       </CardContent>

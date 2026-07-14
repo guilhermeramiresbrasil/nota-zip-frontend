@@ -57,4 +57,13 @@ export const sharedGroupService = {
     if (!data.success) return null;
     return data.data;
   },
+
+  async leave(userId: string): Promise<void> {
+    const res = await fetch(`${GATEWAY_URL}/api/shared-groups/${userId}/leave`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'Erro ao sair do grupo compartilhado');
+  },
 };
