@@ -262,6 +262,17 @@ export function CardDetailModal({ card, userId, open, onOpenChange, onReload }: 
                                 className="h-8 text-xs"
                               />
                             )}
+                            <div className="space-y-1">
+                              <Label className="text-xs">Categoria (opcional)</Label>
+                              <Select value={payCategoryId} onValueChange={setPayCategoryId}>
+                                <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecione uma categoria" /></SelectTrigger>
+                                <SelectContent>
+                                  {categories.map((cat) => (
+                                    <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
                             <div className="flex gap-2">
                               <Button size="sm" className="flex-1" disabled={actionLoading} onClick={() => handlePayInvoice(inv.id)}>
                                 Confirmar

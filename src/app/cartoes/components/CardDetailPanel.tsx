@@ -35,6 +35,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { cardService } from '../logics/cardService';
+import { categoryService } from '../../expenses/logics/services/categoryService';
 import {
   CreditCard,
   CreditCardInvoice,
@@ -78,6 +79,8 @@ export function CardDetailPanel({ card, userId, balance, onReload }: Props) {
   const [payingId, setPayingId] = useState<string | null>(null);
   const [payType, setPayType] = useState<'full' | 'partial'>('full');
   const [payAmount, setPayAmount] = useState('');
+  const [payCategoryId, setPayCategoryId] = useState('');
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [actionLoading, setActionLoading] = useState(false);
 
   const [reloadOpen, setReloadOpen] = useState(false);
@@ -116,6 +119,10 @@ export function CardDetailPanel({ card, userId, balance, onReload }: Props) {
   }, [card.id, userId, card.type]);
 
   useEffect(() => { loadData(); }, [loadData]);
+
+  useEffect(() => {
+    categoryService.fetchCategories().then(setCategories).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (editingPurchase) {
@@ -168,9 +175,11 @@ export function CardDetailPanel({ card, userId, balance, onReload }: Props) {
         userId,
         payType,
         payType === 'partial' ? parseFloat(payAmount) : totalAmount,
+        payCategoryId || undefined
       );
       setPayingId(null);
       setPayAmount('');
+      setPayCategoryId('');
       await loadData();
       onReload();
     } catch (e) {
@@ -483,6 +492,17 @@ export function CardDetailPanel({ card, userId, balance, onReload }: Props) {
                                       className="h-8 text-xs bg-white"
                                     />
                                   )}
+                                  <div className="space-y-1">
+                                    <Label className="text-xs">Categoria (opcional)</Label>
+                                    <Select value={payCategoryId} onValueChange={setPayCategoryId}>
+                                      <SelectTrigger className="h-8 text-xs bg-white"><SelectValue placeholder="Selecione uma categoria" /></SelectTrigger>
+                                      <SelectContent>
+                                        {categories.map((cat) => (
+                                          <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
                                   <div className="flex gap-2">
                                     <Button
                                       size="sm"
