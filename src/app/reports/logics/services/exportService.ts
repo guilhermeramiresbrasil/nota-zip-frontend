@@ -47,9 +47,74 @@ export class ExportService {
     const html2canvas = (await import('html2canvas')).default;
     const { jsPDF } = await import('jspdf');
 
-    // Temporarily replace oklch colors with hex for html2canvas compatibility
-    const originalStyle = document.documentElement.getAttribute('style');
-    this.replaceOklchWithHex();
+    // Inject temporary CSS to override oklch colors with hex
+    const styleId = 'temp-export-styles';
+    const style = document.createElement('style');
+    style.id = styleId;
+    style.textContent = `
+      :root {
+        --background: #ffffff !important;
+        --foreground: #242424 !important;
+        --card: #ffffff !important;
+        --card-foreground: #242424 !important;
+        --popover: #ffffff !important;
+        --popover-foreground: #242424 !important;
+        --primary: #404040 !important;
+        --primary-foreground: #fcfcfc !important;
+        --secondary: #f5f5f5 !important;
+        --secondary-foreground: #404040 !important;
+        --muted: #f5f5f5 !important;
+        --muted-foreground: #8a8a8a !important;
+        --accent: #f5f5f5 !important;
+        --accent-foreground: #404040 !important;
+        --destructive: #ef4444 !important;
+        --border: #ebebeb !important;
+        --input: #ebebeb !important;
+        --ring: #b4b4b4 !important;
+        --chart-1: #dedede !important;
+        --chart-2: #8a8a8a !important;
+        --chart-3: #6f6f6f !important;
+        --chart-4: #5e5e5e !important;
+        --chart-5: #444444 !important;
+        --sidebar: #fcfcfc !important;
+        --sidebar-foreground: #242424 !important;
+        --sidebar-primary: #404040 !important;
+        --sidebar-primary-foreground: #fcfcfc !important;
+        --sidebar-accent: #f5f5f5 !important;
+        --sidebar-accent-foreground: #404040 !important;
+        --sidebar-border: #ebebeb !important;
+        --sidebar-ring: #b4b4b4 !important;
+      }
+      .dark {
+        --background: #242424 !important;
+        --foreground: #fcfcfc !important;
+        --card: #404040 !important;
+        --card-foreground: #fcfcfc !important;
+        --popover: #404040 !important;
+        --popover-foreground: #fcfcfc !important;
+        --primary: #ebebeb !important;
+        --primary-foreground: #404040 !important;
+        --secondary: #444444 !important;
+        --secondary-foreground: #fcfcfc !important;
+        --muted: #444444 !important;
+        --muted-foreground: #b4b4b4 !important;
+        --accent: #444444 !important;
+        --accent-foreground: #fcfcfc !important;
+        --destructive: #dc2626 !important;
+        --border: rgba(255, 255, 255, 0.1) !important;
+        --input: rgba(255, 255, 255, 0.15) !important;
+        --ring: #8a8a8a !important;
+        --sidebar: #404040 !important;
+        --sidebar-foreground: #fcfcfc !important;
+        --sidebar-primary: #7c3aed !important;
+        --sidebar-primary-foreground: #fcfcfc !important;
+        --sidebar-accent: #444444 !important;
+        --sidebar-accent-foreground: #fcfcfc !important;
+        --sidebar-border: rgba(255, 255, 255, 0.1) !important;
+        --sidebar-ring: #8a8a8a !important;
+      }
+    `;
+    document.head.appendChild(style);
 
     try {
       const canvas = await html2canvas(element, { 
@@ -67,21 +132,81 @@ export class ExportService {
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
       pdf.save(`${filename}.pdf`);
     } finally {
-      // Restore original colors
-      if (originalStyle) {
-        document.documentElement.setAttribute('style', originalStyle);
-      } else {
-        document.documentElement.removeAttribute('style');
-      }
+      document.head.removeChild(style);
     }
   }
 
   async exportChartAsImage(chartRef: HTMLElement, filename: string): Promise<void> {
     const html2canvas = (await import('html2canvas')).default;
 
-    // Temporarily replace oklch colors with hex for html2canvas compatibility
-    const originalStyle = document.documentElement.getAttribute('style');
-    this.replaceOklchWithHex();
+    // Inject temporary CSS to override oklch colors with hex
+    const styleId = 'temp-export-styles';
+    const style = document.createElement('style');
+    style.id = styleId;
+    style.textContent = `
+      :root {
+        --background: #ffffff !important;
+        --foreground: #242424 !important;
+        --card: #ffffff !important;
+        --card-foreground: #242424 !important;
+        --popover: #ffffff !important;
+        --popover-foreground: #242424 !important;
+        --primary: #404040 !important;
+        --primary-foreground: #fcfcfc !important;
+        --secondary: #f5f5f5 !important;
+        --secondary-foreground: #404040 !important;
+        --muted: #f5f5f5 !important;
+        --muted-foreground: #8a8a8a !important;
+        --accent: #f5f5f5 !important;
+        --accent-foreground: #404040 !important;
+        --destructive: #ef4444 !important;
+        --border: #ebebeb !important;
+        --input: #ebebeb !important;
+        --ring: #b4b4b4 !important;
+        --chart-1: #dedede !important;
+        --chart-2: #8a8a8a !important;
+        --chart-3: #6f6f6f !important;
+        --chart-4: #5e5e5e !important;
+        --chart-5: #444444 !important;
+        --sidebar: #fcfcfc !important;
+        --sidebar-foreground: #242424 !important;
+        --sidebar-primary: #404040 !important;
+        --sidebar-primary-foreground: #fcfcfc !important;
+        --sidebar-accent: #f5f5f5 !important;
+        --sidebar-accent-foreground: #404040 !important;
+        --sidebar-border: #ebebeb !important;
+        --sidebar-ring: #b4b4b4 !important;
+      }
+      .dark {
+        --background: #242424 !important;
+        --foreground: #fcfcfc !important;
+        --card: #404040 !important;
+        --card-foreground: #fcfcfc !important;
+        --popover: #404040 !important;
+        --popover-foreground: #fcfcfc !important;
+        --primary: #ebebeb !important;
+        --primary-foreground: #404040 !important;
+        --secondary: #444444 !important;
+        --secondary-foreground: #fcfcfc !important;
+        --muted: #444444 !important;
+        --muted-foreground: #b4b4b4 !important;
+        --accent: #444444 !important;
+        --accent-foreground: #fcfcfc !important;
+        --destructive: #dc2626 !important;
+        --border: rgba(255, 255, 255, 0.1) !important;
+        --input: rgba(255, 255, 255, 0.15) !important;
+        --ring: #8a8a8a !important;
+        --sidebar: #404040 !important;
+        --sidebar-foreground: #fcfcfc !important;
+        --sidebar-primary: #7c3aed !important;
+        --sidebar-primary-foreground: #fcfcfc !important;
+        --sidebar-accent: #444444 !important;
+        --sidebar-accent-foreground: #fcfcfc !important;
+        --sidebar-border: rgba(255, 255, 255, 0.1) !important;
+        --sidebar-ring: #8a8a8a !important;
+      }
+    `;
+    document.head.appendChild(style);
 
     try {
       const canvas = await html2canvas(chartRef, { 
@@ -95,79 +220,12 @@ export class ExportService {
       link.href = canvas.toDataURL('image/png');
       link.click();
     } finally {
-      // Restore original colors
-      if (originalStyle) {
-        document.documentElement.setAttribute('style', originalStyle);
-      } else {
-        document.documentElement.removeAttribute('style');
-      }
+      document.head.removeChild(style);
     }
   }
 
   async exportDashboardAsImage(containerRef: HTMLElement, filename: string): Promise<void> {
     await this.exportChartAsImage(containerRef, filename);
-  }
-
-  private replaceOklchWithHex(): void {
-    const style = document.documentElement.style;
-    const computedStyle = getComputedStyle(document.documentElement);
-    
-    // Common oklch to hex mappings for the theme
-    const colorMap: Record<string, string> = {
-      'oklch(1 0 0)': '#ffffff',
-      'oklch(0.145 0 0)': '#242424',
-      'oklch(0.205 0 0)': '#404040',
-      'oklch(0.97 0 0)': '#f5f5f5',
-      'oklch(0.556 0 0)': '#8a8a8a',
-      'oklch(0.577 0.245 27.325)': '#ef4444',
-      'oklch(0.922 0 0)': '#ebebeb',
-      'oklch(0.708 0 0)': '#b4b4b4',
-      'oklch(0.87 0 0)': '#dedede',
-      'oklch(0.439 0 0)': '#6f6f6f',
-      'oklch(0.371 0 0)': '#5e5e5e',
-      'oklch(0.269 0 0)': '#444444',
-      'oklch(0.985 0 0)': '#fcfcfc',
-      'oklch(0.704 0.191 22.216)': '#dc2626',
-      'oklch(0.488 0.243 264.376)': '#7c3aed',
-    };
-
-    // Replace CSS variables
-    for (const [oklch, hex] of Object.entries(colorMap)) {
-      Array.from(document.styleSheets).forEach(sheet => {
-        try {
-          const rules = sheet.cssRules || sheet.rules;
-          for (let i = 0; i < rules.length; i++) {
-            const rule = rules[i];
-            if (rule.cssText && rule.cssText.includes(oklch)) {
-              // This is a simplified approach - in production you might want to clone rules
-            }
-          }
-        } catch (e) {
-          // Ignore cross-origin stylesheet errors
-        }
-      });
-    }
-
-    // Force inline style override for common variables
-    const root = document.documentElement;
-    root.style.setProperty('--background', '#ffffff');
-    root.style.setProperty('--foreground', '#242424');
-    root.style.setProperty('--card', '#ffffff');
-    root.style.setProperty('--card-foreground', '#242424');
-    root.style.setProperty('--popover', '#ffffff');
-    root.style.setProperty('--popover-foreground', '#242424');
-    root.style.setProperty('--primary', '#404040');
-    root.style.setProperty('--primary-foreground', '#fcfcfc');
-    root.style.setProperty('--secondary', '#f5f5f5');
-    root.style.setProperty('--secondary-foreground', '#404040');
-    root.style.setProperty('--muted', '#f5f5f5');
-    root.style.setProperty('--muted-foreground', '#8a8a8a');
-    root.style.setProperty('--accent', '#f5f5f5');
-    root.style.setProperty('--accent-foreground', '#404040');
-    root.style.setProperty('--destructive', '#ef4444');
-    root.style.setProperty('--border', '#ebebeb');
-    root.style.setProperty('--input', '#ebebeb');
-    root.style.setProperty('--ring', '#b4b4b4');
   }
 
   private downloadFile(content: string, filename: string, mimeType: string): void {
