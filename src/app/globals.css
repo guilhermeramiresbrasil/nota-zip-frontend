@@ -143,6 +143,17 @@
     position: static !important;
   }
   
+  /* Hide fixed positioning */
+  .fixed,
+  [class*="fixed"] {
+    position: static !important;
+  }
+  
+  /* Prevent elements from repeating on each page */
+  @page {
+    margin: 1cm;
+  }
+  
   /* Ensure content takes full width */
   body {
     width: 100% !important;
@@ -183,5 +194,16 @@
   .flex,
   [class*="flex"] {
     display: flex !important;
+  }
+  
+  /* Prevent page breaks inside important elements */
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid;
+  }
+  
+  /* Prevent page breaks before important elements */
+  .summary-cards,
+  [class*="Summary"] {
+    page-break-inside: avoid;
   }
 }
