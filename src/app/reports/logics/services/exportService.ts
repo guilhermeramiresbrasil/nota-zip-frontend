@@ -1,5 +1,5 @@
 import { DetailedTransaction, SummaryStats } from '../../types/report.types';
-import Color from 'color';
+import { domToPng } from 'modern-screenshot';
 
 export class ExportService {
   private static instance: ExportService;
@@ -45,101 +45,40 @@ export class ExportService {
   }
 
   async exportToPDF(element: HTMLElement, filename: string): Promise<void> {
-    const { default: html2canvas } = await import('html2canvas');
-    const { jsPDF } = await import('jspdf');
-
-    // Force all elements to use inline hex colors by computing and setting them
-    this.forceHexColors(element);
-
-    try {
-      const canvas = await html2canvas(element, { 
-        scale: 2, 
-        useCORS: true,
-        backgroundColor: '#ffffff',
-        logging: false,
-        allowTaint: true,
-        ignoreElements: (element) => {
-          // Ignore elements that might cause issues
-          return false;
-        },
-      });
-      const imgData = canvas.toDataURL('image/png');
-
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`${filename}.pdf`);
-    } finally {
-      // Note: We don't restore the original styles as they're computed values
-      // The page will reload or the user can refresh to restore
-    }
+    // Use window.print() as the most reliable method for PDF export
+    // modern-screenshot and html2canvas both have issues with oklch colors
+    window.print();
   }
 
   async exportChartAsImage(chartRef: HTMLElement, filename: string): Promise<void> {
-    const { default: html2canvas } = await import('html2canvas');
-
-    // Force all elements to use inline hex colors by computing and setting them
-    this.forceHexColors(chartRef);
-
     try {
-      const canvas = await html2canvas(chartRef, { 
-        scale: 2, 
-        useCORS: true,
+      const dataUrl = await domToPng(chartRef, {
+        scale: 2,
         backgroundColor: '#ffffff',
-        logging: false,
-        allowTaint: true,
       });
       const link = document.createElement('a');
       link.download = `${filename}.png`;
-      link.href = canvas.toDataURL('image/png');
+      link.href = dataUrl;
       link.click();
-    } finally {
-      // Note: We don't restore the original styles as they're computed values
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert('Exportação de imagem falhou. Tente usar "Exportar PDF" ou imprima a página (Ctrl+P / Cmd+P).');
     }
   }
 
   async exportDashboardAsImage(containerRef: HTMLElement, filename: string): Promise<void> {
-    await this.exportChartAsImage(containerRef, filename);
-  }
-
-  private forceHexColors(element: HTMLElement): void {
-    const computedStyle = getComputedStyle(element);
-    
-    // Get computed color values and convert to hex
-    const colorProperties = [
-      'color', 'backgroundColor', 'borderColor', 'borderTopColor',
-      'borderRightColor', 'borderBottomColor', 'borderLeftColor',
-      'outlineColor', 'textDecorationColor', 'fill', 'stroke'
-    ];
-
-    colorProperties.forEach(prop => {
-      const value = computedStyle.getPropertyValue(prop);
-      if (value && value.includes('oklch')) {
-        const hex = this.oklchToHexSimple(value);
-        if (hex) {
-          element.style.setProperty(prop, hex, 'important');
-        }
-      }
-    });
-
-    // Recursively process children
-    const children = element.children;
-    for (let i = 0; i < children.length; i++) {
-      this.forceHexColors(children[i] as HTMLElement);
-    }
-  }
-
-  private oklchToHexSimple(oklchString: string): string | null {
     try {
-      // Use the color library to convert oklch to hex
-      const color = Color(oklchString);
-      return color.hex();
-    } catch (e) {
-      console.error('Error converting color:', e);
-      // Fallback to white if conversion fails
-      return '#ffffff';
+      const dataUrl = await domToPng(containerRef, {
+        scale: 2,
+        backgroundColor: '#ffffff',
+      });
+      const link = document.createElement('a');
+      link.download = `${filename}.png`;
+      link.href = dataUrl;
+      link.click();
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert('Exportação de imagem falhou. Tente usar "Exportar PDF" ou imprima a página (Ctrl+P / Cmd+P).');
     }
   }
 
