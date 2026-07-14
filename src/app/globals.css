@@ -133,8 +133,16 @@
   /* Hide navigation during print */
   nav,
   header,
-  .no-print {
+  .no-print,
+  [class*="navigation"],
+  [class*="Navigation"] {
     display: none !important;
+  }
+  
+  /* Hide sticky elements */
+  .sticky,
+  [class*="sticky"] {
+    position: static !important;
   }
   
   /* Ensure content takes full width */
@@ -148,5 +156,13 @@
   * {
     box-shadow: none !important;
     text-shadow: none !important;
+  }
+  
+  /* Ensure main content is visible */
+  main,
+  [role="main"],
+  .container {
+    display: block !important;
+    width: 100% !important;
   }
 }
