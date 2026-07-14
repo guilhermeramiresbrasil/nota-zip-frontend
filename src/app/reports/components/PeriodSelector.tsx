@@ -20,10 +20,10 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = ({
 }) => {
   return (
     <Select value={selectedPeriod} onValueChange={onPeriodChange}>
-      <SelectTrigger className="w-[200px]">
+      <SelectTrigger className="w-[200px] no-print">
         <SelectValue placeholder="Selecione o período" />
       </SelectTrigger>
-      <SelectContent>
+      <SelectContent className="no-print">
         {periods.map((period) => (
           <SelectItem key={period.value} value={period.value}>
             {period.label}

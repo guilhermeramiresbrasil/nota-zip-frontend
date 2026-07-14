@@ -130,9 +130,10 @@
 }
 
 @media print {
-  /* Hide only navigation bar during print */
+  /* Hide navigation and elements with no-print class during print */
   nav[class*="navigation"],
-  nav[class*="Navigation"] {
+  nav[class*="Navigation"],
+  .no-print {
     display: none !important;
   }
   
