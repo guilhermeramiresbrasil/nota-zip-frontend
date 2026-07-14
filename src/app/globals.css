@@ -152,9 +152,18 @@
     padding: 0 !important;
   }
   
-  /* Remove backgrounds and shadows for cleaner print */
-  * {
+  /* Keep card styles for organization */
+  .card,
+  [class*="Card"],
+  [class*="card"] {
+    border: 1px solid #e5e7eb !important;
+    background: #ffffff !important;
     box-shadow: none !important;
+    page-break-inside: avoid;
+  }
+  
+  /* Keep borders for structure */
+  * {
     text-shadow: none !important;
   }
   
@@ -164,5 +173,17 @@
   .container {
     display: block !important;
     width: 100% !important;
+  }
+  
+  /* Keep grid layouts */
+  .grid,
+  [class*="grid"] {
+    display: grid !important;
+  }
+  
+  /* Keep flex layouts */
+  .flex,
+  [class*="flex"] {
+    display: flex !important;
   }
 }
