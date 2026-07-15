@@ -159,11 +159,11 @@ export const useReportsStore = create<ReportsState>((set, get) => ({
   fetchDetailedTransactions: async (userId, partnerId) => {
     if (!userId) return;
     try {
-      let data = await reportService.fetchDetailedTransactions(userId, get().filters);
+      let data = await reportService.fetchDetailedTransactions(userId, get().filters, get().selectedPeriod);
 
       // If partnerId is provided, fetch partner's transactions and combine
       if (partnerId) {
-        const partnerData = await reportService.fetchDetailedTransactions(partnerId, get().filters);
+        const partnerData = await reportService.fetchDetailedTransactions(partnerId, get().filters, get().selectedPeriod);
         data = [...data, ...partnerData];
       }
 

@@ -99,11 +99,41 @@ export default function ReportsPage() {
       try {
         const categories = await categoryService.fetchCategories('both', user.id);
         const map = new Map<string, any>();
+        const parentMap = new Map<string, string>(); // id -> parent name
+
+        // Flatten categories array (extract subcategories)
+        const flatCategories: any[] = [];
         categories.forEach((cat: any) => {
+          flatCategories.push(cat);
+          if (cat.subcategories && cat.subcategories.length > 0) {
+            cat.subcategories.forEach((sub: any) => {
+              flatCategories.push(sub);
+            });
+          }
+        });
+
+        // First pass: create map of all categories
+        flatCategories.forEach((cat: any) => {
           map.set(cat.id, cat);
         });
+
+        // Second pass: populate parentMap with parent names
+        flatCategories.forEach((cat: any) => {
+          if (cat.parentId && map.has(cat.parentId)) {
+            const parent = map.get(cat.parentId);
+            parentMap.set(cat.id, parent.name);
+          }
+        });
+
+        // Add parentName to each category in the map
+        map.forEach((cat: any, id: string) => {
+          if (parentMap.has(id)) {
+            cat.parentName = parentMap.get(id);
+          }
+        });
+
         setCategoriesMap(map);
-        setCategories(categories);
+        setCategories(flatCategories);
       } catch (error) {
         console.error('Error fetching categories:', error);
         setCategoriesMap(new Map());
@@ -174,43 +204,34 @@ export default function ReportsPage() {
     }));
   }, [detailedTransactions]);
 
-  // Calculate category data (parent categories including their subcategories) - separated by type
+  // Calculate category data (parent categories only, aggregating subcategories) - separated by type
   const parentCategoryDataCredit = React.useMemo(() => {
     if (!detailedTransactions || detailedTransactions.length === 0) return [];
 
-    if (categoriesMap.size === 0) {
-      const categoryMap = new Map<string, number>();
-      detailedTransactions.forEach(t => {
-        if (t.type !== 'credit') return;
-        const category = t.category || 'Outros';
-        if (!category.includes(':')) {
-          categoryMap.set(category, (categoryMap.get(category) || 0) + Math.abs(t.amount));
-        } else {
-          const parentCategory = category.split(':')[0].trim();
-          categoryMap.set(parentCategory, (categoryMap.get(parentCategory) || 0) + Math.abs(t.amount));
-        }
-      });
-
-      return Array.from(categoryMap.entries()).map(([name, value], i) => ({
-        name,
-        value,
-        color: COLOR_PALETTES.default[i % COLOR_PALETTES.default.length],
-      }));
-    }
-
     const categoryMap = new Map<string, number>();
     detailedTransactions.forEach(t => {
-      const categoryId = t.categoryId;
-      if (!categoryId) return;
+      if (t.type !== 'credit') return;
 
-      const category = categoriesMap.get(categoryId);
-      if (!category) return;
+      let categoryName = 'Outros';
 
-      // Only include credit categories
-      if (category.type !== 'credit' && category.type !== 'both') return;
+      // Try to get category name from categoriesMap first
+      if (t.categoryId && categoriesMap.size > 0) {
+        const category = categoriesMap.get(t.categoryId);
+        if (category) {
+          // Check if category type is compatible with transaction type
+          // If category is debit but transaction is credit, skip this category
+          if (category.type === 'debit') return;
+          // For parent category chart, use parentName if it's a subcategory, otherwise use name
+          categoryName = category.parentName || category.name || 'Outros';
+        } else {
+          // Fallback to category field
+          categoryName = t.category || 'Outros';
+        }
+      } else {
+        // Fallback to category field
+        categoryName = t.category || 'Outros';
+      }
 
-      // Use parentName if available (for subcategories), otherwise use name
-      const categoryName = category.parentName || category.name || 'Outros';
       categoryMap.set(categoryName, (categoryMap.get(categoryName) || 0) + Math.abs(t.amount));
     });
 
@@ -224,39 +245,29 @@ export default function ReportsPage() {
   const parentCategoryDataDebit = React.useMemo(() => {
     if (!detailedTransactions || detailedTransactions.length === 0) return [];
 
-    if (categoriesMap.size === 0) {
-      const categoryMap = new Map<string, number>();
-      detailedTransactions.forEach(t => {
-        if (t.type !== 'debit') return;
-        const category = t.category || 'Outros';
-        if (!category.includes(':')) {
-          categoryMap.set(category, (categoryMap.get(category) || 0) + Math.abs(t.amount));
-        } else {
-          const parentCategory = category.split(':')[0].trim();
-          categoryMap.set(parentCategory, (categoryMap.get(parentCategory) || 0) + Math.abs(t.amount));
-        }
-      });
-
-      return Array.from(categoryMap.entries()).map(([name, value], i) => ({
-        name,
-        value,
-        color: COLOR_PALETTES.default[i % COLOR_PALETTES.default.length],
-      }));
-    }
-
     const categoryMap = new Map<string, number>();
     detailedTransactions.forEach(t => {
-      const categoryId = t.categoryId;
-      if (!categoryId) return;
+      if (t.type !== 'debit') return;
 
-      const category = categoriesMap.get(categoryId);
-      if (!category) return;
+      let categoryName = 'Outros';
 
-      // Only include debit categories
-      if (category.type !== 'debit' && category.type !== 'both') return;
+      // Try to get category name from categoriesMap first
+      if (t.categoryId && categoriesMap.size > 0) {
+        const category = categoriesMap.get(t.categoryId);
+        if (category) {
+          // Check if category type is compatible with transaction type
+          // If category is credit but transaction is debit, skip this category
+          if (category.type === 'credit') return;
+          categoryName = category.parentName || category.name || 'Outros';
+        } else {
+          // Fallback to category field
+          categoryName = t.category || 'Outros';
+        }
+      } else {
+        // Fallback to category field
+        categoryName = t.category || 'Outros';
+      }
 
-      // Use parentName if available (for subcategories), otherwise use name
-      const categoryName = category.parentName || category.name || 'Outros';
       categoryMap.set(categoryName, (categoryMap.get(categoryName) || 0) + Math.abs(t.amount));
     });
 
@@ -267,82 +278,84 @@ export default function ReportsPage() {
     }));
   }, [detailedTransactions, categoriesMap]);
 
-  // Calculate subcategory data (all categories, counting transactions) - separated by type
+  // Calculate subcategory data (all categories and subcategories) - separated by type
   const subcategoryDataCredit = React.useMemo(() => {
-    if (categoriesMap.size === 0) return [];
+    if (!detailedTransactions || detailedTransactions.length === 0) return [];
 
-    // Get all categories for credit type
-    const creditCategories = categories.filter((cat: any) => 
-      cat.type === 'credit' || cat.type === 'both'
-    );
+    const categoryAmountMap = new Map<string, number>();
 
-    // Count transactions for each category
-    const categoryCountMap = new Map<string, number>();
-    creditCategories.forEach((cat: any) => {
-      categoryCountMap.set(cat.name, 0);
-    });
-
-    // Count transactions for each category
     detailedTransactions.forEach(t => {
       if (t.type !== 'credit') return;
-      const categoryId = t.categoryId;
-      if (!categoryId) return;
 
-      const category = categoriesMap.get(categoryId);
-      if (!category) return;
+      let categoryName = 'Outros';
 
-      if (category.type === 'credit' || category.type === 'both') {
-        const categoryName = category.name || 'Outros';
-        categoryCountMap.set(categoryName, (categoryCountMap.get(categoryName) || 0) + 1);
+      // Try to get category name from categoriesMap first
+      if (t.categoryId && categoriesMap.size > 0) {
+        const category = categoriesMap.get(t.categoryId);
+        if (category) {
+          // Check if category type is compatible with transaction type
+          // If category is debit but transaction is credit, skip this category
+          if (category.type === 'debit') return;
+          categoryName = category.name || 'Outros';
+        } else {
+          // Fallback to category field
+          categoryName = t.category || 'Outros';
+        }
+      } else {
+        // Fallback to category field
+        categoryName = t.category || 'Outros';
       }
+
+      categoryAmountMap.set(categoryName, (categoryAmountMap.get(categoryName) || 0) + Math.abs(t.amount));
     });
 
-    return Array.from(categoryCountMap.entries())
+    return Array.from(categoryAmountMap.entries())
       .filter(([_, value]) => value > 0)
       .map(([name, value], i) => ({
         name,
         value,
         color: COLOR_PALETTES.default[i % COLOR_PALETTES.default.length],
       }));
-  }, [detailedTransactions, categoriesMap, categories]);
+  }, [detailedTransactions, categoriesMap]);
 
   const subcategoryDataDebit = React.useMemo(() => {
-    if (categoriesMap.size === 0) return [];
+    if (!detailedTransactions || detailedTransactions.length === 0) return [];
 
-    // Get all categories for debit type
-    const debitCategories = categories.filter((cat: any) => 
-      cat.type === 'debit' || cat.type === 'both'
-    );
+    const categoryAmountMap = new Map<string, number>();
 
-    // Count transactions for each category
-    const categoryCountMap = new Map<string, number>();
-    debitCategories.forEach((cat: any) => {
-      categoryCountMap.set(cat.name, 0);
-    });
-
-    // Count transactions for each category
     detailedTransactions.forEach(t => {
       if (t.type !== 'debit') return;
-      const categoryId = t.categoryId;
-      if (!categoryId) return;
 
-      const category = categoriesMap.get(categoryId);
-      if (!category) return;
+      let categoryName = 'Outros';
 
-      if (category.type === 'debit' || category.type === 'both') {
-        const categoryName = category.name || 'Outros';
-        categoryCountMap.set(categoryName, (categoryCountMap.get(categoryName) || 0) + 1);
+      // Try to get category name from categoriesMap first
+      if (t.categoryId && categoriesMap.size > 0) {
+        const category = categoriesMap.get(t.categoryId);
+        if (category) {
+          // Check if category type is compatible with transaction type
+          // If category is credit but transaction is debit, skip this category
+          if (category.type === 'credit') return;
+          categoryName = category.name || 'Outros';
+        } else {
+          // Fallback to category field
+          categoryName = t.category || 'Outros';
+        }
+      } else {
+        // Fallback to category field
+        categoryName = t.category || 'Outros';
       }
+
+      categoryAmountMap.set(categoryName, (categoryAmountMap.get(categoryName) || 0) + Math.abs(t.amount));
     });
 
-    return Array.from(categoryCountMap.entries())
+    return Array.from(categoryAmountMap.entries())
       .filter(([_, value]) => value > 0)
       .map(([name, value], i) => ({
         name,
         value,
         color: COLOR_PALETTES.default[i % COLOR_PALETTES.default.length],
       }));
-  }, [detailedTransactions, categoriesMap, categories]);
+  }, [detailedTransactions, categoriesMap]);
 
   const handleExportCSV = () => {
     if (detailedTransactions.length > 0) {
@@ -372,6 +385,27 @@ export default function ReportsPage() {
     if (dashboardRef.current) {
       await exportService.exportDashboardAsImage(dashboardRef.current, 'notazip-dashboard');
     }
+  };
+
+  // Wrapper functions for chart config changes
+  const handleParentCategoryConfigCreditChange = (config: Partial<ChartConfig>) => {
+    setParentCategoryConfigCredit(prev => ({ ...prev, ...config }));
+  };
+
+  const handleParentCategoryConfigDebitChange = (config: Partial<ChartConfig>) => {
+    setParentCategoryConfigDebit(prev => ({ ...prev, ...config }));
+  };
+
+  const handleSubcategoryConfigCreditChange = (config: Partial<ChartConfig>) => {
+    setSubcategoryConfigCredit(prev => ({ ...prev, ...config }));
+  };
+
+  const handleSubcategoryConfigDebitChange = (config: Partial<ChartConfig>) => {
+    setSubcategoryConfigDebit(prev => ({ ...prev, ...config }));
+  };
+
+  const handleMonthlyChartConfigChange = (config: Partial<ChartConfig>) => {
+    setMonthlyChartConfig(prev => ({ ...prev, ...config }));
   };
 
   return (
@@ -411,7 +445,7 @@ export default function ReportsPage() {
                   <ParentCategoryChart 
                     data={parentCategoryDataCredit} 
                     config={parentCategoryConfigCredit}
-                    onConfigChange={setParentCategoryConfigCredit}
+                    onConfigChange={handleParentCategoryConfigCreditChange}
                     onConfigReset={() => setParentCategoryConfigCredit({
                       chartType: 'pie',
                       showLegend: true,
@@ -425,7 +459,7 @@ export default function ReportsPage() {
                   <ParentCategoryChart 
                     data={parentCategoryDataDebit} 
                     config={parentCategoryConfigDebit}
-                    onConfigChange={setParentCategoryConfigDebit}
+                    onConfigChange={handleParentCategoryConfigDebitChange}
                     onConfigReset={() => setParentCategoryConfigDebit({
                       chartType: 'pie',
                       showLegend: true,
@@ -439,7 +473,7 @@ export default function ReportsPage() {
                   <SubcategoryChart 
                     data={subcategoryDataCredit} 
                     config={subcategoryConfigCredit}
-                    onConfigChange={setSubcategoryConfigCredit}
+                    onConfigChange={handleSubcategoryConfigCreditChange}
                     onConfigReset={() => setSubcategoryConfigCredit({
                       chartType: 'pie',
                       showLegend: true,
@@ -453,7 +487,7 @@ export default function ReportsPage() {
                   <SubcategoryChart 
                     data={subcategoryDataDebit} 
                     config={subcategoryConfigDebit}
-                    onConfigChange={setSubcategoryConfigDebit}
+                    onConfigChange={handleSubcategoryConfigDebitChange}
                     onConfigReset={() => setSubcategoryConfigDebit({
                       chartType: 'pie',
                       showLegend: true,
@@ -472,7 +506,7 @@ export default function ReportsPage() {
               <MonthlyChart 
                 data={reportData.monthlyData} 
                 config={monthlyChartConfig}
-                onConfigChange={setMonthlyChartConfig}
+                onConfigChange={handleMonthlyChartConfigChange}
                 onConfigReset={() => setMonthlyChartConfig({
                   chartType: 'bar',
                   showLegend: true,

@@ -84,7 +84,6 @@ export function CardDetailModal({ card, userId, open, onOpenChange, onReload }: 
   const [showPayForm, setShowPayForm] = useState<string | null>(null);
   const [payType, setPayType] = useState<'full' | 'partial'>('full');
   const [payAmount, setPayAmount] = useState('');
-  const [payCategoryId, setPayCategoryId] = useState('');
 
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [actionLoading, setActionLoading] = useState(false);
@@ -162,12 +161,14 @@ export function CardDetailModal({ card, userId, open, onOpenChange, onReload }: 
     setError('');
     setActionLoading(true);
     try {
+      // Usa automaticamente a categoria "Cartão de Crédito" (subcategoria de "Contas")
+      const creditCardCategoryId = '508d544c-7273-4158-8aa9-74068c110c6f';
       await cardService.payInvoice(
         invoiceId,
         userId,
         payType,
         payType === 'partial' ? parseFloat(payAmount) : undefined,
-        payCategoryId || undefined
+        creditCardCategoryId
       );
       setShowPayForm(null);
       setPayAmount('');
@@ -254,25 +255,13 @@ export function CardDetailModal({ card, userId, open, onOpenChange, onReload }: 
                               </SelectContent>
                             </Select>
                             {payType === 'partial' && (
-                              <Input
-                                type="number"
+                              <CurrencyInput
                                 placeholder="Valor pago"
                                 value={payAmount}
-                                onChange={(e) => setPayAmount(e.target.value)}
+                                onChange={setPayAmount}
                                 className="h-8 text-xs"
                               />
                             )}
-                            <div className="space-y-1">
-                              <Label className="text-xs">Categoria (opcional)</Label>
-                              <Select value={payCategoryId} onValueChange={setPayCategoryId}>
-                                <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecione uma categoria" /></SelectTrigger>
-                                <SelectContent>
-                                  {categories.map((cat) => (
-                                    <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
                             <div className="flex gap-2">
                               <Button size="sm" className="flex-1" disabled={actionLoading} onClick={() => handlePayInvoice(inv.id)}>
                                 Confirmar

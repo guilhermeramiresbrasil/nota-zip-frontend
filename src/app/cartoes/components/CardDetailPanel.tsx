@@ -79,8 +79,6 @@ export function CardDetailPanel({ card, userId, balance, onReload }: Props) {
   const [payingId, setPayingId] = useState<string | null>(null);
   const [payType, setPayType] = useState<'full' | 'partial'>('full');
   const [payAmount, setPayAmount] = useState('');
-  const [payCategoryId, setPayCategoryId] = useState('');
-  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [actionLoading, setActionLoading] = useState(false);
 
   const [reloadOpen, setReloadOpen] = useState(false);
@@ -121,10 +119,6 @@ export function CardDetailPanel({ card, userId, balance, onReload }: Props) {
   useEffect(() => { loadData(); }, [loadData]);
 
   useEffect(() => {
-    categoryService.fetchCategories().then(setCategories).catch(() => {});
-  }, []);
-
-  useEffect(() => {
     if (editingPurchase) {
       const amount = editingPurchase.totalAmount;
       setEditingPurchaseAmount(amount.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
@@ -135,7 +129,10 @@ export function CardDetailPanel({ card, userId, balance, onReload }: Props) {
 
   useEffect(() => {
     if (editingLimit && balance) {
-      setEditingLimitAmount(balance.limit.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+      // Converte o valor numérico para dígitos para o CurrencyInput (ex: 300 -> "30000" para mostrar 300,00)
+      const limitNumber = balance.limit;
+      const digitsOnly = String(Math.round(limitNumber * 100));
+      setEditingLimitAmount(digitsOnly);
     } else {
       setEditingLimitAmount('');
     }
@@ -170,16 +167,17 @@ export function CardDetailPanel({ card, userId, balance, onReload }: Props) {
   const handlePayInvoice = async (invoiceId: string, totalAmount: number) => {
     setActionLoading(true);
     try {
+      // Usa automaticamente a categoria "Cartão de Crédito" (subcategoria de "Contas")
+      const creditCardCategoryId = '508d544c-7273-4158-8aa9-74068c110c6f';
       await cardService.payInvoice(
         invoiceId,
         userId,
         payType,
         payType === 'partial' ? parseFloat(payAmount) : totalAmount,
-        payCategoryId || undefined
+        creditCardCategoryId
       );
       setPayingId(null);
       setPayAmount('');
-      setPayCategoryId('');
       await loadData();
       onReload();
     } catch (e) {
@@ -255,7 +253,10 @@ export function CardDetailPanel({ card, userId, balance, onReload }: Props) {
     }
     setActionLoading(true);
     try {
-      await cardService.patchCard(card.id, userId, { creditLimit: editingLimitAmount });
+      // Converte dígitos para valor formatado (ex: "30000" -> "300,00")
+      const numericValue = parseInt(editingLimitAmount, 10) / 100;
+      const formattedValue = numericValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      await cardService.patchCard(card.id, userId, { creditLimit: formattedValue });
       setEditingLimit(false);
       setEditingLimitAmount('');
       await loadData();
@@ -483,25 +484,13 @@ export function CardDetailPanel({ card, userId, balance, onReload }: Props) {
                                     </SelectContent>
                                   </Select>
                                   {payType === 'partial' && (
-                                    <Input
-                                      type="number"
+                                    <CurrencyInput
                                       placeholder="Valor (R$)"
                                       value={payAmount}
-                                      onChange={(e) => setPayAmount(e.target.value)}
+                                      onChange={setPayAmount}
                                       className="h-8 text-xs bg-white"
                                     />
                                   )}
-                                  <div className="space-y-1">
-                                    <Label className="text-xs">Categoria (opcional)</Label>
-                                    <Select value={payCategoryId} onValueChange={setPayCategoryId}>
-                                      <SelectTrigger className="h-8 text-xs bg-white"><SelectValue placeholder="Selecione uma categoria" /></SelectTrigger>
-                                      <SelectContent>
-                                        {categories.map((cat) => (
-                                          <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
-                                        ))}
-                                      </SelectContent>
-                                    </Select>
-                                  </div>
                                   <div className="flex gap-2">
                                     <Button
                                       size="sm"

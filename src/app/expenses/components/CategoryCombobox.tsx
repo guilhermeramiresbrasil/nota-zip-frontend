@@ -145,7 +145,23 @@ export function CategoryCombobox({
       </div>
 
       {/* List */}
-      <div className="overflow-y-auto" style={{ maxHeight: 300, scrollbarWidth: 'thin' }}>
+      <div 
+        className="overflow-y-auto" 
+        style={{ 
+          maxHeight: 300, 
+          scrollbarWidth: 'thin',
+          WebkitOverflowScrolling: 'touch',
+          overflowY: 'auto',
+          touchAction: 'pan-y'
+        }}
+        onWheel={(e) => {
+          // Allow native scroll behavior
+          const target = e.currentTarget;
+          if (target.scrollHeight > target.clientHeight) {
+            e.stopPropagation();
+          }
+        }}
+      >
         {grouped.length === 0 && (
           <p className="py-7 text-center text-sm text-slate-400">Nenhuma categoria encontrada.</p>
         )}
@@ -229,6 +245,8 @@ export function CategoryCombobox({
           align="start"
           sideOffset={4}
           className="z-50 w-[var(--radix-popover-trigger-width)] rounded-xl border border-slate-200 bg-white shadow-lg outline-none"
+          onOpenAutoFocus={(e) => e.preventDefault()}
+          onCloseAutoFocus={(e) => e.preventDefault()}
         >
           {ListContent}
         </PopoverPrimitive.Content>

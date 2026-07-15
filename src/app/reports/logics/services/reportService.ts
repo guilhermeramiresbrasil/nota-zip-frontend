@@ -46,8 +46,38 @@ export class ReportService {
     };
   }
 
-  async fetchDetailedTransactions(userId: string, filters: ReportFilters): Promise<DetailedTransaction[]> {
+  async fetchDetailedTransactions(userId: string, filters: ReportFilters, period?: string): Promise<DetailedTransaction[]> {
     try {
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      const currentMonth = now.getMonth() + 1;
+
+      let startDate: string | undefined;
+      let endDate: string | undefined;
+
+      // Calculate dates based on period if not provided in filters
+      if (!filters.startDate || !filters.endDate) {
+        if (period === 'current') {
+          startDate = `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`;
+          const lastDay = new Date(currentYear, currentMonth, 0).getDate();
+          endDate = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+        } else if (period === 'last') {
+          const d = new Date(currentYear, currentMonth - 2, 1);
+          const lastMonth = d.getMonth() + 1;
+          const lastYear = d.getFullYear();
+          startDate = `${lastYear}-${String(lastMonth).padStart(2, '0')}-01`;
+          const lastDay = new Date(lastYear, lastMonth, 0).getDate();
+          endDate = `${lastYear}-${String(lastMonth).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+        } else if (period === 'quarter') {
+          const d = new Date(currentYear, currentMonth - 3, 1);
+          startDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`;
+          endDate = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(new Date(currentYear, currentMonth, 0).getDate()).padStart(2, '0')}`;
+        } else if (period === 'year') {
+          startDate = `${currentYear}-01-01`;
+          endDate = `${currentYear}-12-31`;
+        }
+      }
+
       const response = await fetch(`${GATEWAY_URL}/api/transactions/list`, {
         method: 'POST',
         headers: this.getHeaders(),
@@ -55,8 +85,8 @@ export class ReportService {
           userId,
           limit: 1000,
           offset: 0,
-          ...(filters.startDate && { startDate: filters.startDate }),
-          ...(filters.endDate && { endDate: filters.endDate }),
+          startDate: filters.startDate || startDate,
+          endDate: filters.endDate || endDate,
         }),
       });
 

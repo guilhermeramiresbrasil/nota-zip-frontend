@@ -149,7 +149,10 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
       try {
         setLoading(true);
         const apiType = transactionType === 'income' ? 'credit' : 'debit';
-        setCategories(await categoryService.fetchCategories(apiType, user?.id));
+        const fetchedCategories = await categoryService.fetchCategories(apiType, user?.id);
+        setCategories(fetchedCategories);
+        // Reset category selection when type changes
+        onChangeFormData({ ...formData, categoryId: '', subcategoryId: '' });
       } catch { /* silent */ } finally { setLoading(false); }
     };
     fetch();

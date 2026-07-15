@@ -50,6 +50,7 @@ export interface DetailedTransaction {
   date: string;
   description: string;
   category: string;
+  categoryId?: string;
   type: 'credit' | 'debit';
   amount: number;
   payment_method?: string;
