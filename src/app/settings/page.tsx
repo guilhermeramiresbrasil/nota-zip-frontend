@@ -52,7 +52,7 @@ export default function SettingsPage() {
         <div className="space-y-6">
           <PersonalDataSection />
           <SubscriptionSection />
-          {user?.plan === 'shared' && <SharedGroupSection />}
+          <SharedGroupSection />
           <CategoriesSection />
           <EmailSection />
           <WhatsAppSection />

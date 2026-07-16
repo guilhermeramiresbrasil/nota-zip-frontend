@@ -48,9 +48,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   const getStoredAuthData = () => {
-    const storedUser = localStorage.getItem('user');
-    const storedAccessToken = localStorage.getItem('accessToken');
-    return { storedUser, storedAccessToken };
+    try {
+      const storedUser = localStorage.getItem('user');
+      const storedAccessToken = localStorage.getItem('accessToken');
+      return { storedUser, storedAccessToken };
+    } catch (error) {
+      console.error('Error accessing localStorage (possibly private browsing):', error);
+      return { storedUser: null, storedAccessToken: null };
+    }
   };
 
   const validateStoredUser = (parsedUser: any): boolean => {
@@ -58,17 +63,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const clearInvalidAuthData = () => {
-    localStorage.removeItem('user');
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('sessionId');
+    try {
+      localStorage.removeItem('user');
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('sessionId');
+    } catch (error) {
+      console.error('Error clearing localStorage (possibly private browsing):', error);
+    }
   };
 
   const restoreUserFromStorage = (parsedUser: any, storedAccessToken: string): IUser => {
-    return {
-      ...parsedUser,
-      accessToken: storedAccessToken,
-      sessionId: parsedUser.sessionId || localStorage.getItem('sessionId') || undefined,
-    };
+    try {
+      return {
+        ...parsedUser,
+        accessToken: storedAccessToken,
+        sessionId: parsedUser.sessionId || localStorage.getItem('sessionId') || undefined,
+      };
+    } catch (error) {
+      console.error('Error accessing localStorage (possibly private browsing):', error);
+      return {
+        ...parsedUser,
+        accessToken: storedAccessToken,
+        sessionId: parsedUser.sessionId || undefined,
+      };
+    }
   };
 
   const buildUpdatedUser = (userData: any, parsedUser: any, storedAccessToken: string): IUser => {
@@ -153,8 +171,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       const loginDetails = loginInfo.data;
 
-      localStorage.setItem('accessToken', loginDetails.accessToken);
-      localStorage.setItem('sessionId', loginDetails.sessionId);
+      try {
+        localStorage.setItem('accessToken', loginDetails.accessToken);
+        localStorage.setItem('sessionId', loginDetails.sessionId);
+      } catch (error) {
+        console.error('Error setting localStorage (possibly private browsing):', error);
+        // Continue without localStorage in private browsing
+      }
 
       const userInfo = await userServiceInstance.getUserById(loginDetails.userId);
       if (!userInfo) {

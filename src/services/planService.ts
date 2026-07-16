@@ -154,6 +154,28 @@ export class PlanService {
   async downgradePlan(request: PlanUpgradeRequest): Promise<void> {
     throw new Error('Pagamento em breve disponível');
   }
+
+  async pauseSubscription(): Promise<void> {
+    const response = await fetch(`${GATEWAY_URL}/api/subscriptions/pause`, {
+      method: 'POST',
+      headers: getHeaders(),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || data.message || 'Erro ao pausar assinatura');
+    }
+  }
+
+  async resumeSubscription(): Promise<void> {
+    const response = await fetch(`${GATEWAY_URL}/api/subscriptions/resume`, {
+      method: 'POST',
+      headers: getHeaders(),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || data.message || 'Erro ao reativar assinatura');
+    }
+  }
 }
 
 export const planService = PlanService.getInstance();
