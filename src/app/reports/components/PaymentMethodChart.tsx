@@ -104,7 +104,7 @@ export const PaymentMethodChart: React.FC<PaymentMethodChartProps> = ({
           ))}
         </Pie>
         {config?.showTooltip !== false && <Tooltip />}
-        {config?.showLegend !== false && <Legend onClick={(e) => handleCategoryClick(e.dataKey)} />}
+        {config?.showLegend !== false && <Legend onClick={(e) => handleCategoryClick(e.dataKey as string)} />}
       </PieChart>
     );
   };

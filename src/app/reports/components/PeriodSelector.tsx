@@ -19,7 +19,7 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = ({
   onPeriodChange,
 }) => {
   return (
-    <Select value={selectedPeriod} onValueChange={onPeriodChange}>
+    <Select value={selectedPeriod} onValueChange={onPeriodChange as (value: string) => void}>
       <SelectTrigger className="w-[200px] no-print">
         <SelectValue placeholder="Selecione o período" />
       </SelectTrigger>

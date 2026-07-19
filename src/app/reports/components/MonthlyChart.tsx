@@ -125,7 +125,7 @@ export const MonthlyChart: React.FC<MonthlyChartProps> = ({
         <XAxis dataKey="month" tick={{ fontSize: 12 }} />
         <YAxis />
         {config?.showTooltip !== false && <Tooltip />}
-        {config?.showLegend !== false && <Legend onClick={(e) => handleSeriesClick(e.dataKey)} />}
+        {config?.showLegend !== false && <Legend onClick={(e) => handleSeriesClick(e.dataKey as string)} />}
         {!hiddenSeries.has('receitas') && (
           <Bar 
             dataKey="receitas" 

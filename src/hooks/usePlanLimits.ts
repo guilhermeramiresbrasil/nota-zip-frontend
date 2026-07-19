@@ -12,9 +12,10 @@ interface PlanLimits {
 export function usePlanLimits() {
   const { user } = useAuth();
 
-  const getPlanLimits = (plan?: 'free' | 'basic' | 'premium'): PlanLimits => {
+  const getPlanLimits = (plan?: 'free' | 'basic' | 'premium' | 'shared'): PlanLimits => {
     switch (plan || 'free') {
-      case 'free':
+      case 'shared':
+      case 'premium':
         return {
           maxIncomePerWeek: 1,
           maxExpensePerWeek: 5,
