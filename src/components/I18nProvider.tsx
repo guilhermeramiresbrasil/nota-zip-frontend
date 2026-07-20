@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { NextIntlClientProvider } from 'next-intl';
 import { useAuth } from '@/contexts/AuthContext';
 import pt from '../../messages/pt.json';
@@ -22,18 +22,22 @@ function resolveSupportedLocale(raw?: string | null): string {
   return match || 'pt-BR';
 }
 
-function getInitialLocale(userLanguage?: string): string {
-  if (typeof window === 'undefined') return 'pt-BR';
-  const saved = window.localStorage.getItem('nota-zip-locale');
-  if (saved) return resolveSupportedLocale(saved);
-  if (userLanguage) return resolveSupportedLocale(userLanguage);
-  return resolveSupportedLocale(navigator.language);
-}
-
 export function I18nProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
-  const locale = useMemo(() => getInitialLocale(user?.language), [user?.language]);
+  const [locale, setLocale] = useState('pt-BR');
   const messages = messagesByLocale[locale] ?? pt;
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const saved = window.localStorage.getItem('nota-zip-locale');
+    if (saved) {
+      setLocale(resolveSupportedLocale(saved));
+    } else if (user?.language) {
+      setLocale(resolveSupportedLocale(user.language));
+    } else {
+      setLocale(resolveSupportedLocale(navigator.language));
+    }
+  }, [user?.language]);
 
   useEffect(() => {
     document.documentElement.lang = locale;
