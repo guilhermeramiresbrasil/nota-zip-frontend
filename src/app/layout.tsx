@@ -22,9 +22,35 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Nota Zip - Sistema Financeiro Inteligente",
-  description: "Gerencie suas finanças de forma simples e inteligente com o Nota Zip",
+  metadataBase: new URL('https://notazip.com.br'),
+  title: {
+    default: 'Nota Zip - Sistema Financeiro Inteligente',
+    template: '%s | Nota Zip',
+  },
+  description: 'Gerencie suas finanças de forma simples e inteligente com o Nota Zip. Controle gastos, receitas e envie notas fiscais pelo WhatsApp.',
+  keywords: ['finanças pessoais', 'controle de gastos', 'nota fiscal', 'whatsapp', 'Nota Zip'],
+  authors: [{ name: 'Nota Zip' }],
+  robots: { index: true, follow: true },
+  alternates: { canonical: '/' },
+  openGraph: {
+    title: 'Nota Zip - Sistema Financeiro Inteligente',
+    description: 'Gerencie suas finanças de forma simples e inteligente com o Nota Zip.',
+    url: '/',
+    siteName: 'Nota Zip',
+    locale: 'pt_BR',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Nota Zip - Sistema Financeiro Inteligente',
+    description: 'Gerencie suas finanças de forma simples e inteligente com o Nota Zip.',
+  },
+  icons: {
+    icon: '/favicon.ico',
+  },
 };
+
+export const revalidate = 60;
 
 export default function RootLayout({
   children,

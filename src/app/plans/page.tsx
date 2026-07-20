@@ -57,7 +57,7 @@ export default function PlansPage() {
           price: price.amount.toFixed(2),
           priceCurrency: price.currency,
           availability: 'https://schema.org/InStock',
-          url: 'http://localhost:3000/plans',
+          url: 'https://notazip.com.br/plans',
         },
       }))
     ),
