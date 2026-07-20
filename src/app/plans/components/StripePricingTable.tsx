@@ -30,15 +30,18 @@ function StripePricingTableInner({ user, locale }: StripePricingTableInnerProps)
 
     const container = containerRef.current;
     if (container) {
-      const pricingTableId = process.env.NEXT_PUBLIC_STRIPE_PRICING_TABLE_ID || DEFAULT_PRICING_TABLE_ID;
+      const pricingTableIds: Record<string, string | undefined> = {
+        pt: process.env.NEXT_PUBLIC_STRIPE_PRICING_TABLE_ID_PT,
+        en: process.env.NEXT_PUBLIC_STRIPE_PRICING_TABLE_ID_EN,
+        es: process.env.NEXT_PUBLIC_STRIPE_PRICING_TABLE_ID_ES,
+      };
+      const pricingTableId =
+        pricingTableIds[locale] || process.env.NEXT_PUBLIC_STRIPE_PRICING_TABLE_ID || DEFAULT_PRICING_TABLE_ID;
       const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || DEFAULT_PUBLISHABLE_KEY;
-      const stripeLocale = locale === 'pt' ? 'pt-BR' : locale;
 
       const pricingTable = document.createElement('stripe-pricing-table');
       pricingTable.setAttribute('pricing-table-id', pricingTableId);
       pricingTable.setAttribute('publishable-key', publishableKey);
-      // Stripe uses an internal attribute for locale override; not documented, but supported by the web component.
-      pricingTable.setAttribute('__locale-override', stripeLocale);
 
       if (user?.email) {
         pricingTable.setAttribute('customer-email', user.email);

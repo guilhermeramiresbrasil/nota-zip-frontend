@@ -4,6 +4,9 @@ const nextConfig: NextConfig = {
   transpilePackages: ["@notazip/crypto"],
   env: {
     NEXT_PUBLIC_STRIPE_PRICING_TABLE_ID: process.env.NEXT_PUBLIC_STRIPE_PRICING_TABLE_ID || '',
+    NEXT_PUBLIC_STRIPE_PRICING_TABLE_ID_PT: process.env.NEXT_PUBLIC_STRIPE_PRICING_TABLE_ID_PT || '',
+    NEXT_PUBLIC_STRIPE_PRICING_TABLE_ID_EN: process.env.NEXT_PUBLIC_STRIPE_PRICING_TABLE_ID_EN || '',
+    NEXT_PUBLIC_STRIPE_PRICING_TABLE_ID_ES: process.env.NEXT_PUBLIC_STRIPE_PRICING_TABLE_ID_ES || '',
     NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '',
   },
   // Disable cache to ensure fresh builds
