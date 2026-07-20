@@ -24,17 +24,17 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL('https://notazip.com.br'),
   title: {
-    default: 'Nota Zip - Sistema Financeiro Inteligente',
+    default: 'Nota Zip — Mensagens e áudios de WhatsApp viram finanças automáticas',
     template: '%s | Nota Zip',
   },
-  description: 'Gerencie suas finanças de forma simples e inteligente com o Nota Zip. Controle gastos, receitas e envie notas fiscais pelo WhatsApp.',
-  keywords: ['finanças pessoais', 'controle de gastos', 'nota fiscal', 'whatsapp', 'Nota Zip'],
+  description: 'Transforme mensagens e áudios de WhatsApp em organização financeira automática. A IA do Nota Zip lê, categoriza e organiza seus gastos sem planilhas.',
+  keywords: ['finanças pessoais', 'controle de gastos', 'nota fiscal', 'whatsapp', 'inteligência artificial', 'Nota Zip'],
   authors: [{ name: 'Nota Zip' }],
   robots: { index: true, follow: true },
   alternates: { canonical: '/' },
   openGraph: {
-    title: 'Nota Zip - Sistema Financeiro Inteligente',
-    description: 'Gerencie suas finanças de forma simples e inteligente com o Nota Zip.',
+    title: 'Nota Zip — Mensagens e áudios de WhatsApp viram finanças automáticas',
+    description: 'Transforme mensagens e áudios de WhatsApp em organização financeira automática. A IA do Nota Zip lê, categoriza e organiza seus gastos sem planilhas.',
     url: '/',
     siteName: 'Nota Zip',
     locale: 'pt_BR',
@@ -42,8 +42,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary',
-    title: 'Nota Zip - Sistema Financeiro Inteligente',
-    description: 'Gerencie suas finanças de forma simples e inteligente com o Nota Zip.',
+    title: 'Nota Zip — Mensagens e áudios de WhatsApp viram finanças automáticas',
+    description: 'Transforme mensagens e áudios de WhatsApp em organização financeira automática. A IA do Nota Zip lê, categoriza e organiza seus gastos sem planilhas.',
   },
   icons: {
     icon: '/favicon.ico',
