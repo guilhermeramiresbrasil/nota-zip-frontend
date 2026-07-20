@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { CheckCircle, ArrowRight, Receipt } from 'lucide-react';
@@ -7,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 
 function PaymentSuccessContent() {
+  const t = useTranslations('paymentSuccess');
   const router = useRouter();
   const searchParams = useSearchParams();
   const [countdown, setCountdown] = useState(10);
@@ -28,7 +30,7 @@ function PaymentSuccessContent() {
     return () => clearInterval(timer);
   }, [router]);
 
-  const paymentMethodLabel = captureMethod === 'pix' ? 'Pix' : 'Cartão de crédito';
+  const paymentMethodLabel = captureMethod === 'pix' ? t('pix') : t('creditCard');
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-100 dark:from-green-950 dark:to-emerald-900 p-4">
@@ -40,10 +42,10 @@ function PaymentSuccessContent() {
 
           <div className="space-y-2">
             <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              Pagamento confirmado!
+              {t('title')}
             </h1>
             <p className="text-gray-500 dark:text-gray-400">
-              Seu plano foi ativado com sucesso.
+              {t('description')}
             </p>
           </div>
 
@@ -51,13 +53,13 @@ function PaymentSuccessContent() {
             <div className="w-full bg-gray-50 dark:bg-gray-800 rounded-lg p-4 text-sm text-left space-y-2">
               {captureMethod && (
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Método</span>
+                  <span className="text-gray-500">{t('method')}</span>
                   <span className="font-medium">{paymentMethodLabel}</span>
                 </div>
               )}
               {orderNsu && (
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Pedido</span>
+                  <span className="text-gray-500">{t('order')}</span>
                   <span className="font-medium font-mono text-xs">{orderNsu}</span>
                 </div>
               )}
@@ -69,18 +71,18 @@ function PaymentSuccessContent() {
               <Button variant="outline" className="w-full gap-2" asChild>
                 <a href={receiptUrl} target="_blank" rel="noopener noreferrer">
                   <Receipt className="w-4 h-4" />
-                  Ver comprovante
+                  {t('viewReceipt')}
                 </a>
               </Button>
             )}
             <Button className="w-full gap-2" onClick={() => router.push('/home')}>
-              Ir para o início
+              {t('goHome')}
               <ArrowRight className="w-4 h-4" />
             </Button>
           </div>
 
           <p className="text-xs text-gray-400">
-            Redirecionando automaticamente em {countdown}s...
+            {t('redirecting', { countdown })}
           </p>
         </CardContent>
       </Card>
@@ -89,8 +91,9 @@ function PaymentSuccessContent() {
 }
 
 export default function PaymentSuccessPage() {
+  const t = useTranslations('paymentSuccess');
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Carregando...</div>}>
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">{t('loading')}</div>}>
       <PaymentSuccessContent />
     </Suspense>
   );

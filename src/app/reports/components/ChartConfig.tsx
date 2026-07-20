@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -14,53 +15,54 @@ interface ChartConfigProps {
   onReset: () => void;
 }
 
-const chartTypes: { value: ChartType; label: string }[] = [
-  { value: 'pie', label: 'Pizza' },
-  { value: 'bar', label: 'Barras' },
-  { value: 'line', label: 'Linha' },
-  { value: 'area', label: 'Área' },
+const chartTypes: { value: ChartType; key: string }[] = [
+  { value: 'pie', key: 'pie' },
+  { value: 'bar', key: 'bar' },
+  { value: 'line', key: 'line' },
+  { value: 'area', key: 'area' },
 ];
 
-const palettes: { value: ColorPalette; label: string }[] = [
-  { value: 'default', label: 'Padrão' },
-  { value: 'warm', label: 'Quente' },
-  { value: 'cool', label: 'Frio' },
-  { value: 'pastel', label: 'Pastel' },
+const palettes: { value: ColorPalette; key: string }[] = [
+  { value: 'default', key: 'default' },
+  { value: 'warm', key: 'warm' },
+  { value: 'cool', key: 'cool' },
+  { value: 'pastel', key: 'pastel' },
 ];
 
 export const ChartConfigComponent: React.FC<ChartConfigProps> = ({ config, onConfigChange, onReset }) => {
+  const t = useTranslations('reports');
   return (
     <Card>
       <CardHeader className="pb-3">
         <CardTitle className="text-sm flex items-center gap-2">
           <Settings className="h-4 w-4" />
-          Configurações do Gráfico
+          {t('chartSettings')}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <Label className="text-xs">Tipo</Label>
+            <Label className="text-xs">{t('chartType')}</Label>
             <Select value={config.chartType} onValueChange={(v) => onConfigChange({ chartType: v as ChartType })}>
               <SelectTrigger className="h-8 text-xs">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {chartTypes.map((t) => (
-                  <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                {chartTypes.map((ct) => (
+                  <SelectItem key={ct.value} value={ct.value}>{t(ct.key)}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
           <div>
-            <Label className="text-xs">Cores</Label>
+            <Label className="text-xs">{t('colorPalette')}</Label>
             <Select value={config.colorPalette} onValueChange={(v) => onConfigChange({ colorPalette: v as ColorPalette })}>
               <SelectTrigger className="h-8 text-xs">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {palettes.map((p) => (
-                  <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                  <SelectItem key={p.value} value={p.value}>{t(p.key)}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -70,34 +72,34 @@ export const ChartConfigComponent: React.FC<ChartConfigProps> = ({ config, onCon
         <div className="flex flex-wrap gap-3 text-xs">
           <label className="flex items-center gap-1">
             <input type="checkbox" checked={config.showLegend} onChange={(e) => onConfigChange({ showLegend: e.target.checked })} />
-            Legenda
+            {t('showLegend')}
           </label>
           <label className="flex items-center gap-1">
             <input type="checkbox" checked={config.showLabels} onChange={(e) => onConfigChange({ showLabels: e.target.checked })} />
-            Labels
+            {t('showLabels')}
           </label>
           <label className="flex items-center gap-1">
             <input type="checkbox" checked={config.showTooltip} onChange={(e) => onConfigChange({ showTooltip: e.target.checked })} />
-            Tooltip
+            {t('showTooltip')}
           </label>
         </div>
 
         <div>
-          <Label className="text-xs">Orientação</Label>
+          <Label className="text-xs">{t('orientation')}</Label>
           <Select value={config.orientation} onValueChange={(v) => onConfigChange({ orientation: v as 'horizontal' | 'vertical' })}>
             <SelectTrigger className="h-8 text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="vertical">Vertical</SelectItem>
-              <SelectItem value="horizontal">Horizontal</SelectItem>
+              <SelectItem value="vertical">{t('vertical')}</SelectItem>
+              <SelectItem value="horizontal">{t('horizontal')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         <Button variant="outline" size="sm" onClick={onReset} className="w-full text-xs">
           <RotateCcw className="h-3 w-3 mr-1" />
-          Resetar
+          {t('reset')}
         </Button>
       </CardContent>
     </Card>

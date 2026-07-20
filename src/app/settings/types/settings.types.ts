@@ -3,7 +3,7 @@ import { IUser, useAuth } from '@/contexts/AuthContext';
 export interface SettingsFormData {
   theme: 'light' | 'dark' | 'system';
   currency: 'BRL' | 'USD' | 'EUR';
-  language: 'pt-BR' | 'en-US';
+  language: 'pt-BR' | 'en-US' | 'es-ES';
   notifications: boolean;
   emailAlerts: boolean;
   currentPassword?: string;

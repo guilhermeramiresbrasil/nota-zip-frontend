@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslations, useLocale } from 'next-intl';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -28,6 +29,8 @@ export function NotificationsCenter() {
   const { user } = useAuth();
   const { showSuccess, showError } = useToast();
   const router = useRouter();
+  const t = useTranslations('notifications');
+  const locale = useLocale();
   const [isOpen, setIsOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [alerts, setAlerts] = useState<Alert[]>([]);
@@ -105,7 +108,7 @@ export function NotificationsCenter() {
         if (alert && !alert.isRead) {
           setUnreadCount(prev => Math.max(0, prev - 1));
         }
-        showSuccess('Alerta arquivado');
+        showSuccess(t('archived'));
       }
     } catch (error) {
       console.error('Error archiving alert:', error);
@@ -138,7 +141,7 @@ export function NotificationsCenter() {
       if (res.ok) {
         setAlerts(alerts.map(a => ({ ...a, isRead: true })));
         setUnreadCount(0);
-        showSuccess('Todos os alertas marcados como lidos');
+        showSuccess(t('allMarkedAsRead'));
       }
     } catch (error) {
       console.error('Error marking all as read:', error);
@@ -212,7 +215,7 @@ export function NotificationsCenter() {
             <div className="px-4 pt-4 pb-6">
               <div className="p-4 border-b border-gray-200">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-lg">Notificações</h3>
+                  <h3 className="font-semibold text-lg">{t('title')}</h3>
                   <div className="flex items-center gap-2">
                     {unreadCount > 0 && (
                       <Button
@@ -221,7 +224,7 @@ export function NotificationsCenter() {
                         onClick={markAllAsRead}
                         className="text-xs"
                       >
-                        Marcar todas como lidas
+                        {t('markAllAsRead')}
                       </Button>
                     )}
                     <Button
@@ -238,12 +241,12 @@ export function NotificationsCenter() {
               <div className="h-96 overflow-y-auto">
                 {loading ? (
                   <div className="flex items-center justify-center h-32">
-                    <p className="text-sm text-gray-500">Carregando...</p>
+                    <p className="text-sm text-gray-500">{t('loading')}</p>
                   </div>
                 ) : alerts.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-32 text-gray-500">
                     <Bell className="h-8 w-8 mb-2 opacity-50" />
-                    <p className="text-sm">Nenhuma notificação</p>
+                    <p className="text-sm">{t('noNotifications')}</p>
                   </div>
                 ) : (
                   <div className="p-2">
@@ -269,14 +272,14 @@ export function NotificationsCenter() {
                                 onClick={() => handleActionClick(alert)}
                               >
                                 <ExternalLink className="h-3 w-3 mr-1 text-blue-600" />
-                                {alert.actionType === 'shared_group_setup' ? 'Configurar grupo' :
-                                 alert.actionType === 'email_verification' ? 'Verificar email' :
-                                 alert.actionType === 'whatsapp_verification' ? 'Verificar WhatsApp' :
-                                 'Ver detalhes'}
+                                {alert.actionType === 'shared_group_setup' ? t('actions.shared_group_setup') :
+                                 alert.actionType === 'email_verification' ? t('actions.email_verification') :
+                                 alert.actionType === 'whatsapp_verification' ? t('actions.whatsapp_verification') :
+                                 t('actions.view_details')}
                               </Button>
                             )}
                             <p className="text-xs text-gray-400 mt-2">
-                              {new Date(alert.createdAt).toLocaleString('pt-BR')}
+                              {new Date(alert.createdAt).toLocaleString(locale)}
                             </p>
                           </div>
                           <div className="flex flex-col gap-1">
@@ -312,7 +315,7 @@ export function NotificationsCenter() {
           <div className={`hidden md:block absolute right-0 top-12 w-96 bg-white rounded-lg shadow-xl border border-gray-200 z-50 ${isClosing ? 'animate-slide-up' : 'animate-slide-down'}`}>
             <div className="p-4 border-b border-gray-200">
               <div className="flex items-center justify-between">
-                <h3 className="font-semibold text-lg">Notificações</h3>
+                <h3 className="font-semibold text-lg">{t('title')}</h3>
                 <div className="flex items-center gap-2">
                   {unreadCount > 0 && (
                     <Button
@@ -321,7 +324,7 @@ export function NotificationsCenter() {
                       onClick={markAllAsRead}
                       className="text-xs"
                     >
-                      Marcar todas como lidas
+                      {t('markAllAsRead')}
                     </Button>
                   )}
                   <Button
@@ -338,12 +341,12 @@ export function NotificationsCenter() {
             <div className="h-96 overflow-y-auto">
               {loading ? (
                 <div className="flex items-center justify-center h-32">
-                  <p className="text-sm text-gray-500">Carregando...</p>
+                  <p className="text-sm text-gray-500">{t('loading')}</p>
                 </div>
               ) : alerts.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-32 text-gray-500">
                   <Bell className="h-8 w-8 mb-2 opacity-50" />
-                  <p className="text-sm">Nenhuma notificação</p>
+                  <p className="text-sm">{t('noNotifications')}</p>
                 </div>
               ) : (
                 <div className="p-2">
@@ -369,14 +372,14 @@ export function NotificationsCenter() {
                               onClick={() => handleActionClick(alert)}
                             >
                               <ExternalLink className="h-3 w-3 mr-1 text-blue-600" />
-                              {alert.actionType === 'shared_group_setup' ? 'Configurar grupo' :
-                               alert.actionType === 'email_verification' ? 'Verificar email' :
-                               alert.actionType === 'whatsapp_verification' ? 'Verificar WhatsApp' :
-                               'Ver detalhes'}
+                              {alert.actionType === 'shared_group_setup' ? t('actions.shared_group_setup') :
+                               alert.actionType === 'email_verification' ? t('actions.email_verification') :
+                               alert.actionType === 'whatsapp_verification' ? t('actions.whatsapp_verification') :
+                               t('actions.view_details')}
                             </Button>
                           )}
                           <p className="text-xs text-gray-400 mt-2">
-                            {new Date(alert.createdAt).toLocaleString('pt-BR')}
+                            {new Date(alert.createdAt).toLocaleString(locale)}
                           </p>
                         </div>
                         <div className="flex flex-col gap-1">

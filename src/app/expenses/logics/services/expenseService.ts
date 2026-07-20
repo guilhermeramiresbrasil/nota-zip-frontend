@@ -1,8 +1,11 @@
 import { Transaction } from '@/app/home/types/dashboard.types';
 import { ExpenseFormData } from '../../types/expense.types';
 import { generateCorrelationId } from '@/lib/utils';
+import * as cryptoClient from '@/lib/crypto/cryptoClient';
 import { categoryService } from './categoryService';
 import { cardService } from '@/app/cartoes/logics/cardService';
+
+const parseCurrencyToNumber = (v: string) => parseFloat(v.replace(/\./g, '').replace(',', '.')) || 0;
 
 // Hardcoded production URL
 const GATEWAY_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
@@ -56,21 +59,26 @@ export class ExpenseService {
       const result = await response.json();
       const data = result.data || [];
 
-      return data.map((t: any) => ({
-        id: t.id,
-        name: t.description,
-        description: t.description,
-        amount: t.type === 'debit' ? -Math.abs(t.amount) : Math.abs(t.amount),
-        category: t.category,
-        categoryId: t.categoryId,
-        subcategoryId: t.subcategoryId,
-        date: t.date,
-        type: t.type === 'credit' ? 'income' : 'expense',
-        payment_method: t.payment_method || undefined,
-        cardId: t.card_id || undefined,
-        installments: t.installments || undefined,
-        firstBillingMonth: t.firstBillingMonth || undefined,
-      }));
+      return Promise.all(
+        data.map(async (t: any) => {
+          const description = (await cryptoClient.maybeDecryptField(t.description)) ?? t.description ?? '';
+          return {
+            id: t.id,
+            name: description,
+            description: description,
+            amount: t.type === 'debit' ? -Math.abs(t.amount) : Math.abs(t.amount),
+            category: t.category,
+            categoryId: t.categoryId,
+            subcategoryId: t.subcategoryId,
+            date: t.date,
+            type: t.type === 'credit' ? 'income' : 'expense',
+            payment_method: t.payment_method || undefined,
+            cardId: t.card_id || undefined,
+            installments: t.installments || undefined,
+            firstBillingMonth: t.firstBillingMonth || undefined,
+          };
+        })
+      );
     } catch (error) {
       console.error('Error fetching transactions:', error);
       return [];
@@ -106,12 +114,12 @@ export class ExpenseService {
       await cardService.createPurchase(formData.card_id!, userId, {
         categoryId,
         description: formData.description || '',
-        totalAmount: String(parseFloat(formData.amount)),
+        totalAmount: String(parseCurrencyToNumber(formData.amount)),
         installments: formData.installments || '1',
         purchaseDate: formData.date || today,
         firstBillingMonth: formData.firstBillingMonth || nowMonth,
       });
-      const total = parseFloat(formData.amount);
+      const total = parseCurrencyToNumber(formData.amount);
       return {
         id: crypto.randomUUID(),
         name: formData.description || 'Compra no crédito',
@@ -122,15 +130,17 @@ export class ExpenseService {
       };
     }
 
+    const encryptedDescription = await cryptoClient.encryptField(formData.description || '');
+
     const response = await fetch(`${GATEWAY_URL}/api/transactions`, {
       method: 'POST',
       headers: this.getHeaders(),
       body: JSON.stringify({
         userId,
         categoryId,
-        amount: parseFloat(formData.amount),
+        amount: parseCurrencyToNumber(formData.amount),
         type: type === 'income' ? 'credit' : 'debit',
-        description: formData.description || '',
+        description: encryptedDescription,
         date: formData.date,
         ...(formData.payment_method ? { payment_method: formData.payment_method } : {}),
         ...(formData.card_id ? { card_id: formData.card_id } : {}),
@@ -144,10 +154,11 @@ export class ExpenseService {
 
     const result = await response.json();
     const t = result.data;
+    const description = (await cryptoClient.maybeDecryptField(t.description)) ?? t.description ?? '';
 
     return {
       id: t.id,
-      name: t.description,
+      name: description,
       amount: t.type === 'debit' ? -Math.abs(t.amount) : Math.abs(t.amount),
       category: t.categoryId,
       date: t.date,
@@ -174,6 +185,10 @@ export class ExpenseService {
     if (formData.installments !== undefined) body.installments = parseInt(formData.installments);
     if (formData.firstBillingMonth !== undefined) body.firstBillingMonth = formData.firstBillingMonth;
 
+    if (formData.description !== undefined) {
+      body.description = await cryptoClient.encryptField(formData.description || '');
+    }
+
     const response = await fetch(`${GATEWAY_URL}/api/transactions/${id}?userId=${userId}`, {
       method: 'PUT',
       headers: this.getHeaders(),
@@ -187,11 +202,12 @@ export class ExpenseService {
 
     const result = await response.json();
     const t = result.data;
+    const description = (await cryptoClient.maybeDecryptField(t.description)) ?? t.description ?? '';
 
     return {
       id: t.id,
-      name: t.description,
-      description: t.description,
+      name: description,
+      description: description,
       amount: t.type === 'debit' ? -Math.abs(t.amount) : Math.abs(t.amount),
       category: t.category,
       categoryId: t.categoryId,

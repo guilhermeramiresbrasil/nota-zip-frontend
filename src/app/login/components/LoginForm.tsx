@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,13 +25,14 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   onSubmit 
 }) => {
   const [showPassword, setShowPassword] = useState(false);
+  const t = useTranslations('auth');
 
   return (
     <Card className="shadow-xl">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold text-center">Bem-vindo de volta</CardTitle>
+        <CardTitle className="text-2xl font-bold text-center">{t('welcomeBack')}</CardTitle>
         <CardDescription className="text-center">
-          Entre com suas credenciais para acessar sua conta
+          {t('loginSubtitle')}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -42,13 +44,13 @@ export const LoginForm: React.FC<LoginFormProps> = ({
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t('email')}</Label>
             <div className="relative">
               <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
               <Input
                 id="email"
                 type="email"
-                placeholder="seu@email.com"
+                placeholder={t('yourEmail')}
                 className="pl-10"
                 value={formData.email}
                 onChange={(e) => onChangeFormData({ ...formData, email: e.target.value })}
@@ -58,7 +60,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">Senha</Label>
+            <Label htmlFor="password">{t('password')}</Label>
             <div className="relative">
               <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
               <Input
@@ -81,7 +83,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
           </div>
 
           <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? 'Entrando...' : 'Entrar'}
+            {isLoading ? t('loggingIn') : t('login')}
             {!isLoading && <ArrowRight className="ml-2 h-4 w-4" />}
           </Button>
         </form>

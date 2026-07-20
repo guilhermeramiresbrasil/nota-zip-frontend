@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { useTranslations } from 'next-intl';
 import { ReportFilters } from '../types/report.types';
 import { Filter, X, ChevronDown, ChevronUp, Search } from 'lucide-react';
 
@@ -23,6 +24,7 @@ export const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
   onReset,
   categories,
 }) => {
+  const t = useTranslations('reports');
   const [isExpanded, setIsExpanded] = useState(true);
   const [categorySearch, setCategorySearch] = useState('');
 
@@ -67,7 +69,7 @@ export const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
         <CardTitle className="text-sm flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Filter className="h-4 w-4" />
-            Filtros
+            {t('filters')}
             {activeFiltersCount > 0 && (
               <span className="bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full">
                 {activeFiltersCount}
@@ -85,7 +87,7 @@ export const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
                 }}
                 className="h-6 px-2 text-xs"
               >
-                Limpar
+                {t('clear')}
               </Button>
             )}
             {isExpanded ? (
@@ -102,7 +104,7 @@ export const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
           {/* Date Range */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <Label className="text-xs font-medium">Data Início</Label>
+              <Label className="text-xs font-medium">{t('startDate')}</Label>
               <Input
                 type="date"
                 className="h-9 text-sm mt-1"
@@ -111,7 +113,7 @@ export const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
               />
             </div>
             <div>
-              <Label className="text-xs font-medium">Data Fim</Label>
+              <Label className="text-xs font-medium">{t('endDate')}</Label>
               <Input
                 type="date"
                 className="h-9 text-sm mt-1"
@@ -123,7 +125,7 @@ export const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
 
           {/* Transaction Type */}
           <div>
-            <Label className="text-xs font-medium mb-2 block">Tipo de Transação</Label>
+            <Label className="text-xs font-medium mb-2 block">{t('transactionType')}</Label>
             <div className="flex gap-4">
               <div className="flex items-center space-x-2">
                 <Checkbox
@@ -135,7 +137,7 @@ export const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
                   htmlFor="credit"
                   className="text-sm cursor-pointer select-none"
                 >
-                  Receita
+                  {t('income')}
                 </label>
               </div>
               <div className="flex items-center space-x-2">
@@ -148,7 +150,7 @@ export const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
                   htmlFor="debit"
                   className="text-sm cursor-pointer select-none"
                 >
-                  Despesa
+                  {t('expense')}
                 </label>
               </div>
             </div>
@@ -156,11 +158,11 @@ export const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
 
           {/* Categories */}
           <div>
-            <Label className="text-xs font-medium mb-2 block">Categorias</Label>
+            <Label className="text-xs font-medium mb-2 block">{t('categories')}</Label>
             <div className="relative mb-2">
               <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Buscar categorias..."
+                placeholder={t('searchCategories')}
                 className="h-9 text-sm pl-8"
                 value={categorySearch}
                 onChange={(e) => setCategorySearch(e.target.value)}
@@ -179,7 +181,7 @@ export const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
             <div className="max-h-32 overflow-y-auto border rounded-md p-2 space-y-1">
               {filteredCategories.length === 0 ? (
                 <p className="text-xs text-muted-foreground text-center py-2">
-                  Nenhuma categoria encontrada
+                  {t('noCategoriesFound')}
                 </p>
               ) : (
                 filteredCategories.map((cat) => (
@@ -218,7 +220,7 @@ export const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
           {/* Amount Range */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <Label className="text-xs font-medium">Valor Mínimo</Label>
+              <Label className="text-xs font-medium">{t('minAmount')}</Label>
               <Input
                 type="number"
                 className="h-9 text-sm mt-1"
@@ -228,7 +230,7 @@ export const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
               />
             </div>
             <div>
-              <Label className="text-xs font-medium">Valor Máximo</Label>
+              <Label className="text-xs font-medium">{t('maxAmount')}</Label>
               <Input
                 type="number"
                 className="h-9 text-sm mt-1"
@@ -241,11 +243,11 @@ export const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
 
           {/* Search Text */}
           <div>
-            <Label className="text-xs font-medium">Buscar na Descrição</Label>
+            <Label className="text-xs font-medium">{t('searchDescription')}</Label>
             <div className="flex gap-2 mt-1">
               <Input
                 className="h-9 text-sm"
-                placeholder="Digite para buscar..."
+                placeholder={t('searchPlaceholder')}
                 value={filters.searchText}
                 onChange={(e) => onFiltersChange({ searchText: e.target.value })}
               />

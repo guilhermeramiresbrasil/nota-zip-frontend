@@ -23,6 +23,7 @@ import { Tag, Plus, Pencil, Trash2, ChevronRight } from 'lucide-react';
 import { categoryService, Category } from '@/app/expenses/logics/services/categoryService';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 
 const TYPE_COLORS: Record<string, string> = {
@@ -39,6 +40,7 @@ interface FormState {
 const emptyForm: FormState = { name: '', parentId: '' };
 
 export function CategoriesSection() {
+  const t = useTranslations('settings');
   const { user } = useAuth();
   const { showSuccess, showError } = useToast();
 
@@ -68,7 +70,7 @@ export function CategoriesSection() {
       const allSubs = roots.flatMap((c) => c.subcategories ?? []);
       setUserSubs(allSubs.filter((s) => s.userId === user.id));
     } catch {
-      showError('Erro', 'Não foi possível carregar as categorias.');
+      showError('Erro', t('loadCategoriesError'));
     } finally {
       setLoading(false);
     }
@@ -100,7 +102,7 @@ export function CategoriesSection() {
           name: form.name.trim(),
           type: selectedParent?.type as 'credit' | 'debit' | 'both' | undefined,
         });
-        showSuccess('Subcategoria atualizada!');
+        showSuccess(t('subcategoryUpdated'));
       } else {
         await categoryService.createCategory({
           name: form.name.trim(),
@@ -108,12 +110,12 @@ export function CategoriesSection() {
           parentId: form.parentId,
           userId: user.id,
         });
-        showSuccess('Subcategoria criada!');
+        showSuccess(t('subcategoryCreated'));
       }
       setModalOpen(false);
       await load();
     } catch {
-      showError('Erro', 'Não foi possível salvar a subcategoria.');
+      showError('Erro', t('saveSubcategoryError'));
     } finally {
       setSaving(false);
     }
@@ -124,11 +126,11 @@ export function CategoriesSection() {
     setDeleting(true);
     try {
       await categoryService.deleteCategory(deleteTarget.id, user.id);
-      showSuccess('Subcategoria excluída.');
+      showSuccess(t('subcategoryDeleted'));
       setDeleteTarget(null);
       await load();
     } catch {
-      showError('Erro', 'Não foi possível excluir a subcategoria.');
+      showError('Erro', t('deleteSubcategoryError'));
     } finally {
       setDeleting(false);
     }
@@ -152,28 +154,28 @@ export function CategoriesSection() {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Tag className="h-5 w-5" />
-                Minhas Subcategorias
+                {t('mySubcategories')}
               </CardTitle>
               <CardDescription className="mt-1">
-                Adicione subcategorias personalizadas dentro das categorias padrão (ex: "Açaí" em Alimentação).
+                {t('subcategoriesDescription')}
               </CardDescription>
             </div>
             <Button size="sm" onClick={() => openCreate()} className="gap-1.5">
               <Plus className="h-4 w-4" />
-              Nova
+              {t('newSubcategory')}
             </Button>
           </div>
         </CardHeader>
         <CardContent>
           {loading ? (
-            <p className="text-sm text-slate-400 text-center py-6">Carregando…</p>
+            <p className="text-sm text-slate-400 text-center py-6">{t('loading')}</p>
           ) : totalSubs === 0 ? (
             <div className="flex flex-col items-center gap-2 py-8 text-slate-400">
               <Tag className="h-8 w-8 opacity-30" />
-              <p className="text-sm">Nenhuma subcategoria personalizada ainda.</p>
+              <p className="text-sm">{t('noSubcategories')}</p>
               <Button variant="outline" size="sm" onClick={() => openCreate()} className="mt-1 gap-1.5">
                 <Plus className="h-4 w-4" />
-                Criar primeira subcategoria
+                {t('createFirstSubcategory')}
               </Button>
             </div>
           ) : (
@@ -197,7 +199,7 @@ export function CategoriesSection() {
                       className="text-[11px] text-slate-400 hover:text-slate-700 flex items-center gap-0.5 transition-colors"
                     >
                       <Plus className="h-3 w-3" />
-                      Adicionar
+                      {t('add')}
                     </button>
                   </div>
                   <ul className="divide-y divide-slate-100 rounded-lg border border-slate-100 overflow-hidden">
@@ -212,7 +214,7 @@ export function CategoriesSection() {
                             type="button"
                             onClick={() => openEdit(sub)}
                             className="p-1.5 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
-                            aria-label="Editar"
+                            aria-label={t('editAria')}
                           >
                             <Pencil className="h-3.5 w-3.5" />
                           </button>
@@ -220,7 +222,7 @@ export function CategoriesSection() {
                             type="button"
                             onClick={() => setDeleteTarget(sub)}
                             className="p-1.5 rounded-md text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                            aria-label="Excluir"
+                            aria-label={t('deleteAria')}
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                           </button>
@@ -239,24 +241,24 @@ export function CategoriesSection() {
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>{editTarget ? 'Editar subcategoria' : 'Nova subcategoria'}</DialogTitle>
+            <DialogTitle>{editTarget ? t('editSubcategory') : t('newSubcategoryModal')}</DialogTitle>
             <DialogDescription>
               {editTarget
-                ? 'Altere o nome da subcategoria.'
-                : 'Escolha uma categoria pai e dê um nome à subcategoria.'}
+                ? t('editSubcategoryDescription')
+                : t('newSubcategoryDescription')}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 pt-1">
             {/* Categoria pai */}
             <div className="space-y-1.5">
-              <Label>Categoria pai</Label>
+              <Label>{t('parentCategory')}</Label>
               <Select
                 value={form.parentId}
                 onValueChange={(v) => setForm((f) => ({ ...f, parentId: v }))}
                 disabled={!!editTarget}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione uma categoria…" />
+                  <SelectValue placeholder={t('selectCategoryPlaceholder')} />
                 </SelectTrigger>
                 <SelectContent>
                   {globalCats.map((cat) => (
@@ -274,9 +276,9 @@ export function CategoriesSection() {
               </Select>
               {selectedParent && (
                 <p className="text-[11px] text-slate-400">
-                  Tipo herdado:{' '}
+                  {t('inheritedType')}{' '}
                   <span className={cn('font-semibold px-1 py-0.5 rounded', TYPE_COLORS[selectedParent.type ?? 'both'])}>
-                    {selectedParent.type === 'credit' ? 'Receita' : selectedParent.type === 'debit' ? 'Despesa' : 'Ambos'}
+                    {selectedParent.type === 'credit' ? t('income') : selectedParent.type === 'debit' ? t('expense') : t('both')}
                   </span>
                 </p>
               )}
@@ -284,11 +286,11 @@ export function CategoriesSection() {
 
             {/* Nome */}
             <div className="space-y-1.5">
-              <Label htmlFor="cat-name">Nome</Label>
+              <Label htmlFor="cat-name">{t('name')}</Label>
               <Input
                 id="cat-name"
                 name="cat-name"
-                placeholder="Ex: Açaí, Academia, Uber…"
+                placeholder={t('subcategoryNamePlaceholder')}
                 value={form.name}
                 onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
               />
@@ -296,14 +298,14 @@ export function CategoriesSection() {
 
             <div className="flex gap-2 pt-1">
               <Button variant="outline" className="flex-1" onClick={() => setModalOpen(false)} disabled={saving}>
-                Cancelar
+                {t('cancel')}
               </Button>
               <Button
                 className="flex-1"
                 onClick={handleSave}
                 disabled={saving || !form.name.trim() || !form.parentId}
               >
-                {saving ? 'Salvando…' : editTarget ? 'Salvar' : 'Criar'}
+                {saving ? t('saving') : editTarget ? t('save') : t('create')}
               </Button>
             </div>
           </div>
@@ -314,17 +316,20 @@ export function CategoriesSection() {
       <Dialog open={!!deleteTarget} onOpenChange={(v) => !v && setDeleteTarget(null)}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Excluir subcategoria</DialogTitle>
+            <DialogTitle>{t('deleteSubcategory')}</DialogTitle>
             <DialogDescription>
-              Tem certeza que deseja excluir <strong>{deleteTarget?.name}</strong>? Transações existentes não serão afetadas.
+              {t.rich('deleteSubcategoryDescription', {
+                name: deleteTarget?.name,
+                strong: (chunks) => <strong>{chunks}</strong>,
+              })}
             </DialogDescription>
           </DialogHeader>
           <div className="flex gap-2 pt-2">
             <Button variant="outline" className="flex-1" onClick={() => setDeleteTarget(null)} disabled={deleting}>
-              Cancelar
+              {t('cancel')}
             </Button>
             <Button variant="destructive" className="flex-1" onClick={handleDelete} disabled={deleting}>
-              {deleting ? 'Excluindo…' : 'Excluir'}
+              {deleting ? t('deleting') : t('deleteAria')}
             </Button>
           </div>
         </DialogContent>

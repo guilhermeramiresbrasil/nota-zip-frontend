@@ -44,24 +44,13 @@ import {
   CardBalance,
 } from '../types/card.types';
 import { cn } from '@/lib/utils';
+import { useTranslations } from 'next-intl';
+import { useLocale } from 'next-intl';
+import { useAuth } from '@/contexts/AuthContext';
 
 type Tab = 'invoices' | 'purchases' | 'reloads';
 
-const fmt = (v: number) =>
-  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
-
-const fmtDate = (d: string) =>
-  new Date(d + (d.length === 7 ? '-01' : '')).toLocaleDateString('pt-BR', {
-    month: 'short',
-    year: 'numeric',
-  });
-
-const STATUS_CONFIG: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
-  open:    { label: 'Aberta',   icon: <Clock className="h-3 w-3" />,        color: 'text-blue-600 bg-blue-50 border-blue-200' },
-  closed:  { label: 'Fechada',  icon: <AlertCircle className="h-3 w-3" />,  color: 'text-slate-600 bg-slate-50 border-slate-200' },
-  paid:    { label: 'Paga',     icon: <CheckCircle2 className="h-3 w-3" />, color: 'text-green-600 bg-green-50 border-green-200' },
-  partial: { label: 'Parcial',  icon: <TrendingDown className="h-3 w-3" />, color: 'text-amber-600 bg-amber-50 border-amber-200' },
-};
+const parseCurrencyToNumber = (v: string) => parseFloat(v.replace(/\./g, '').replace(',', '.')) || 0;
 
 interface Props {
   card: CreditCard;
@@ -71,6 +60,18 @@ interface Props {
 }
 
 export function CardDetailPanel({ card, userId, balance, onReload }: Props) {
+  const t = useTranslations('cards');
+  const locale = useLocale();
+  const { user } = useAuth();
+  const fmt = (v: number) => new Intl.NumberFormat(user?.language || 'pt-BR', { style: 'currency', currency: user?.currency || 'BRL' }).format(v);
+  const fmtDate = (d: string) => new Date(d + (d.length === 7 ? '-01' : '')).toLocaleDateString(locale, { month: 'short', year: 'numeric' });
+  const statusLabel = (s: string) => t(`invoiceStatus.${s}` as any) || s;
+  const STATUS_CONFIG: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
+    open:    { label: t('invoiceStatus.open'),   icon: <Clock className="h-3 w-3" />,        color: 'text-blue-600 bg-blue-50 border-blue-200' },
+    closed:  { label: t('invoiceStatus.closed'),  icon: <AlertCircle className="h-3 w-3" />,  color: 'text-slate-600 bg-slate-50 border-slate-200' },
+    paid:    { label: t('invoiceStatus.paid'),     icon: <CheckCircle2 className="h-3 w-3" />, color: 'text-green-600 bg-green-50 border-green-200' },
+    partial: { label: t('invoiceStatus.partial'),  icon: <TrendingDown className="h-3 w-3" />, color: 'text-amber-600 bg-amber-50 border-amber-200' },
+  };
   const [tab, setTab] = useState<Tab>('invoices');
   const [invoices, setInvoices] = useState<CreditCardInvoice[]>([]);
   const [purchases, setPurchases] = useState<CreditCardPurchase[]>([]);
@@ -191,7 +192,7 @@ export function CardDetailPanel({ card, userId, balance, onReload }: Props) {
     e.preventDefault();
     setActionLoading(true);
     try {
-      await cardService.addReload(card.id, userId, parseFloat(reloadAmount), reloadNotes || undefined);
+      await cardService.addReload(card.id, userId, parseCurrencyToNumber(reloadAmount), reloadNotes || undefined);
       setReloadOpen(false);
       setReloadAmount('');
       setReloadNotes('');
@@ -325,10 +326,10 @@ export function CardDetailPanel({ card, userId, balance, onReload }: Props) {
   };
 
   const tabs: { key: Tab; label: string; icon: React.ReactNode; count?: number }[] = [
-    { key: 'invoices',  label: 'Faturas',  icon: <Receipt className="h-3.5 w-3.5" />,     count: invoices.length },
-    { key: 'purchases', label: 'Compras',  icon: <ShoppingBag className="h-3.5 w-3.5" />, count: purchases.length },
+    { key: 'invoices',  label: t('invoicesTab'),  icon: <Receipt className="h-3.5 w-3.5" />,     count: invoices.length },
+    { key: 'purchases', label: t('purchasesTab'),  icon: <ShoppingBag className="h-3.5 w-3.5" />, count: purchases.length },
     ...(card.type === 'prepaid'
-      ? [{ key: 'reloads' as Tab, label: 'Recargas', icon: <RefreshCw className="h-3.5 w-3.5" />, count: reloads.length }]
+      ? [{ key: 'reloads' as Tab, label: t('reloadsTab'), icon: <RefreshCw className="h-3.5 w-3.5" />, count: reloads.length }]
       : []),
   ];
 
@@ -339,12 +340,12 @@ export function CardDetailPanel({ card, userId, balance, onReload }: Props) {
         <div className="grid grid-cols-3 divide-x divide-slate-100 bg-slate-50 border-b border-slate-200">
           <div className="px-5 py-3">
             <div className="flex items-center gap-2">
-              <p className="text-[11px] text-slate-400 uppercase tracking-wide mb-0.5">Limite</p>
+              <p className="text-[11px] text-slate-400 uppercase tracking-wide mb-0.5">{t('limit')}</p>
               <button
                 type="button"
                 onClick={() => setEditingLimit(true)}
                 className="text-slate-400 hover:text-slate-600 transition-colors"
-                title="Editar limite"
+                title={t('editLimit')}
               >
                 <Pencil className="h-3 w-3" />
               </button>
@@ -377,11 +378,11 @@ export function CardDetailPanel({ card, userId, balance, onReload }: Props) {
             )}
           </div>
           <div className="px-5 py-3">
-            <p className="text-[11px] text-slate-400 uppercase tracking-wide mb-0.5">Fatura atual</p>
+            <p className="text-[11px] text-slate-400 uppercase tracking-wide mb-0.5">{t('currentInvoice')}</p>
             <p className="text-sm font-semibold text-slate-800">{fmt(balance.currentInvoice)}</p>
           </div>
           <div className="px-5 py-3">
-            <p className="text-[11px] text-slate-400 uppercase tracking-wide mb-0.5">Disponível</p>
+            <p className="text-[11px] text-slate-400 uppercase tracking-wide mb-0.5">{t('available')}</p>
             <p className={cn('text-sm font-semibold', balance.available < 0 ? 'text-red-500' : 'text-green-600')}>
               {fmt(balance.available)}
             </p>
@@ -391,25 +392,25 @@ export function CardDetailPanel({ card, userId, balance, onReload }: Props) {
 
       {/* Tabs */}
       <div className="flex border-b border-slate-200 bg-white px-4 gap-1">
-        {tabs.map((t) => (
+        {tabs.map((tabItem) => (
           <button
-            key={t.key}
-            onClick={() => setTab(t.key)}
+            key={tabItem.key}
+            onClick={() => setTab(tabItem.key)}
             className={cn(
               'flex items-center gap-1.5 px-3 py-3 text-sm font-medium border-b-2 transition-all',
-              tab === t.key
+              tab === tabItem.key
                 ? 'border-indigo-500 text-indigo-600'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             )}
           >
-            {t.icon}
-            {t.label}
-            {(t.count ?? 0) > 0 && (
+            {tabItem.icon}
+            {tabItem.label}
+            {(tabItem.count ?? 0) > 0 && (
               <span className={cn(
                 'ml-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full',
-                tab === t.key ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-100 text-slate-500'
+                tab === tabItem.key ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-100 text-slate-500'
               )}>
-                {t.count}
+                {tabItem.count}
               </span>
             )}
           </button>
@@ -424,7 +425,7 @@ export function CardDetailPanel({ card, userId, balance, onReload }: Props) {
                 {invoices.length === 0 ? (
                   <div className="text-center py-10 text-slate-400">
                     <Receipt className="h-8 w-8 mx-auto mb-2 opacity-30" />
-                    <p className="text-sm">Nenhuma fatura encontrada</p>
+                    <p className="text-sm">{t('noInvoices')}</p>
                   </div>
                 ) : invoices.map((inv) => {
                   const cfg = STATUS_CONFIG[inv.status] ?? STATUS_CONFIG.closed;
@@ -461,13 +462,13 @@ export function CardDetailPanel({ card, userId, balance, onReload }: Props) {
                             <div className="space-y-1">
                               {inv.installments.map((inst) => (
                                 <div key={inst.id} className="flex justify-between text-xs text-slate-600">
-                                  <span>Parcela {inst.installmentNumber}</span>
+                                  <span>{t('installment')} {inst.installmentNumber}</span>
                                   <span>{fmt(inst.amount)}</span>
                                 </div>
                               ))}
                             </div>
                           ) : (
-                            <p className="text-xs text-slate-400">Nenhuma parcela encontrada</p>
+                            <p className="text-xs text-slate-400">{t('noInstallments')}</p>
                           )}
 
                           {inv.status === 'closed' && (
@@ -479,13 +480,13 @@ export function CardDetailPanel({ card, userId, balance, onReload }: Props) {
                                       <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      <SelectItem value="full">Pagar total — {fmt(inv.totalAmount)}</SelectItem>
-                                      <SelectItem value="partial">Pagar valor parcial</SelectItem>
+                                      <SelectItem value="full">{t('payFull', { amount: fmt(inv.totalAmount) })}</SelectItem>
+                                      <SelectItem value="partial">{t('payPartial')}</SelectItem>
                                     </SelectContent>
                                   </Select>
                                   {payType === 'partial' && (
                                     <CurrencyInput
-                                      placeholder="Valor (R$)"
+                                      placeholder={t('value')}
                                       value={payAmount}
                                       onChange={setPayAmount}
                                       className="h-8 text-xs bg-white"
@@ -498,10 +499,10 @@ export function CardDetailPanel({ card, userId, balance, onReload }: Props) {
                                       disabled={actionLoading || (payType === 'partial' && !payAmount)}
                                       onClick={() => handlePayInvoice(inv.id, inv.totalAmount)}
                                     >
-                                      {actionLoading ? 'Aguarde…' : 'Confirmar pagamento'}
+                                      {actionLoading ? '...' : t('confirmPayment')}
                                     </Button>
                                     <Button size="sm" variant="outline" className="h-8" onClick={() => setPayingId(null)}>
-                                      Cancelar
+                                      {t('cancel')}
                                     </Button>
                                   </div>
                                 </div>
@@ -512,7 +513,7 @@ export function CardDetailPanel({ card, userId, balance, onReload }: Props) {
                                   className="w-full h-8 text-xs border-indigo-200 text-indigo-600 hover:bg-indigo-50"
                                   onClick={() => { setPayingId(inv.id); setPayType('full'); setPayAmount(''); }}
                                 >
-                                  Pagar fatura
+                                  {t('payInvoice')}
                                 </Button>
                               )}
                             </>
@@ -531,27 +532,27 @@ export function CardDetailPanel({ card, userId, balance, onReload }: Props) {
                 {purchases.length === 0 ? (
                   <div className="text-center py-10 text-slate-400">
                     <ShoppingBag className="h-8 w-8 mx-auto mb-2 opacity-30" />
-                    <p className="text-sm">Nenhuma compra registrada</p>
-                    <p className="text-xs mt-1">Use o botão "Nova Transação" para registrar uma compra neste cartão.</p>
+                    <p className="text-sm">{t('noPurchases')}</p>
+                    <p className="text-xs mt-1">{t('noPurchasesHint')}</p>
                   </div>
                 ) : purchases.map((p) => (
                   <div key={p.id} className="flex items-center justify-between px-4 py-3 rounded-xl border border-slate-100 hover:bg-slate-50/60 transition-colors group">
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium text-slate-800 truncate">{p.description}</p>
                       <p className="text-xs text-slate-400 mt-0.5">
-                        {p.installments}x · {new Date(p.purchaseDate).toLocaleDateString('pt-BR')}
+                        {p.installments}x · {new Date(p.purchaseDate).toLocaleDateString(locale)}
                       </p>
                     </div>
                     <div className="text-right shrink-0 ml-4">
                       <p className="text-sm font-bold text-slate-900">{fmt(p.totalAmount)}</p>
-                      <p className="text-xs text-slate-400">{fmt(p.installmentAmount)}/mês</p>
+                      <p className="text-xs text-slate-400">{fmt(p.installmentAmount)}{t('perMonth')}</p>
                     </div>
                     <div className="flex items-center gap-1 ml-3 opacity-100 transition-opacity">
                       <button
                         type="button"
                         onClick={() => setEditingPurchase(p)}
                         className="p-1.5 rounded-lg hover:bg-slate-200 text-slate-500 hover:text-slate-700 transition-colors"
-                        title="Editar compra"
+                        title={t('editPurchase')}
                       >
                         <Pencil className="h-3.5 w-3.5" />
                       </button>
@@ -559,7 +560,7 @@ export function CardDetailPanel({ card, userId, balance, onReload }: Props) {
                         type="button"
                         onClick={() => setDeleteConfirmPurchase(p)}
                         className="p-1.5 rounded-lg hover:bg-red-100 text-slate-500 hover:text-red-600 transition-colors"
-                        title="Excluir compra"
+                        title={t('deletePurchase')}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
@@ -578,35 +579,35 @@ export function CardDetailPanel({ card, userId, balance, onReload }: Props) {
                   className="w-full flex items-center justify-center gap-2 py-2 rounded-xl border border-dashed border-slate-300 text-sm text-slate-500 hover:border-indigo-400 hover:text-indigo-600 transition-colors"
                 >
                   <RefreshCw className="h-4 w-4" />
-                  Adicionar recarga
+                  {t('addReload')}
                 </button>
 
                 {reloadOpen && (
                   <form onSubmit={handleAddReload} className="rounded-xl border border-slate-200 p-4 space-y-3 bg-slate-50">
                     <div className="space-y-1">
-                      <Label className="text-xs">Valor (R$)</Label>
-                      <Input
-                        type="number" min="0.01" step="0.01"
+                      <Label className="text-xs">{t('reloadAmount')}</Label>
+                      <CurrencyInput
                         value={reloadAmount}
-                        onChange={(e) => setReloadAmount(e.target.value)}
-                        required className="h-8 text-xs bg-white"
+                        onChange={(value) => setReloadAmount(value)}
+                        placeholder="0,00"
+                        required className="h-8 text-xs"
                       />
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-xs">Observações <span className="text-slate-400">(opcional)</span></Label>
+                      <Label className="text-xs">{t('notesOptional')}</Label>
                       <Input
                         value={reloadNotes}
                         onChange={(e) => setReloadNotes(e.target.value)}
-                        placeholder="Ex: recarga mensal"
+                        placeholder={t('notesPlaceholder')}
                         className="h-8 text-xs bg-white"
                       />
                     </div>
                     <div className="flex gap-2">
                       <Button type="submit" size="sm" className="flex-1 h-8" disabled={actionLoading || !reloadAmount}>
-                        {actionLoading ? 'Aguarde…' : 'Confirmar'}
+                        {actionLoading ? '...' : t('confirm')}
                       </Button>
                       <Button type="button" size="sm" variant="outline" className="h-8" onClick={() => setReloadOpen(false)}>
-                        Cancelar
+                        {t('cancel')}
                       </Button>
                     </div>
                   </form>
@@ -615,7 +616,7 @@ export function CardDetailPanel({ card, userId, balance, onReload }: Props) {
                 {reloads.length === 0 && !reloadOpen ? (
                   <div className="text-center py-8 text-slate-400">
                     <RefreshCw className="h-8 w-8 mx-auto mb-2 opacity-30" />
-                    <p className="text-sm">Nenhuma recarga registrada</p>
+                    <p className="text-sm">{t('noReloads')}</p>
                   </div>
                 ) : reloads.map((r) => (
                   <div key={r.id} className="flex items-center justify-between px-4 py-3 rounded-xl border border-slate-100">
@@ -624,7 +625,7 @@ export function CardDetailPanel({ card, userId, balance, onReload }: Props) {
                       {r.notes && <p className="text-xs text-slate-400 mt-0.5">{r.notes}</p>}
                     </div>
                     <div className="flex items-center gap-3">
-                      <p className="text-xs text-slate-400">{new Date(r.reloadDate).toLocaleDateString('pt-BR')}</p>
+                      <p className="text-xs text-slate-400">{new Date(r.reloadDate).toLocaleDateString(locale)}</p>
                       <button
                         type="button"
                         onClick={() => setEditingReload(r)}
@@ -643,12 +644,12 @@ export function CardDetailPanel({ card, userId, balance, onReload }: Props) {
       <Dialog open={!!editingPurchase} onOpenChange={(open) => !open && setEditingPurchase(null)}>
         <DialogContent className="sm:max-w-[440px]">
           <DialogHeader>
-            <DialogTitle>Editar Compra</DialogTitle>
-            <DialogDescription>Altere os detalhes da compra do cartão</DialogDescription>
+            <DialogTitle>{t('editPurchase')}</DialogTitle>
+            <DialogDescription>{t('editPurchaseDescription')}</DialogDescription>
           </DialogHeader>
           <form onSubmit={(e) => { e.preventDefault(); handleUpdatePurchase({ description: editingPurchase?.description, installments: editingPurchase?.installments.toString(), purchaseDate: editingPurchase?.purchaseDate, firstBillingMonth: editingPurchase?.firstBillingMonth, categoryId: editingPurchase?.categoryId }); }} className="space-y-4">
             <div className="space-y-1.5">
-              <Label>Descrição</Label>
+              <Label>{t('description')}</Label>
               <Input
                 value={editingPurchase?.description || ''}
                 onChange={(e) => setEditingPurchase(prev => prev ? { ...prev, description: e.target.value } : null)}
@@ -656,7 +657,7 @@ export function CardDetailPanel({ card, userId, balance, onReload }: Props) {
               />
             </div>
             <div className="space-y-1.5">
-              <Label>Valor Total</Label>
+              <Label>{t('totalAmount')}</Label>
               <CurrencyInput
                 value={editingPurchaseAmount}
                 onChange={setEditingPurchaseAmount}
@@ -665,7 +666,7 @@ export function CardDetailPanel({ card, userId, balance, onReload }: Props) {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label>Parcelas</Label>
+                <Label>{t('installments')}</Label>
                 <Input
                   type="number"
                   min="1"
@@ -676,7 +677,7 @@ export function CardDetailPanel({ card, userId, balance, onReload }: Props) {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label>Data da Compra</Label>
+                <Label>{t('purchaseDate')}</Label>
                 <Input
                   type="date"
                   value={editingPurchase?.purchaseDate || ''}
@@ -686,7 +687,7 @@ export function CardDetailPanel({ card, userId, balance, onReload }: Props) {
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label>1ª Fatura</Label>
+              <Label>{t('firstInvoice')}</Label>
               <Input
                 type="month"
                 value={editingPurchase?.firstBillingMonth || ''}
@@ -696,10 +697,10 @@ export function CardDetailPanel({ card, userId, balance, onReload }: Props) {
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setEditingPurchase(null)}>
-                Cancelar
+                {t('cancel')}
               </Button>
               <Button type="submit" disabled={actionLoading}>
-                {actionLoading ? 'Salvando...' : 'Salvar'}
+                {actionLoading ? t('saving') : t('save')}
               </Button>
             </DialogFooter>
           </form>
@@ -710,12 +711,12 @@ export function CardDetailPanel({ card, userId, balance, onReload }: Props) {
       <Dialog open={!!editingInvoice} onOpenChange={(open) => !open && setEditingInvoice(null)}>
         <DialogContent className="sm:max-w-[440px]">
           <DialogHeader>
-            <DialogTitle>Editar Fatura</DialogTitle>
-            <DialogDescription>Altere os detalhes da fatura</DialogDescription>
+            <DialogTitle>{t('editInvoice')}</DialogTitle>
+            <DialogDescription>{t('editInvoiceDescription')}</DialogDescription>
           </DialogHeader>
           <form onSubmit={(e) => { e.preventDefault(); handleUpdateInvoice(); }} className="space-y-4">
             <div className="space-y-1.5">
-              <Label>Valor Total</Label>
+              <Label>{t('totalAmount')}</Label>
               <CurrencyInput
                 value={editingInvoiceAmount}
                 onChange={setEditingInvoiceAmount}
@@ -723,28 +724,28 @@ export function CardDetailPanel({ card, userId, balance, onReload }: Props) {
               />
             </div>
             <div className="space-y-1.5">
-              <Label>Status</Label>
+              <Label>{t('status')}</Label>
               <Select value={editingInvoiceStatus} onValueChange={setEditingInvoiceStatus}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="open">Aberta</SelectItem>
-                  <SelectItem value="closed">Fechada</SelectItem>
-                  <SelectItem value="paid">Paga</SelectItem>
-                  <SelectItem value="partial">Parcialmente Paga</SelectItem>
+                  <SelectItem value="open">{t('payStatus.open')}</SelectItem>
+                  <SelectItem value="closed">{t('payStatus.closed')}</SelectItem>
+                  <SelectItem value="paid">{t('payStatus.paid')}</SelectItem>
+                  <SelectItem value="partial">{t('payStatus.partial')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Valor Pago</Label>
+              <Label>{t('paidAmount')}</Label>
               <CurrencyInput
                 value={editingInvoicePaidAmount}
                 onChange={setEditingInvoicePaidAmount}
               />
             </div>
             <div className="space-y-1.5">
-              <Label>Data de Pagamento</Label>
+              <Label>{t('paymentDate')}</Label>
               <Input
                 type="date"
                 value={editingInvoicePaymentDate}
@@ -753,10 +754,10 @@ export function CardDetailPanel({ card, userId, balance, onReload }: Props) {
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setEditingInvoice(null)}>
-                Cancelar
+                {t('cancel')}
               </Button>
               <Button type="submit" disabled={actionLoading}>
-                {actionLoading ? 'Salvando...' : 'Salvar'}
+                {actionLoading ? t('saving') : t('save')}
               </Button>
             </DialogFooter>
           </form>
@@ -767,12 +768,12 @@ export function CardDetailPanel({ card, userId, balance, onReload }: Props) {
       <Dialog open={!!editingReload} onOpenChange={(open) => !open && setEditingReload(null)}>
         <DialogContent className="sm:max-w-[440px]">
           <DialogHeader>
-            <DialogTitle>Editar Recarga</DialogTitle>
-            <DialogDescription>Altere os detalhes da recarga</DialogDescription>
+            <DialogTitle>{t('editReload')}</DialogTitle>
+            <DialogDescription>{t('editReloadDescription')}</DialogDescription>
           </DialogHeader>
           <form onSubmit={(e) => { e.preventDefault(); handleUpdateReload(); }} className="space-y-4">
             <div className="space-y-1.5">
-              <Label>Valor</Label>
+              <Label>{t('value')}</Label>
               <CurrencyInput
                 value={editingReloadAmount}
                 onChange={setEditingReloadAmount}
@@ -780,7 +781,7 @@ export function CardDetailPanel({ card, userId, balance, onReload }: Props) {
               />
             </div>
             <div className="space-y-1.5">
-              <Label>Data</Label>
+              <Label>{t('date')}</Label>
               <Input
                 type="date"
                 value={editingReloadDate}
@@ -789,19 +790,19 @@ export function CardDetailPanel({ card, userId, balance, onReload }: Props) {
               />
             </div>
             <div className="space-y-1.5">
-              <Label>Observações</Label>
+              <Label>{t('notes')}</Label>
               <Input
                 value={editingReloadNotes}
                 onChange={(e) => setEditingReloadNotes(e.target.value)}
-                placeholder="Ex: recarga mensal"
+                placeholder={t('notesPlaceholder')}
               />
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setEditingReload(null)}>
-                Cancelar
+                {t('cancel')}
               </Button>
               <Button type="submit" disabled={actionLoading}>
-                {actionLoading ? 'Salvando...' : 'Salvar'}
+                {actionLoading ? t('saving') : t('save')}
               </Button>
             </DialogFooter>
           </form>
@@ -812,17 +813,17 @@ export function CardDetailPanel({ card, userId, balance, onReload }: Props) {
       <Dialog open={!!deleteConfirmPurchase} onOpenChange={(open) => !open && setDeleteConfirmPurchase(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Excluir Compra</DialogTitle>
+            <DialogTitle>{t('deletePurchase')}</DialogTitle>
             <DialogDescription>
-              Tem certeza que deseja excluir a compra "{deleteConfirmPurchase?.description}"? Esta ação não pode ser desfeita.
+              {deleteConfirmPurchase && t('deletePurchaseDescription', { description: deleteConfirmPurchase.description })}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteConfirmPurchase(null)}>
-              Cancelar
+              {t('cancel')}
             </Button>
             <Button variant="destructive" onClick={() => deleteConfirmPurchase && handleDeletePurchase(deleteConfirmPurchase)} disabled={actionLoading}>
-              {actionLoading ? 'Excluindo...' : 'Excluir'}
+              {actionLoading ? t('deleting') : t('delete')}
             </Button>
           </DialogFooter>
         </DialogContent>

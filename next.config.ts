@@ -2,7 +2,6 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   env: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'https://api.notazip.com.br',
     NEXT_PUBLIC_STRIPE_PRICING_TABLE_ID: process.env.NEXT_PUBLIC_STRIPE_PRICING_TABLE_ID || '',
     NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '',
   },
@@ -11,6 +10,13 @@ const nextConfig: NextConfig = {
   // Set turbopack root to current directory to avoid lockfile conflicts
   turbopack: {
     root: __dirname,
+  },
+  webpack: (config) => {
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      'libsodium-wrappers-sumo': require.resolve('libsodium-wrappers-sumo/dist/modules/libsodium-wrappers-sumo.js'),
+    };
+    return config;
   },
 };
 

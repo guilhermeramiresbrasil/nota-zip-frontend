@@ -1,3 +1,4 @@
+import { useTranslations } from 'next-intl';
 import { LucideIcon } from 'lucide-react';
 import { Check } from 'lucide-react';
 
@@ -8,6 +9,7 @@ interface WelcomeStepProps {
 }
 
 export function WelcomeStep({ title, description, icon: Icon }: WelcomeStepProps) {
+  const t = useTranslations('onboarding');
   return (
     <div className="space-y-6">
       <div className="flex justify-center">
@@ -22,15 +24,15 @@ export function WelcomeStep({ title, description, icon: Icon }: WelcomeStepProps
       <div className="space-y-4">
         <div className="flex items-center gap-3 p-4 bg-green-50 rounded-lg">
           <Check className="h-5 w-5 text-green-600" />
-          <span className="text-gray-700">Controle completo de suas finanças</span>
+          <span className="text-gray-700">{t('fullControl')}</span>
         </div>
         <div className="flex items-center gap-3 p-4 bg-green-50 rounded-lg">
           <Check className="h-5 w-5 text-green-600" />
-          <span className="text-gray-700">Relatórios detalhados e insights</span>
+          <span className="text-gray-700">{t('reports')}</span>
         </div>
         <div className="flex items-center gap-3 p-4 bg-green-50 rounded-lg">
           <Check className="h-5 w-5 text-green-600" />
-          <span className="text-gray-700">Notas e anotações financeiras</span>
+          <span className="text-gray-700">{t('notes')}</span>
         </div>
       </div>
     </div>

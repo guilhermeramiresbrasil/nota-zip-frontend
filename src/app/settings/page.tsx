@@ -14,8 +14,10 @@ import { DeleteAccountDialog } from './components/DeleteAccountDialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslations } from 'next-intl';
 
 export default function SettingsPage() {
+  const t = useTranslations('settings');
   const { user, logout, deleteAccount } = useAuth();
   const router = useRouter();  
   const { showSuccess, showError } = useToast();
@@ -30,10 +32,10 @@ export default function SettingsPage() {
     try { 
       setIsDeleting(true);
       await deleteAccount();
-      showSuccess('Conta excluída com sucesso');
+      showSuccess(t('accountDeleted'));
       handleLogout();
     } catch (error) {
-      showError('Erro ao excluir conta', 'Não foi possível excluir sua conta. Tente novamente.');
+      showError(t('deleteAccountErrorTitle'), t('deleteAccountError'));
       throw error;
     } finally {
       setIsDeleting(false);
@@ -47,7 +49,7 @@ export default function SettingsPage() {
   return (
     <ProtectedRoute>
       <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <PageHeader title="Configurações" description="Gerencie sua conta e preferências" />
+        <PageHeader title={t('title')} description={t('description')} />
 
         <div className="space-y-6">
           <PersonalDataSection />
@@ -64,7 +66,7 @@ export default function SettingsPage() {
               variant="outline"
               className="flex items-center justify-center gap-2"
             >
-              Sair da Conta
+              {t('logout')}
             </Button>
             <DeleteAccountDialog
               handleDeleteAccount={handleDeleteAccount}

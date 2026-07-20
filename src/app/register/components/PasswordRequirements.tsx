@@ -1,4 +1,7 @@
+'use client';
+
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { Check } from 'lucide-react';
 import { registerValidation } from '../logics/validations/registerValidation';
 
@@ -8,6 +11,7 @@ interface PasswordRequirementsProps {
 
 export const PasswordRequirements: React.FC<PasswordRequirementsProps> = ({ password }) => {
   const requirements = registerValidation.getPasswordRequirements();
+  const t = useTranslations('errors');
 
   return (
     <div className="space-y-2">
@@ -21,7 +25,7 @@ export const PasswordRequirements: React.FC<PasswordRequirementsProps> = ({ pass
               }`}
             />
             <span className={isMet ? 'text-green-700' : 'text-gray-500'}>
-              {requirement}
+              {t(requirement)}
             </span>
           </div>
         );

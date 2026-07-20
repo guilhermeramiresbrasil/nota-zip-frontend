@@ -30,6 +30,8 @@ import {
 } from '../types/card.types';
 import { categoryService } from '@/app/expenses/logics/services/categoryService';
 import { PlusCircle, Receipt, RefreshCw, Wallet } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface CardDetailModalProps {
   card: CreditCard;
@@ -41,15 +43,6 @@ interface CardDetailModalProps {
 
 type Tab = 'invoices' | 'purchases' | 'reloads';
 
-const STATUS_LABELS: Record<string, string> = {
-  open: 'Aberta',
-  closed: 'Fechada',
-  paid: 'Paga',
-  partial: 'Parcial',
-  pending: 'Pendente',
-  billed: 'Faturada',
-};
-
 const STATUS_VARIANTS: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
   open: 'default',
   closed: 'secondary',
@@ -57,10 +50,13 @@ const STATUS_VARIANTS: Record<string, 'default' | 'secondary' | 'destructive' | 
   partial: 'secondary',
 };
 
-const fmt = (v: number) =>
-  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
+const parseCurrencyToNumber = (v: string) => parseFloat(v.replace(/\./g, '').replace(',', '.')) || 0;
 
 export function CardDetailModal({ card, userId, open, onOpenChange, onReload }: CardDetailModalProps) {
+  const t = useTranslations('cards');
+  const { user } = useAuth();
+  const fmt = (v: number) => new Intl.NumberFormat(user?.language || 'pt-BR', { style: 'currency', currency: user?.currency || 'BRL' }).format(v);
+  const statusLabel = (s: string) => t(`invoiceStatus.${s}` as any) || s;
   const [tab, setTab] = useState<Tab>('invoices');
   const [invoices, setInvoices] = useState<CreditCardInvoice[]>([]);
   const [purchases, setPurchases] = useState<CreditCardPurchase[]>([]);
@@ -134,7 +130,7 @@ export function CardDetailModal({ card, userId, open, onOpenChange, onReload }: 
       });
       loadData();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao criar compra');
+      setError(err instanceof Error ? err.message : t('errorCreatePurchase'));
     } finally {
       setActionLoading(false);
     }
@@ -145,14 +141,14 @@ export function CardDetailModal({ card, userId, open, onOpenChange, onReload }: 
     setError('');
     setActionLoading(true);
     try {
-      await cardService.addReload(card.id, userId, parseFloat(reloadAmount), reloadNotes || undefined);
+      await cardService.addReload(card.id, userId, parseCurrencyToNumber(reloadAmount), reloadNotes || undefined);
       setShowReloadForm(false);
       setReloadAmount('');
       setReloadNotes('');
       loadData();
       onReload();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao adicionar recarga');
+      setError(err instanceof Error ? err.message : t('errorAddReload'));
     } finally {
       setActionLoading(false);
     }
@@ -168,7 +164,7 @@ export function CardDetailModal({ card, userId, open, onOpenChange, onReload }: 
         invoiceId,
         userId,
         payType,
-        payType === 'partial' ? parseFloat(payAmount) : undefined,
+        payType === 'partial' ? parseCurrencyToNumber(payAmount) : undefined,
         creditCardCategoryId
       );
       setShowPayForm(null);
@@ -176,16 +172,16 @@ export function CardDetailModal({ card, userId, open, onOpenChange, onReload }: 
       loadData();
       onReload();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao pagar fatura');
+      setError(err instanceof Error ? err.message : t('errorPayInvoice'));
     } finally {
       setActionLoading(false);
     }
   };
 
   const tabs: { key: Tab; label: string }[] = [
-    { key: 'invoices', label: 'Faturas' },
-    { key: 'purchases', label: 'Compras' },
-    ...(card.type === 'prepaid' ? [{ key: 'reloads' as Tab, label: 'Recargas' }] : []),
+    { key: 'invoices', label: t('invoicesTab') },
+    { key: 'purchases', label: t('purchasesTab') },
+    ...(card.type === 'prepaid' ? [{ key: 'reloads' as Tab, label: t('reloadsTab') }] : []),
   ];
 
   return (
@@ -199,7 +195,7 @@ export function CardDetailModal({ card, userId, open, onOpenChange, onReload }: 
           <DialogDescription>
             {balance && (
               <span className="text-sm">
-                Limite: {fmt(balance.limit)} · Utilizado: {fmt(balance.used)} · Disponível:{' '}
+                {t('limit')}: {fmt(balance.limit)} · {t('used')}: {fmt(balance.used)} · {t('available')}:{' '}
                 <span className={balance.available < 0 ? 'text-red-500 font-medium' : 'text-green-600 font-medium'}>
                   {fmt(balance.available)}
                 </span>
@@ -209,15 +205,15 @@ export function CardDetailModal({ card, userId, open, onOpenChange, onReload }: 
         </DialogHeader>
 
         <div className="flex gap-1 border-b mb-4">
-          {tabs.map((t) => (
+          {tabs.map((tabItem) => (
             <button
-              key={t.key}
-              onClick={() => setTab(t.key)}
+              key={tabItem.key}
+              onClick={() => setTab(tabItem.key)}
               className={`px-3 py-2 text-sm font-medium transition-colors ${
-                tab === t.key ? 'border-b-2 border-primary text-primary' : 'text-muted-foreground hover:text-foreground'
+                tab === tabItem.key ? 'border-b-2 border-primary text-primary' : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              {t.label}
+              {tabItem.label}
             </button>
           ))}
         </div>
@@ -232,14 +228,14 @@ export function CardDetailModal({ card, userId, open, onOpenChange, onReload }: 
           <>
             {tab === 'invoices' && (
               <div className="space-y-3">
-                {invoices.length === 0 && <p className="text-muted-foreground text-sm text-center py-6">Sem faturas</p>}
+                {invoices.length === 0 && <p className="text-muted-foreground text-sm text-center py-6">{t('noInvoicesModal')}</p>}
                 {invoices.map((inv) => (
                   <div key={inv.id} className="border rounded-lg p-3 space-y-2">
                     <div className="flex justify-between items-center">
                       <span className="font-medium">{inv.billingMonth}</span>
                       <div className="flex items-center gap-2">
                         <Badge variant={STATUS_VARIANTS[inv.status] || 'secondary'}>
-                          {STATUS_LABELS[inv.status] || inv.status}
+                          {statusLabel(inv.status)}
                         </Badge>
                         <span className="font-semibold">{fmt(inv.totalAmount)}</span>
                       </div>
@@ -251,13 +247,13 @@ export function CardDetailModal({ card, userId, open, onOpenChange, onReload }: 
                             <Select value={payType} onValueChange={(v) => setPayType(v as 'full' | 'partial')}>
                               <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="full">Pagar total ({fmt(inv.totalAmount)})</SelectItem>
-                                <SelectItem value="partial">Pagar parcial</SelectItem>
+                                <SelectItem value="full">{t('payFull', { amount: fmt(inv.totalAmount) })}</SelectItem>
+                                <SelectItem value="partial">{t('payPartial')}</SelectItem>
                               </SelectContent>
                             </Select>
                             {payType === 'partial' && (
                               <CurrencyInput
-                                placeholder="Valor pago"
+                                placeholder={t('paidAmount')}
                                 value={payAmount}
                                 onChange={setPayAmount}
                                 className="h-8 text-xs"
@@ -265,16 +261,16 @@ export function CardDetailModal({ card, userId, open, onOpenChange, onReload }: 
                             )}
                             <div className="flex gap-2">
                               <Button size="sm" className="flex-1" disabled={actionLoading} onClick={() => handlePayInvoice(inv.id)}>
-                                Confirmar
+                                {t('confirm')}
                               </Button>
                               <Button size="sm" variant="outline" className="flex-1" onClick={() => setShowPayForm(null)}>
-                                Cancelar
+                                {t('cancel')}
                               </Button>
                             </div>
                           </div>
                         ) : (
                           <Button size="sm" variant="outline" className="w-full" onClick={() => setShowPayForm(inv.id)}>
-                            Pagar fatura
+                            {t('payInvoice')}
                           </Button>
                         )}
                       </>
@@ -287,12 +283,12 @@ export function CardDetailModal({ card, userId, open, onOpenChange, onReload }: 
             {tab === 'purchases' && (
               <div className="space-y-3">
                 <Button size="sm" variant="outline" className="w-full gap-2" onClick={() => setShowPurchaseForm((v) => !v)}>
-                  <PlusCircle className="h-4 w-4" /> Nova compra
+                  <PlusCircle className="h-4 w-4" /> {t('addPurchase')}
                 </Button>
                 {showPurchaseForm && (
                   <form onSubmit={handleCreatePurchase} className="border rounded-lg p-3 space-y-2">
                     <div>
-                      <Label className="text-xs">Descrição</Label>
+                      <Label className="text-xs">{t('description')}</Label>
                       <Input
                         className="h-8 text-xs mt-1"
                         value={purchaseForm.description}
@@ -302,7 +298,7 @@ export function CardDetailModal({ card, userId, open, onOpenChange, onReload }: 
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <Label className="text-xs">Valor total (R$)</Label>
+                        <Label className="text-xs">{t('totalAmount')}</Label>
                         <Input
                           className="h-8 text-xs mt-1"
                           type="number"
@@ -314,7 +310,7 @@ export function CardDetailModal({ card, userId, open, onOpenChange, onReload }: 
                         />
                       </div>
                       <div>
-                        <Label className="text-xs">Parcelas</Label>
+                        <Label className="text-xs">{t('installments')}</Label>
                         <Input
                           className="h-8 text-xs mt-1"
                           type="number"
@@ -327,7 +323,7 @@ export function CardDetailModal({ card, userId, open, onOpenChange, onReload }: 
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <Label className="text-xs">Data da compra</Label>
+                        <Label className="text-xs">{t('purchaseDate')}</Label>
                         <Input
                           className="h-8 text-xs mt-1"
                           type="date"
@@ -336,7 +332,7 @@ export function CardDetailModal({ card, userId, open, onOpenChange, onReload }: 
                         />
                       </div>
                       <div>
-                        <Label className="text-xs">1ª fatura</Label>
+                        <Label className="text-xs">{t('firstInvoice')}</Label>
                         <Input
                           className="h-8 text-xs mt-1"
                           type="month"
@@ -346,12 +342,12 @@ export function CardDetailModal({ card, userId, open, onOpenChange, onReload }: 
                       </div>
                     </div>
                     <div>
-                      <Label className="text-xs">Categoria</Label>
+                      <Label className="text-xs">{t('category')}</Label>
                       <Select
                         value={purchaseForm.categoryId}
                         onValueChange={(v) => setPurchaseForm((f) => ({ ...f, categoryId: v }))}
                       >
-                        <SelectTrigger className="h-9 mt-1"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <SelectTrigger className="h-9 mt-1"><SelectValue placeholder={t('select')} /></SelectTrigger>
                         <SelectContent>
                           {categories.map((c) => (
                             <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
@@ -360,13 +356,13 @@ export function CardDetailModal({ card, userId, open, onOpenChange, onReload }: 
                       </Select>
                     </div>
                     <div className="flex gap-2">
-                      <Button type="submit" size="sm" className="flex-1" disabled={actionLoading}>Adicionar</Button>
-                      <Button type="button" size="sm" variant="outline" className="flex-1" onClick={() => setShowPurchaseForm(false)}>Cancelar</Button>
+                      <Button type="submit" size="sm" className="flex-1" disabled={actionLoading}>{t('add')}</Button>
+                      <Button type="button" size="sm" variant="outline" className="flex-1" onClick={() => setShowPurchaseForm(false)}>{t('cancel')}</Button>
                     </div>
                   </form>
                 )}
                 {purchases.length === 0 && !showPurchaseForm && (
-                  <p className="text-muted-foreground text-sm text-center py-4">Sem compras</p>
+                  <p className="text-muted-foreground text-sm text-center py-4">{t('noPurchasesModal')}</p>
                 )}
                 {purchases.map((p) => (
                   <div key={p.id} className="border rounded-lg p-3 flex justify-between items-start">
@@ -378,7 +374,7 @@ export function CardDetailModal({ card, userId, open, onOpenChange, onReload }: 
                     </div>
                     <div className="text-right">
                       <p className="font-semibold text-sm">{fmt(p.totalAmount)}</p>
-                      <p className="text-xs text-muted-foreground">{fmt(p.installmentAmount)}/mês</p>
+                      <p className="text-xs text-muted-foreground">{fmt(p.installmentAmount)}{t('perMonth')}</p>
                     </div>
                   </div>
                 ))}
@@ -388,39 +384,37 @@ export function CardDetailModal({ card, userId, open, onOpenChange, onReload }: 
             {tab === 'reloads' && (
               <div className="space-y-3">
                 <Button size="sm" variant="outline" className="w-full gap-2" onClick={() => setShowReloadForm((v) => !v)}>
-                  <RefreshCw className="h-4 w-4" /> Adicionar recarga
+                  <RefreshCw className="h-4 w-4" /> {t('addReload')}
                 </Button>
                 {showReloadForm && (
                   <form onSubmit={handleAddReload} className="border rounded-lg p-3 space-y-2">
                     <div>
-                      <Label className="text-xs">Valor (R$)</Label>
-                      <Input
+                      <Label className="text-xs">{t('reloadAmount')}</Label>
+                      <CurrencyInput
                         className="h-8 text-xs mt-1"
-                        type="number"
-                        min="0.01"
-                        step="0.01"
                         value={reloadAmount}
-                        onChange={(e) => setReloadAmount(e.target.value)}
+                        onChange={(value) => setReloadAmount(value)}
+                        placeholder="0,00"
                         required
                       />
                     </div>
                     <div>
-                      <Label className="text-xs">Observações</Label>
+                      <Label className="text-xs">{t('notes')}</Label>
                       <Input
                         className="h-8 text-xs mt-1"
                         value={reloadNotes}
                         onChange={(e) => setReloadNotes(e.target.value)}
-                        placeholder="Opcional"
+                        placeholder={t('notesPlaceholder')}
                       />
                     </div>
                     <div className="flex gap-2">
-                      <Button type="submit" size="sm" className="flex-1" disabled={actionLoading}>Confirmar</Button>
-                      <Button type="button" size="sm" variant="outline" className="flex-1" onClick={() => setShowReloadForm(false)}>Cancelar</Button>
+                      <Button type="submit" size="sm" className="flex-1" disabled={actionLoading}>{t('confirm')}</Button>
+                      <Button type="button" size="sm" variant="outline" className="flex-1" onClick={() => setShowReloadForm(false)}>{t('cancel')}</Button>
                     </div>
                   </form>
                 )}
                 {reloads.length === 0 && !showReloadForm && (
-                  <p className="text-muted-foreground text-sm text-center py-4">Sem recargas</p>
+                  <p className="text-muted-foreground text-sm text-center py-4">{t('noReloadsModal')}</p>
                 )}
                 {reloads.map((r) => (
                   <div key={r.id} className="border rounded-lg p-3 flex justify-between items-center">

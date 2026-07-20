@@ -1,44 +1,46 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { ChevronDown } from 'lucide-react';
 
-const faqs = [
-  {
-    q: 'O NotaZip é gratuito?',
-    a: 'Sim! O plano gratuito permite até 12 mensagens diárias pelo WhatsApp. Para mais recursos, temos planos acessíveis.',
-  },
-  {
-    q: 'Como funciona o envio de notas pelo WhatsApp?',
-    a: 'Após conectar seu WhatsApp nas configurações, basta enviar uma foto da nota ou descrever o gasto por mensagem. Nossa IA extrai automaticamente os dados.',
-  },
-  {
-    q: 'Meus dados estão seguros?',
-    a: 'Sim. Utilizamos criptografia em todas as comunicações e seguimos as normas da LGPD para proteção de dados pessoais.',
-  },
-  {
-    q: 'Posso exportar meus relatórios?',
-    a: 'Sim! Você pode exportar relatórios em CSV, PDF e imagem diretamente da página de relatórios.',
-  },
-  {
-    q: 'Como faço upgrade do meu plano?',
-    a: 'Acesse a página de planos no app e escolha o plano que melhor atende suas necessidades. A mudança é instantânea.',
-  },
-  {
-    q: 'Posso cancelar a qualquer momento?',
-    a: 'Sim, você pode cancelar ou fazer downgrade do seu plano a qualquer momento, sem multa ou fidelidade.',
-  },
-];
-
 export const LandingFAQ: React.FC = () => {
+  const t = useTranslations('landing');
   const [open, setOpen] = useState<number | null>(null);
+
+  const faqs = [
+  {
+    q: t('faq1_q'),
+    a: t('faq1_a'),
+  },
+  {
+    q: t('faq2_q'),
+    a: t('faq2_a'),
+  },
+  {
+    q: t('faq3_q'),
+    a: t('faq3_a'),
+  },
+  {
+    q: t('faq4_q'),
+    a: t('faq4_a'),
+  },
+  {
+    q: t('faq5_q'),
+    a: t('faq5_a'),
+  },
+  {
+    q: t('faq6_q'),
+    a: t('faq6_a'),
+  },
+  ];
 
   return (
     <section className="py-20">
       <div className="container mx-auto px-4 max-w-3xl">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">Perguntas Frequentes</h2>
-          <p className="text-gray-600">Tire suas dúvidas sobre o NotaZip</p>
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">{t('faqTitle')}</h2>
+          <p className="text-gray-600">{t('faqSubtitle')}</p>
         </div>
         <div className="space-y-3">
           {faqs.map((faq, i) => (

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ReportPeriod } from '../types/report.types';
 
@@ -7,21 +8,23 @@ interface PeriodSelectorProps {
   onPeriodChange: (period: ReportPeriod['value']) => void;
 }
 
-const periods: ReportPeriod[] = [
-  { value: 'current', label: 'Este Mês' },
-  { value: 'last', label: 'Último Mês' },
-  { value: 'quarter', label: 'Este Trimestre' },
-  { value: 'year', label: 'Este Ano' },
-];
-
 export const PeriodSelector: React.FC<PeriodSelectorProps> = ({
   selectedPeriod,
   onPeriodChange,
 }) => {
+  const t = useTranslations('reports');
+  const periods: ReportPeriod[] = [
+    { value: 'current', label: t('currentMonth') },
+    { value: 'last', label: t('lastMonth') },
+    { value: 'quarter', label: t('thisQuarter') },
+    { value: 'year', label: t('thisYear') },
+  ];
+
   return (
+
     <Select value={selectedPeriod} onValueChange={onPeriodChange as (value: string) => void}>
       <SelectTrigger className="w-[200px] no-print">
-        <SelectValue placeholder="Selecione o período" />
+        <SelectValue placeholder={t('periodPlaceholder')} />
       </SelectTrigger>
       <SelectContent className="no-print">
         {periods.map((period) => (

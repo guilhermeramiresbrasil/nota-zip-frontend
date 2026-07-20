@@ -1,4 +1,5 @@
 import { ReportData, ReportPeriod, ReportFilters, DetailedTransaction } from '../../types/report.types';
+import * as cryptoClient from '@/lib/crypto/cryptoClient';
 
 // Hardcoded production URL
 const GATEWAY_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
@@ -95,18 +96,20 @@ export class ReportService {
       const json = await response.json();
       const data = json.data ?? [];
 
-      return data.map((t: any) => ({
-        id: t.id,
-        date: t.date,
-        description: t.description,
-        category: t.category || t.categoryId,
-        categoryId: t.categoryId,
-        type: t.type === 'credit' ? 'credit' : 'debit',
-        amount: t.amount,
-        payment_method: t.payment_method,
-        userId: t.userId,
-        userNickname: t.userNickname,
-      }));
+      return Promise.all(
+        data.map(async (t: any) => ({
+          id: t.id,
+          date: t.date,
+          description: (await cryptoClient.maybeDecryptField(t.description)) ?? t.description ?? '',
+          category: t.category || t.categoryId,
+          categoryId: t.categoryId,
+          type: t.type === 'credit' ? 'credit' : 'debit',
+          amount: t.amount,
+          payment_method: t.payment_method,
+          userId: t.userId,
+          userNickname: t.userNickname,
+        }))
+      );
     } catch {
       return [];
     }

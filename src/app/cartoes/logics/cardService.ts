@@ -1,4 +1,5 @@
 import { generateCorrelationId } from '@/lib/utils';
+import * as cryptoClient from '@/lib/crypto/cryptoClient';
 import {
   CreditCard,
   CardBalance,
@@ -10,6 +11,8 @@ import {
 } from '../types/card.types';
 
 const GATEWAY_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
+const parseCurrencyToNumber = (v: string) => parseFloat(v.replace(/\./g, '').replace(',', '.')) || 0;
 
 class CardService {
   private static instance: CardService;
@@ -42,12 +45,22 @@ class CardService {
       throw new Error(err.error || err.message || 'Erro ao listar cartões'); 
     }
     const result = await res.json();
-    return result.data || [];
+    const cards = result.data || [];
+    return Promise.all(
+      cards.map(async (card: any) => ({
+        ...card,
+        ownerName: await cryptoClient.maybeDecryptField(card.ownerName),
+      }))
+    );
   }
 
   async createCard(userId: string, data: CreateCardFormData): Promise<CreditCard> {
     const parseCurrencyToNumber = (v: string) => parseFloat(v.replace(/\./g, '').replace(',', '.')) || 0;
-    
+
+    const encryptedOwnerName = data.ownerName
+      ? await cryptoClient.encryptField(data.ownerName)
+      : undefined;
+
     const res = await fetch(`${GATEWAY_URL}/api/credit-cards/`, {
       method: 'POST',
       headers: this.getHeaders(),
@@ -57,6 +70,7 @@ class CardService {
         creditLimit: parseCurrencyToNumber(data.creditLimit),
         closingDay: parseInt(data.closingDay),
         dueDay: parseInt(data.dueDay),
+        ownerName: encryptedOwnerName,
       }),
     });
     if (!res.ok) { 
@@ -83,7 +97,9 @@ class CardService {
     if (data.closingDay !== undefined) processedData.closingDay = parseInt(data.closingDay);
     if (data.dueDay !== undefined) processedData.dueDay = parseInt(data.dueDay);
     if (data.owner !== undefined) processedData.owner = data.owner;
-    if (data.ownerName !== undefined) processedData.ownerName = data.ownerName;
+    if (data.ownerName !== undefined) processedData.ownerName = data.ownerName
+      ? await cryptoClient.encryptField(data.ownerName)
+      : undefined;
     if (data.color !== undefined && data.color !== null) processedData.color = data.color;
     if (data.icon !== undefined && data.icon !== null) processedData.icon = data.icon;
 
@@ -120,7 +136,13 @@ class CardService {
     });
     if (!res.ok) throw new Error('Erro ao listar compras');
     const result = await res.json();
-    return result.data || [];
+    const purchases = result.data || [];
+    return Promise.all(
+      purchases.map(async (p: any) => ({
+        ...p,
+        description: (await cryptoClient.maybeDecryptField(p.description)) ?? p.description ?? '',
+      }))
+    );
   }
 
   async createPurchase(cardId: string, userId: string, data: CreatePurchaseFormData): Promise<void> {
@@ -132,8 +154,8 @@ class CardService {
       body: JSON.stringify({
         userId,
         categoryId: data.categoryId,
-        description: data.description,
-        totalAmount: parseFloat(data.totalAmount),
+        description: await cryptoClient.encryptField(data.description || ''),
+        totalAmount: parseCurrencyToNumber(data.totalAmount),
         installments: parseInt(data.installments) || 1,
         purchaseDate: data.purchaseDate || today,
         firstBillingMonth: data.firstBillingMonth || nowMonth,
@@ -156,8 +178,8 @@ class CardService {
       headers: this.getHeaders(),
       body: JSON.stringify({
         categoryId: data.categoryId,
-        description: data.description,
-        totalAmount: parseFloat(data.totalAmount),
+        description: await cryptoClient.encryptField(data.description || ''),
+        totalAmount: parseCurrencyToNumber(data.totalAmount),
         installments: parseInt(data.installments) || 1,
         purchaseDate: data.purchaseDate,
         firstBillingMonth: data.firstBillingMonth,
@@ -209,10 +231,14 @@ class CardService {
   }
 
   async updateReload(id: string, userId: string, data: any): Promise<void> {
+    const payload = { userId, ...data };
+    if (payload.notes !== undefined) {
+      payload.notes = payload.notes ? await cryptoClient.encryptField(payload.notes) : undefined;
+    }
     const res = await fetch(`${GATEWAY_URL}/api/credit-cards/reloads/${id}`, {
       method: 'PATCH',
       headers: this.getHeaders(),
-      body: JSON.stringify({ userId, ...data }),
+      body: JSON.stringify(payload),
     });
     if (!res.ok) { const err = await res.json(); throw new Error(err.error || 'Erro ao atualizar recarga'); }
   }
@@ -224,7 +250,7 @@ class CardService {
       body: JSON.stringify({
         userId,
         amount,
-        notes,
+        notes: notes ? await cryptoClient.encryptField(notes) : undefined,
         reloadDate: new Date().toISOString().split('T')[0],
       }),
     });
@@ -239,7 +265,13 @@ class CardService {
     });
     if (!res.ok) throw new Error('Erro ao listar recargas');
     const result = await res.json();
-    return result.data || [];
+    const reloads = result.data || [];
+    return Promise.all(
+      reloads.map(async (r: any) => ({
+        ...r,
+        notes: await cryptoClient.maybeDecryptField(r.notes),
+      }))
+    );
   }
 }
 

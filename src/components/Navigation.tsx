@@ -7,23 +7,25 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { useAuth } from '@/contexts/AuthContext';
 import { NotificationsCenter } from '@/components/NotificationsCenter';
 import { ViewModeToggle } from '@/components/ViewModeToggle';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const navigation = [
-  { name: 'Home', href: '/home', icon: Home },
-  { name: 'Transações', href: '/expenses', icon: Wallet },
-  { name: 'Cartões', href: '/cartoes', icon: CreditCard },
-  { name: 'Relatórios', href: '/reports', icon: PieChart },
-  { name: 'Guarda Garantias', href: '/garantias', icon: Shield },
+  { key: 'home', href: '/home', icon: Home },
+  { key: 'transactions', href: '/expenses', icon: Wallet },
+  { key: 'cards', href: '/cartoes', icon: CreditCard },
+  { key: 'reports', href: '/reports', icon: PieChart },
+  { key: 'warranties', href: '/garantias', icon: Shield },
 ];
 
 export default function Navigation() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, isAuthenticated, logout, isLoading } = useAuth();
+  const t = useTranslations('navigation');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [isDesktop, setIsDesktop] = useState(true);
@@ -68,7 +70,7 @@ export default function Navigation() {
                   const Icon = item.icon;
                   return (
                     <Link
-                      key={item.name}
+                      key={item.key}
                       href={item.href === '/garantias' && user?.plan && user.plan === 'free' ? '#' : item.href}
 
                       className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200 whitespace-nowrap ${
@@ -78,7 +80,7 @@ export default function Navigation() {
                       }`}
                     >
                       <Icon className="h-4 w-4" />
-                      <span className="font-medium">{item.name}</span>
+                      <span className="font-medium">{t(item.key)}</span>
                     </Link>
                   );
                 })}
@@ -88,11 +90,11 @@ export default function Navigation() {
             ) : (
               <div className="flex items-center space-x-4">
                 <Link href="/login">
-                  <Button variant="ghost">Entrar</Button>
+                  <Button variant="ghost">{t('login')}</Button>
                 </Link>
                 <Link href="/register">
                   <Button className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700">
-                    Cadastrar
+                    {t('register')}
                   </Button>
                 </Link>
               </div>
@@ -123,19 +125,19 @@ export default function Navigation() {
                   <DropdownMenuItem asChild>
                     <Link href="/plans" className="flex items-center cursor-pointer">
                       <TrendingUp className="h-4 w-4 mr-2" />
-                      Planos
+                      {t('plans')}
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href="/settings" className="flex items-center cursor-pointer">
                       <Settings className="h-4 w-4 mr-2" />
-                      Configurações
+                      {t('settings')}
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout} className="text-red-600 cursor-pointer">
                     <LogOut className="h-4 w-4 mr-2" />
-                    Sair
+                    {t('logout')}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -183,7 +185,7 @@ export default function Navigation() {
                     const Icon = item.icon;
                     return (
                       <motion.div
-                        key={item.name}
+                        key={item.key}
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: index * 0.05 }}
@@ -198,7 +200,7 @@ export default function Navigation() {
                           }`}
                         >
                           <Icon className="h-5 w-5" />
-                          <span className="font-medium">{item.name}</span>
+                          <span className="font-medium">{t(item.key)}</span>
                         </Link>
                       </motion.div>
                     );
@@ -214,7 +216,7 @@ export default function Navigation() {
                       className="flex items-center space-x-3 px-3 py-2 rounded-lg transition-all duration-200 text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                     >
                       <Settings className="h-5 w-5" />
-                      <span className="font-medium">Configurações</span>
+                      <span className="font-medium">{t('settings')}</span>
                     </Link>
                   </motion.div>
                   <motion.div
@@ -228,7 +230,7 @@ export default function Navigation() {
                       className="flex items-center space-x-3 px-3 py-2 rounded-lg transition-all duration-200 text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                     >
                       <TrendingUp className="h-5 w-5" />
-                      <span className="font-medium">Planos</span>
+                      <span className="font-medium">{t('plans')}</span>
                     </Link>
                   </motion.div>
                   <motion.div
@@ -244,7 +246,7 @@ export default function Navigation() {
                       className="flex items-center space-x-3 px-3 py-2 rounded-lg transition-all duration-200 text-red-600 hover:text-red-700 hover:bg-red-50 w-full"
                     >
                       <LogOut className="h-5 w-5" />
-                      <span className="font-medium">Sair</span>
+                      <span className="font-medium">{t('logout')}</span>
                     </button>
                   </motion.div>
                 </>
@@ -260,7 +262,7 @@ export default function Navigation() {
                       onClick={() => setMobileMenuOpen(false)}
                       className="flex items-center space-x-3 px-3 py-2 rounded-lg transition-all duration-200 text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                     >
-                      <span className="font-medium">Entrar</span>
+                      <span className="font-medium">{t('login')}</span>
                     </Link>
                   </motion.div>
                   <motion.div
@@ -273,7 +275,7 @@ export default function Navigation() {
                       onClick={() => setMobileMenuOpen(false)}
                       className="flex items-center space-x-3 px-3 py-2 rounded-lg transition-all duration-200 bg-gradient-to-r from-blue-500 to-blue-600 text-white"
                     >
-                      <span className="font-medium">Cadastrar</span>
+                      <span className="font-medium">{t('register')}</span>
                     </Link>
                   </motion.div>
                 </>

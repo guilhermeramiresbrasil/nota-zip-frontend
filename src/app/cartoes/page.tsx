@@ -12,6 +12,7 @@ import { CardDetailPanel } from './components/CardDetailPanel';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, CreditCard as CreditCardIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 
 export default function CartoesPage() {
   return (
@@ -22,6 +23,7 @@ export default function CartoesPage() {
 }
 
 function CartoesContent() {
+  const t = useTranslations('cards');
   const { user } = useAuth();
   const { isSharedView } = useViewMode();
   const userId = user?.id || '';
@@ -98,7 +100,7 @@ function CartoesContent() {
         setSelectedCard(data[0]);
       }
     } catch (error) {
-      console.error('Erro ao carregar cartões:', error);
+      console.error(t('loadingError'), error);
     } finally {
       setLoading(false);
     }
@@ -143,13 +145,13 @@ function CartoesContent() {
           <div className="flex items-center gap-3">
             <CreditCardIcon className="h-8 w-8 text-primary" />
             <div>
-              <h1 className="text-3xl font-bold text-foreground">Cartões</h1>
-              <p className="text-muted-foreground text-sm">Clique em um cartão para ver detalhes</p>
+              <h1 className="text-3xl font-bold text-foreground">{t('pageTitle')}</h1>
+              <p className="text-muted-foreground text-sm">{t('pageDescription')}</p>
             </div>
           </div>
           <Button onClick={() => setFormOpen(true)} className="gap-2">
             <PlusCircle className="h-4 w-4" />
-            Novo Cartão
+            {t('newCardButton')}
           </Button>
         </div>
 
@@ -160,11 +162,11 @@ function CartoesContent() {
         ) : cards.length === 0 ? (
           <div className="text-center py-20">
             <CreditCardIcon className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-            <h2 className="text-xl font-semibold text-muted-foreground mb-2">Nenhum cartão cadastrado</h2>
-            <p className="text-muted-foreground mb-6">Adicione seus cartões para controlar suas faturas</p>
+            <h2 className="text-xl font-semibold text-muted-foreground mb-2">{t('noCardsTitle')}</h2>
+            <p className="text-muted-foreground mb-6">{t('noCardsDescription')}</p>
             <Button onClick={() => setFormOpen(true)} className="gap-2">
               <PlusCircle className="h-4 w-4" />
-              Adicionar cartão
+              {t('addCard')}
             </Button>
           </div>
         ) : (
@@ -205,7 +207,7 @@ function CartoesContent() {
         onOpenChange={(open: boolean) => { if (!open) { setFormOpen(false); setEditCard(null); } }}
         initialData={editCard || undefined}
         onSubmit={editCard ? handleEditCard : handleCreateCard}
-        title={editCard ? 'Editar Cartão' : 'Novo Cartão'}
+        title={editCard ? t('editCard') : t('newCard')}
       />
     </div>
   );

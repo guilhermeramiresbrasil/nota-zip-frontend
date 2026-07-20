@@ -1,3 +1,4 @@
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 
@@ -22,6 +23,7 @@ export function OnboardingNavigation({
   isNextDisabled = false,
   emailVerified,
 }: OnboardingNavigationProps) {
+  const t = useTranslations('onboarding');
   return (
     <>
       <div className="flex gap-3 mt-8">
@@ -31,7 +33,7 @@ export function OnboardingNavigation({
             onClick={onBack}
             className="flex-1"
           >
-            Voltar
+            {t('back')}
           </Button>
         )}
         <Button
@@ -41,7 +43,7 @@ export function OnboardingNavigation({
             currentStep === 1 ? 'flex-1' : ''
           } ${isNextDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
-          {currentStep === 2 && emailVerified ? 'Próximo' : currentStep === 2 ? 'Verificar Email' : currentStep === totalSteps ? 'Concluir' : 'Próximo'}
+          {currentStep === 2 && emailVerified ? t('next') : currentStep === 2 ? t('verifyEmail') : currentStep === totalSteps ? t('finish') : t('next')}
           <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
       </div>
@@ -52,7 +54,7 @@ export function OnboardingNavigation({
             onClick={onSkip}
             className="text-sm text-gray-500 hover:text-gray-700 underline"
           >
-            Pular este passo
+            {t('skipStep')}
           </button>
         </div>
       )}

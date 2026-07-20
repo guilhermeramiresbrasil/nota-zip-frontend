@@ -28,6 +28,7 @@ import { CategoryCombobox, ComboboxOption } from './CategoryCombobox';
 import { categoryService, Category } from '../logics/services/categoryService';
 import { cardService } from '@/app/cartoes/logics/cardService';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTranslations } from 'next-intl';
 
 interface FormData {
   amount: string;
@@ -43,15 +44,7 @@ interface FormData {
   firstBillingMonth?: string;
 }
 
-const PAYMENT_METHOD_LABELS: Record<string, string> = {
-  pix: 'Pix',
-  boleto: 'Boleto',
-  debit_card: 'Débito',
-  cash: 'Dinheiro',
-  credit_card: 'Cartão de crédito',
-  vr_va: 'VR/VA',
-  prepaid_debit: 'Pré-pago',
-};
+const PAYMENT_METHODS = ['pix', 'boleto', 'debit_card', 'cash', 'credit_card', 'vr_va', 'prepaid_debit'];
 
 const isCreditCardMethod = (method?: string) => method === 'credit_card';
 
@@ -135,12 +128,22 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
   onSubmit,
   onCancel,
 }) => {
+  const t = useTranslations('expenses');
   const { user } = useAuth();
   const [categories, setCategories] = useState<Category[]>([]);
   const [cards, setCards] = useState<{ id: string; name: string; lastFourDigits?: string }[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const parseCurrencyToNumber = (v: string) => parseFloat(v.replace(/\./g, '').replace(',', '.')) || 0;
+  const parseCurrencyToNumber = (v: string) => {
+    if (user?.currency === 'USD') {
+      return parseFloat(v.replace(/,/g, '')) || 0;
+    }
+    return parseFloat(v.replace(/\./g, '').replace(',', '.')) || 0;
+  };
+  const currencyFormatter = new Intl.NumberFormat(user?.language || 'pt-BR', {
+    style: 'currency',
+    currency: user?.currency || 'BRL',
+  });
   const isNewCategoryReady = !!(formData.newCategoryName && formData.newParentCategoryId);
   const isReady = !!(formData.amount && (formData.categoryId && formData.categoryId !== 'new' || isNewCategoryReady));
 
@@ -174,9 +177,9 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
     <Dialog open={dialogOpen} onOpenChange={onDialogOpenChange}>
       <DialogContent className="sm:max-w-[440px] p-0 gap-0 overflow-hidden rounded-2xl">
         <DialogHeader className="px-6 pt-6 pb-0">
-          <DialogTitle className="text-lg font-bold text-slate-800 tracking-tight">Nova Transação</DialogTitle>
+          <DialogTitle className="text-lg font-bold text-slate-800 tracking-tight">{t('newTransaction')}</DialogTitle>
           <DialogDescription className="text-sm text-slate-500 mt-0.5">
-            Registre uma entrada ou saída financeira
+            {t('transactionDescription')}
           </DialogDescription>
         </DialogHeader>
 
@@ -195,7 +198,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
               )}
             >
               <ArrowDownLeft className="h-4 w-4" />
-              Despesa
+              {t('expense')}
             </button>
             <button
               type="button"
@@ -208,13 +211,13 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
               )}
             >
               <ArrowUpRight className="h-4 w-4" />
-              Receita
+              {t('income')}
             </button>
           </div>
 
           {/* ── Amount ── */}
           <div className="space-y-1.5">
-            <Label htmlFor="amount" className="text-sm font-medium text-slate-700">Valor</Label>
+            <Label htmlFor="amount" className="text-sm font-medium text-slate-700">{t('amount')}</Label>
             <CurrencyInput
               id="amount"
               value={formData.amount}
@@ -225,7 +228,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
 
           {/* ── Category ── */}
           <div className="space-y-1.5">
-            <Label className="text-sm font-medium text-slate-700">Categoria</Label>
+            <Label className="text-sm font-medium text-slate-700">{t('category')}</Label>
             <CategoryCombobox
               options={catOptions}
               value={formData.subcategoryId || formData.categoryId}
@@ -240,9 +243,9 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
                   newCategoryName: '',
                 });
               }}
-              placeholder={loading ? 'Carregando…' : 'Selecione uma categoria…'}
+              placeholder={loading ? t('loadingCategories') : t('selectCategory')}
               disabled={loading}
-              extraOption={{ value: 'new', label: '+ Nova categoria' }}
+              extraOption={{ value: 'new', label: t('newCategory') }}
             />
             {formData.categoryId === 'new' && (
               <div className="mt-1.5 space-y-2">
@@ -251,7 +254,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
                   onValueChange={(v) => onChangeFormData({ ...formData, newParentCategoryId: v })}
                 >
                   <SelectTrigger className="h-10 border-slate-200 text-slate-700">
-                    <SelectValue placeholder="Categoria pai (obrigatório)" />
+                    <SelectValue placeholder={t('parentCategoryRequired')} />
                   </SelectTrigger>
                   <SelectContent>
                     {categories.map((cat) => (
@@ -271,7 +274,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
                   id="new-category-name"
                   name="new-category-name"
                   type="text"
-                  placeholder="Nome da nova subcategoria"
+                  placeholder={t('newSubcategoryName')}
                   value={formData.newCategoryName || ''}
                   onChange={(e) => onChangeFormData({ ...formData, newCategoryName: e.target.value })}
                   required
@@ -283,12 +286,12 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
           {/* ── Description ── */}
           <div className="space-y-1.5">
             <Label htmlFor="description" className="text-sm font-medium text-slate-700">
-              Descrição <span className="text-slate-400 font-normal">(opcional)</span>
+              {t('description')} <span className="text-slate-400 font-normal">{t('optional')}</span>
             </Label>
             <Input
               id="description"
               type="text"
-              placeholder="Ex: Conta de luz de junho"
+              placeholder={t('descriptionPlaceholder')}
               value={formData.description}
               onChange={(e) => onChangeFormData({ ...formData, description: e.target.value })}
               className="h-10 border-slate-200 text-slate-700 placeholder:text-slate-400 focus-visible:ring-indigo-400"
@@ -297,7 +300,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
 
           {/* ── Date ── */}
           <div className="space-y-1.5">
-            <Label htmlFor="date" className="text-sm font-medium text-slate-700">Data</Label>
+            <Label htmlFor="date" className="text-sm font-medium text-slate-700">{t('date')}</Label>
             <Input
               id="date"
               type="date"
@@ -311,17 +314,17 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
           {/* ── Payment method (expense only) ── */}
           {transactionType === 'expense' && (
             <div className="space-y-1.5">
-              <Label className="text-sm font-medium text-slate-700">Forma de pagamento *</Label>
+              <Label className="text-sm font-medium text-slate-700">{t('paymentMethod')}</Label>
               <Select
                 value={formData.payment_method || ''}
                 onValueChange={(v) => onChangeFormData({ ...formData, payment_method: v, card_id: '', installments: '1', firstBillingMonth: new Date().toISOString().slice(0, 7) })}
               >
                 <SelectTrigger className="h-10 border-slate-200 text-slate-700">
-                  <SelectValue placeholder="Selecione" />
+                  <SelectValue placeholder={t('select')} />
                 </SelectTrigger>
                 <SelectContent>
-                  {Object.entries(PAYMENT_METHOD_LABELS).map(([value, label]) => (
-                    <SelectItem key={value} value={value}>{label}</SelectItem>
+                  {PAYMENT_METHODS.map((value) => (
+                    <SelectItem key={value} value={value}>{t(`paymentMethods.${value}`)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -332,10 +335,10 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
           {transactionType === 'expense' && isCreditCardMethod(formData.payment_method) && (
             <>
               <div className="space-y-1.5">
-                <Label className="text-sm font-medium text-slate-700">Cartão de crédito</Label>
+                <Label className="text-sm font-medium text-slate-700">{t('creditCard')}</Label>
                 <Select value={formData.card_id || ''} onValueChange={(v) => onChangeFormData({ ...formData, card_id: v })}>
                   <SelectTrigger className="h-10 border-slate-200 text-slate-700">
-                    <SelectValue placeholder={cards.length === 0 ? 'Nenhum cartão cadastrado' : 'Selecione o cartão'} />
+                    <SelectValue placeholder={cards.length === 0 ? t('noCardsRegistered') : t('selectCard')} />
                   </SelectTrigger>
                   <SelectContent>
                     {cards.map((c) => (
@@ -346,13 +349,13 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <Label htmlFor="installments" className="text-sm font-medium text-slate-700">Parcelas</Label>
+                  <Label htmlFor="installments" className="text-sm font-medium text-slate-700">{t('installments')}</Label>
                   <Input id="installments" type="number" min="1" max="48" value={formData.installments || '1'}
                     onChange={(e) => onChangeFormData({ ...formData, installments: e.target.value })}
                     className="h-10 border-slate-200" />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="firstBillingMonth" className="text-sm font-medium text-slate-700">1ª fatura</Label>
+                  <Label htmlFor="firstBillingMonth" className="text-sm font-medium text-slate-700">{t('firstStatement')}</Label>
                   <Input id="firstBillingMonth" type="month"
                     value={formData.firstBillingMonth || new Date().toISOString().slice(0, 7)}
                     onChange={(e) => onChangeFormData({ ...formData, firstBillingMonth: e.target.value })}
@@ -361,9 +364,11 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
               </div>
               {parseInt(formData.installments || '1') > 1 && (
                 <p className="text-xs text-slate-500">
-                  {parseInt(formData.installments || '1')}x de{' '}
-                  <strong>{(parseCurrencyToNumber(formData.amount) / parseInt(formData.installments || '1')).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</strong>
-                  {' '}· Você pode ajustar o valor total para incluir juros.
+                  {t('installmentsOf', {
+                    count: parseInt(formData.installments || '1'),
+                    amount: currencyFormatter.format(parseCurrencyToNumber(formData.amount) / parseInt(formData.installments || '1')),
+                  })}
+                  {' · '}{t('youCanAdjust')}
                 </p>
               )}
             </>
@@ -372,10 +377,10 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
           {/* ── Other card ── */}
           {transactionType === 'expense' && showCardSelect && !isCreditCardMethod(formData.payment_method) && cards.length > 0 && (
             <div className="space-y-1.5">
-              <Label className="text-sm font-medium text-slate-700">Cartão</Label>
+              <Label className="text-sm font-medium text-slate-700">{t('card')}</Label>
               <Select value={formData.card_id || ''} onValueChange={(v) => onChangeFormData({ ...formData, card_id: v })}>
                 <SelectTrigger className="h-10 border-slate-200 text-slate-700">
-                  <SelectValue placeholder="Selecione o cartão" />
+                  <SelectValue placeholder={t('selectCard')} />
                 </SelectTrigger>
                 <SelectContent>
                   {cards.map((c) => (
@@ -402,7 +407,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
             {transactionType === 'expense'
               ? <ArrowDownLeft className="h-4 w-4" />
               : <ArrowUpRight className="h-4 w-4" />}
-            {transactionType === 'expense' ? 'Registrar Despesa' : 'Registrar Receita'}
+            {transactionType === 'expense' ? t('registerExpense') : t('registerIncome')}
           </button>
 
           <button
@@ -410,7 +415,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
             onClick={onCancel}
             className="w-full text-sm text-slate-400 hover:text-slate-600 transition-colors py-1"
           >
-            Cancelar
+            {t('cancel')}
           </button>
         </form>
       </DialogContent>

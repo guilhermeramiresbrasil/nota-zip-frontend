@@ -2,6 +2,7 @@
 
 import authService from '@/services/authService';
 import userService from '@/services/userService';
+import * as cryptoClient from '@/lib/crypto/cryptoClient';
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -15,7 +16,7 @@ export interface IUser {
   accessToken?: string;
   theme?: 'light' | 'dark' | 'system';
   currency?: 'BRL' | 'USD' | 'EUR';
-  language?: 'pt-BR' | 'en-US';
+  language?: 'pt-BR' | 'en-US' | 'es-ES';
   notifications?: boolean;
   emailAlerts?: boolean;
   emailVerified?: boolean;
@@ -24,6 +25,9 @@ export interface IUser {
   sharedGroupId?: string;
   partnerNickname?: string;
   selfNickname?: string;
+  publicKey?: string;
+  encryptionSalt?: string;
+  keyVersion?: number;
 }
 
 interface AuthContextType {
@@ -38,7 +42,6 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
@@ -109,11 +112,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       sharedGroupId: userData.sharedGroupId,
       partnerNickname: userData.partnerNickname,
       selfNickname: userData.selfNickname,
+      publicKey: userData.publicKey,
+      encryptionSalt: userData.encryptionSalt,
+      keyVersion: userData.keyVersion,
     };
-  };
-
-  const shouldRedirectToOnboarding = (updatedUser: IUser): boolean => {
-    return false;
   };
 
   const fetchFreshUserData = async (userId: string) => {
@@ -144,9 +146,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser(updatedUser);
             localStorage.setItem('user', JSON.stringify(updatedUser));
 
-            if (shouldRedirectToOnboarding(updatedUser)) {
-              router.push('/onboarding');
+            const publicKey = updatedUser.publicKey;
+            if (publicKey) {
+              cryptoClient.loadPersistedPrivateKey().then((privateKey) => {
+                if (publicKey && privateKey) {
+                  cryptoClient.setVaultKeys(publicKey, privateKey);
+                }
+              });
             }
+
           }
         } catch (error) {
           console.error('Error fetching fresh user data:', error);
@@ -165,8 +173,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string) => {
     try {
-      const loginInfo = await authServiceInstance.login({ email, password });
-      if (!loginInfo) {
+      const publicInfo = await userServiceInstance.getUserByEmail(email);
+      if (!publicInfo?.success || !publicInfo.data) {
+        throw new Error('User not found');
+      }
+      const { id: userId, encryptionSalt, publicKey } = publicInfo.data;
+      if (!encryptionSalt) {
+        throw new Error('Account not ready for zero-knowledge login');
+      }
+
+      const { authKey } = await cryptoClient.deriveKeys(password, encryptionSalt, 'moderate');
+      const authKeyB64 = await cryptoClient.authKeyToString(authKey);
+
+      const loginInfo = await authServiceInstance.login({ email, password: authKeyB64 });
+      if (!loginInfo?.data) {
         throw new Error('Invalid user data');
       }
       const loginDetails = loginInfo.data;
@@ -176,14 +196,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.setItem('sessionId', loginDetails.sessionId);
       } catch (error) {
         console.error('Error setting localStorage (possibly private browsing):', error);
-        // Continue without localStorage in private browsing
       }
 
       const userInfo = await userServiceInstance.getUserById(loginDetails.userId);
-      if (!userInfo) {
+      if (!userInfo?.data) {
         throw new Error('Invalid user response');
       }
       const userDetails = userInfo.data;
+
+      let finalPublicKey = userDetails.publicKey || publicKey;
+      let finalSalt = userDetails.encryptionSalt || encryptionSalt;
+      let finalKeyVersion = userDetails.keyVersion || 1;
+      let privateKey: string | null = null;
+
+      if (userDetails.encryptedPrivateKey && finalPublicKey && finalSalt) {
+        privateKey = await cryptoClient.unlockVault(
+          password,
+          finalSalt,
+          userDetails.encryptedPrivateKey,
+          userDetails.encryptionNonce
+        );
+      }
+
+      if (!privateKey || !finalPublicKey) {
+        const vault = await cryptoClient.createVault(password);
+        await userServiceInstance.setVault(userDetails.id, {
+          publicKey: vault.publicKey,
+          encryptedPrivateKey: vault.encryptedPrivateKey,
+          encryptionNonce: vault.encryptionNonce,
+          encryptionSalt: vault.salt,
+          keyVersion: vault.keyVersion,
+        });
+        finalPublicKey = vault.publicKey;
+        finalSalt = vault.salt;
+        finalKeyVersion = vault.keyVersion;
+        privateKey = vault.privateKey;
+      }
+
+      if (privateKey && finalPublicKey) {
+        await cryptoClient.persistPrivateKey(privateKey);
+        cryptoClient.setVaultKeys(finalPublicKey, privateKey);
+      }
 
       const userObj: IUser = {
         id: loginDetails.userId,
@@ -201,16 +254,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         emailVerified: userDetails.emailVerified ?? loginDetails.emailVerified ?? false,
         phoneVerified: userDetails.phoneVerified ?? loginDetails.phoneVerified ?? false,
         isTemporaryPassword: userDetails.isTemporaryPassword ?? false,
+        publicKey: finalPublicKey,
+        encryptionSalt: finalSalt,
+        keyVersion: finalKeyVersion,
       };
 
       setUser(userObj);
       localStorage.setItem('user', JSON.stringify(userObj));
 
-      // Redirect to change password if temporary password
       if (userObj.isTemporaryPassword) {
         router.push('/change-password');
       } else if (!userObj.emailVerified || !userObj.phoneVerified) {
-        router.push('/onboarding');
+        router.push('/home');
       } else {
         router.push('/home');
       }
@@ -222,12 +277,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const register = async (name: string, email: string, password: string) => {
     try {
-      const registerInfo = await userServiceInstance.registerUser({ name, email, password });
-      if (!registerInfo) {
-        throw new Error('Invalid user data');
-      }
-      router.push('/login');
+      const vault = await cryptoClient.createVault(password);
 
+      const registerInfo = await userServiceInstance.registerUser({
+        name,
+        email,
+        password: vault.authKeyB64,
+        encryptionSalt: vault.salt,
+        publicKey: vault.publicKey,
+        encryptedPrivateKey: vault.encryptedPrivateKey,
+        encryptionNonce: vault.encryptionNonce,
+        keyVersion: vault.keyVersion,
+      });
+
+      if (!registerInfo) {
+        throw new Error('Invalid registration response');
+      }
+
+      await cryptoClient.persistPrivateKey(vault.privateKey);
+      cryptoClient.setVaultKeys(vault.publicKey, vault.privateKey);
+
+      await login(email, password);
     } catch (error) {
       console.error('Registration error:', error);
       if (error instanceof Error) {
@@ -238,16 +308,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
-    await authServiceInstance.logout(user?.sessionId || '');
+    try {
+      await authServiceInstance.logout(user?.sessionId || '');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
     setUser(null);
-    localStorage.removeItem('user');
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('sessionId');
+    clearInvalidAuthData();
+    await cryptoClient.clearCryptoState();
   };
 
   const deleteAccount = async () => {
     const accessToken = localStorage.getItem('accessToken');
-    
 
     try {
       if (!user || !user.id || !accessToken) return;
@@ -264,9 +336,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await userServiceInstance.updateUser(user);
 
-      const updatedUser = { ...user };
-      setUser(updatedUser);
-      localStorage.setItem('user', JSON.stringify(updatedUser));
+      const updated = { ...user };
+      setUser(updated);
+      localStorage.setItem('user', JSON.stringify(updated));
     } catch (error) {
       console.error('Update preferences error:', error);
       throw error;

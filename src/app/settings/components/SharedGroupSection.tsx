@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslations } from 'next-intl';
 import { sharedGroupService, SharedGroup } from '@/services/sharedGroupService';
 import { planService } from '@/services/planService';
 import { Link, Users, Copy, Check, UserPlus, LogOut, Edit2, X, Share2, TrendingUp } from 'lucide-react';
@@ -17,6 +18,7 @@ export function SharedGroupSection() {
   const { user, updatedUser } = useAuth();
   const router = useRouter();
   const { showSuccess, showError } = useToast();
+  const t = useTranslations('sharedGroup');
   const [group, setGroup] = useState<SharedGroup | null>(null);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
@@ -50,16 +52,14 @@ export function SharedGroupSection() {
 
   const handleShareWhatsApp = () => {
     if (!group?.inviteCode) return;
-    const text = encodeURIComponent(
-      `Olá! Te convido para compartilhar meu controle financeiro no Nota Zip.\nUse o código: *${group.inviteCode}*\n\nBaixe o app e acesse Configurações > Grupo Compartilhado > Entrar em grupo.`
-    );
+    const text = encodeURIComponent(t('shareText', { code: group.inviteCode }));
     window.open(`https://wa.me/?text=${text}`, '_blank');
   };
 
   const handleUpdateNicknames = async () => {
     if (!user?.id) return;
     if (!form.ownerNickname.trim() || !form.ownerSelfNickname.trim()) {
-      showError('Erro', 'Preencha os dois campos.');
+      showError('Erro', t('fillBoth'));
       return;
     }
     setLoading(true);
@@ -69,10 +69,10 @@ export function SharedGroupSection() {
         partnerNickname: form.ownerNickname.trim(),
         selfNickname: form.ownerSelfNickname.trim(),
       });
-      showSuccess('Apelidos atualizados', 'Seus apelidos foram atualizados com sucesso.');
+      showSuccess(t('nicknamesUpdated'), t('nicknamesUpdatedDescription'));
       setIsEditing(false);
     } catch (err: any) {
-      showError('Erro', err.message || 'Não foi possível atualizar os apelidos.');
+      showError('Erro', err.message || t('defaultError'));
     } finally {
       setLoading(false);
     }
@@ -95,9 +95,9 @@ export function SharedGroupSection() {
         selfNickname: undefined,
       });
       setGroup(null);
-      showSuccess('Você saiu do grupo compartilhado.');
+      showSuccess(t('left'));
     } catch (err: any) {
-      showError(err.message || 'Erro ao sair do grupo.');
+      showError(err.message || t('leaveError'));
     } finally {
       setLeaving(false);
     }
@@ -114,11 +114,11 @@ export function SharedGroupSection() {
   const handleJoinGroup = async () => {
     if (!user?.id) return;
     if (!inviteCode.trim()) {
-      showError('Erro', 'Digite o código de convite.');
+      showError('Erro', t('enterInviteCode'));
       return;
     }
     if (!form.ownerNickname.trim() || !form.ownerSelfNickname.trim()) {
-      showError('Erro', 'Preencha os apelidos.');
+      showError('Erro', t('fillNicknames'));
       return;
     }
     setJoining(true);
@@ -129,7 +129,7 @@ export function SharedGroupSection() {
         form.ownerNickname.trim(),
         form.ownerSelfNickname.trim()
       );
-      showSuccess('Sucesso', 'Você entrou no grupo compartilhado!');
+      showSuccess(t('joined'), t('joinedDescription'));
       setInviteCode('');
       // Update user with shared plan
       await updatedUser({
@@ -152,19 +152,19 @@ export function SharedGroupSection() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Link className="h-5 w-5 text-rose-500" />
-            Grupo Compartilhado
+            {t('title')}
           </CardTitle>
           <CardDescription className="mt-1">
-            Entre em um grupo compartilhado usando um código de convite
+            {t('joinDescription')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-3 p-3 rounded-lg bg-slate-50 border border-slate-100">
             <div className="space-y-2">
-              <Label htmlFor="inviteCode">Código de convite</Label>
+              <Label htmlFor="inviteCode">{t('inviteCode')}</Label>
               <Input
                 id="inviteCode"
-                placeholder="Digite o código de convite"
+                placeholder={t('inviteCodePlaceholder')}
                 value={inviteCode}
                 onChange={(e) => setInviteCode(e.target.value)}
                 className="font-mono"
@@ -172,19 +172,19 @@ export function SharedGroupSection() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label htmlFor="partnerNickname">Como chamar o outro</Label>
+                <Label htmlFor="partnerNickname">{t('partnerNickname')}</Label>
                 <Input
                   id="partnerNickname"
-                  placeholder="Ex: João, Mãe"
+                  placeholder={t('partnerNicknamePlaceholder')}
                   value={form.ownerNickname}
                   onChange={(e) => setForm({ ...form, ownerNickname: e.target.value })}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="selfNickname">Como te chamam</Label>
+                <Label htmlFor="selfNickname">{t('selfNickname')}</Label>
                 <Input
                   id="selfNickname"
-                  placeholder="Ex: Eu, Maria"
+                  placeholder={t('selfNicknamePlaceholder')}
                   value={form.ownerSelfNickname}
                   onChange={(e) => setForm({ ...form, ownerSelfNickname: e.target.value })}
                 />
@@ -196,7 +196,7 @@ export function SharedGroupSection() {
               className="w-full bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white"
             >
               <UserPlus className="h-4 w-4 mr-2" />
-              {joining ? 'Entrando...' : 'Entrar no grupo'}
+              {joining ? t('joining') : t('joinGroup')}
             </Button>
           </div>
         </CardContent>
@@ -207,7 +207,7 @@ export function SharedGroupSection() {
   if (loading) {
     return (
       <Card>
-        <CardContent className="p-6 text-sm text-gray-400">Carregando grupo compartilhado...</CardContent>
+        <CardContent className="p-6 text-sm text-gray-400">{t('loading')}</CardContent>
       </Card>
     );
   }
@@ -218,10 +218,10 @@ export function SharedGroupSection() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Link className="h-5 w-5 text-rose-500" />
-            Grupo Compartilhado
+            {t('title')}
           </CardTitle>
           <CardDescription className="mt-1">
-            Configure e gerencie seu grupo compartilhado
+            {t('manageDescription')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -230,8 +230,8 @@ export function SharedGroupSection() {
               <div className="flex items-center gap-2.5">
                 <Users className="h-5 w-5 text-slate-400 shrink-0" />
                 <div>
-                  <p className="text-sm font-medium text-slate-800">Grupo não configurado</p>
-                  <p className="text-xs text-slate-500">Configure seu grupo para compartilhar finanças</p>
+                  <p className="text-sm font-medium text-slate-800">{t('notConfigured')}</p>
+                  <p className="text-xs text-slate-500">{t('notConfiguredDescription')}</p>
                 </div>
               </div>
               <Button
@@ -239,7 +239,7 @@ export function SharedGroupSection() {
                 onClick={() => router.push('/shared-group/setup')}
               >
                 <UserPlus className="h-4 w-4 mr-2" />
-                Configurar
+                {t('setup')}
               </Button>
             </div>
           ) : group.status === 'pending' ? (
@@ -248,8 +248,8 @@ export function SharedGroupSection() {
                 <div className="flex items-center gap-2.5">
                   <Users className="h-5 w-5 text-amber-500 shrink-0" />
                   <div>
-                    <p className="text-sm font-medium text-slate-800">Aguardando aceitação</p>
-                    <p className="text-xs text-slate-500">Compartilhe o código com o outro membro</p>
+                    <p className="text-sm font-medium text-slate-800">{t('pending')}</p>
+                    <p className="text-xs text-slate-500">{t('pendingDescription')}</p>
                   </div>
                 </div>
                 <Button
@@ -274,9 +274,9 @@ export function SharedGroupSection() {
                     className="flex-1 gap-1.5"
                   >
                     {copied ? (
-                      <><Check className="h-3.5 w-3.5" />Copiado!</>
+                      <><Check className="h-3.5 w-3.5" />{t('copied')}</>
                     ) : (
-                      <><Copy className="h-3.5 w-3.5" />Copiar</>
+                      <><Copy className="h-3.5 w-3.5" />{t('copy')}</>
                     )}
                   </Button>
                   <Button
@@ -284,7 +284,7 @@ export function SharedGroupSection() {
                     onClick={handleShareWhatsApp}
                   >
                     <Share2 className="h-3.5 w-3.5" />
-                    WhatsApp
+                    {t('whatsapp')}
                   </Button>
                 </div>
               </div>
@@ -296,8 +296,8 @@ export function SharedGroupSection() {
               <div className="flex items-center gap-2.5">
                 <Users className="h-5 w-5 text-green-500 shrink-0" />
                 <div>
-                  <p className="text-sm font-medium text-slate-800">Grupo ativo</p>
-                  <p className="text-xs text-slate-500">Visão compartilhada disponível</p>
+                  <p className="text-sm font-medium text-slate-800">{t('active')}</p>
+                  <p className="text-xs text-slate-500">{t('activeDescription')}</p>
                 </div>
               </div>
               <Button
@@ -314,19 +314,19 @@ export function SharedGroupSection() {
               <div className="space-y-3 p-3 rounded-lg bg-rose-50 border border-rose-100">
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
-                    <Label htmlFor="partnerNickname">Como chamar o outro</Label>
+                    <Label htmlFor="partnerNickname">{t('partnerNickname')}</Label>
                     <Input
                       id="partnerNickname"
-                      placeholder="Ex: João, Mãe"
+                      placeholder={t('partnerNicknamePlaceholder')}
                       value={form.ownerNickname}
                       onChange={(e) => setForm({ ...form, ownerNickname: e.target.value })}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="selfNickname">Como te chamam</Label>
+                    <Label htmlFor="selfNickname">{t('selfNickname')}</Label>
                     <Input
                       id="selfNickname"
-                      placeholder="Ex: Eu, Maria"
+                      placeholder={t('selfNicknamePlaceholder')}
                       value={form.ownerSelfNickname}
                       onChange={(e) => setForm({ ...form, ownerSelfNickname: e.target.value })}
                     />
@@ -338,13 +338,13 @@ export function SharedGroupSection() {
                     disabled={loading || !form.ownerNickname.trim() || !form.ownerSelfNickname.trim()}
                     className="flex-1"
                   >
-                    {loading ? 'Atualizando...' : 'Atualizar apelidos'}
+                    {loading ? t('updating') : t('updateNicknames')}
                   </Button>
                   <Button
                     variant="outline"
                     onClick={handleCancel}
                   >
-                    Cancelar
+                    {t('cancel')}
                   </Button>
                 </div>
                 <Button
@@ -354,7 +354,7 @@ export function SharedGroupSection() {
                   disabled={leaving}
                 >
                   <LogOut className="h-4 w-4 mr-2" />
-                  {leaving ? 'Saindo...' : 'Sair do grupo'}
+                  {leaving ? t('leaving') : t('leaveGroup')}
                 </Button>
               </div>
             )}
@@ -366,10 +366,10 @@ export function SharedGroupSection() {
     <ConfirmDialog
       open={showLeaveDialog}
       onOpenChange={setShowLeaveDialog}
-      title="Sair do grupo compartilhado"
-      description="Tem certeza que deseja sair do grupo compartilhado? Esta ação não pode ser desfeita e você voltará ao seu plano anterior."
-      confirmText="Sair do grupo"
-      cancelText="Cancelar"
+      title={t('leaveTitle')}
+      description={t('leaveDescription')}
+      confirmText={t('leaveConfirm')}
+      cancelText={t('leaveCancel')}
       onConfirm={confirmLeaveGroup}
       variant="destructive"
     />

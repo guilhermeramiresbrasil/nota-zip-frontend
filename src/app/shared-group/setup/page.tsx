@@ -8,11 +8,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslations } from 'next-intl';
 import { sharedGroupService } from '@/services/sharedGroupService';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { Link, Copy, Check, Share2, ArrowRight } from 'lucide-react';
 
 export default function SharedGroupSetupPage() {
+  const t = useTranslations('sharedGroup');
   const router = useRouter();
   const { user, updatedUser } = useAuth();
   const { showSuccess, showError } = useToast();
@@ -28,7 +30,7 @@ export default function SharedGroupSetupPage() {
 
   const handleGenerate = async () => {
     if (!form.ownerNickname.trim() || !form.ownerSelfNickname.trim()) {
-      showError('Preencha os dois campos antes de continuar.');
+      showError(t('fillNicknamesError'));
       return;
     }
     if (!user?.id) return;
@@ -44,7 +46,7 @@ export default function SharedGroupSetupPage() {
       });
       setStep(2);
     } catch (err: any) {
-      showError(err.message || 'Erro ao gerar código de convite.');
+      showError(err.message || t('generateError'));
     } finally {
       setLoading(false);
     }
@@ -58,7 +60,7 @@ export default function SharedGroupSetupPage() {
 
   const handleShareWhatsApp = () => {
     const text = encodeURIComponent(
-      `Olá! Te convido para compartilhar meu controle financeiro no Nota Zip.\nUse o código: *${inviteCode}*\n\nBaixe o app e acesse Configurações > Grupo Compartilhado > Entrar em grupo.`
+      t('shareWhatsAppText', { inviteCode })
     );
     window.open(`https://wa.me/?text=${text}`, '_blank');
   };
@@ -71,8 +73,8 @@ export default function SharedGroupSetupPage() {
             <div className="w-16 h-16 bg-gradient-to-br from-rose-500 to-pink-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <Link className="h-8 w-8 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">Plano Compartilhado</h1>
-            <p className="text-gray-500 mt-1 text-sm">Passo {step} de 2</p>
+            <h1 className="text-2xl font-bold text-gray-900">{t('sharedPlanTitle')}</h1>
+            <p className="text-gray-500 mt-1 text-sm">{t('step', { step, total: 2 })}</p>
           </div>
 
           <div className="w-full bg-gray-200 rounded-full h-2 mb-8">
@@ -87,28 +89,28 @@ export default function SharedGroupSetupPage() {
               {step === 1 ? (
                 <div className="space-y-6">
                   <div className="text-center">
-                    <CardTitle className="text-xl mb-2">Como vamos chamar vocês?</CardTitle>
+                    <CardTitle className="text-xl mb-2">{t('howToCallYou')}</CardTitle>
                     <p className="text-gray-500 text-sm">
-                      Defina apelidos para identificar os registros de cada pessoa na visão compartilhada.
+                      {t('setNicknamesDescription')}
                     </p>
                   </div>
 
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="ownerNickname">Como você vai chamar o outro membro?</Label>
+                      <Label htmlFor="ownerNickname">{t('ownerNicknameLabel')}</Label>
                       <Input
                         id="ownerNickname"
-                        placeholder="Ex: João, Mãe, Sócio, Ana"
+                        placeholder={t('ownerNicknamePlaceholder')}
                         value={form.ownerNickname}
                         onChange={(e) => setForm({ ...form, ownerNickname: e.target.value })}
                         maxLength={30}
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="ownerSelfNickname">Como você quer ser chamado(a)?</Label>
+                      <Label htmlFor="ownerSelfNickname">{t('ownerSelfNicknameLabel')}</Label>
                       <Input
                         id="ownerSelfNickname"
-                        placeholder="Ex: Guilherme, Eu, Maria"
+                        placeholder={t('ownerSelfNicknamePlaceholder')}
                         value={form.ownerSelfNickname}
                         onChange={(e) => setForm({ ...form, ownerSelfNickname: e.target.value })}
                         maxLength={30}
@@ -121,23 +123,23 @@ export default function SharedGroupSetupPage() {
                     onClick={handleGenerate}
                     disabled={loading}
                   >
-                    {loading ? 'Gerando...' : (
-                      <>Gerar código de convite <ArrowRight className="ml-2 h-4 w-4" /></>
+                    {loading ? t('generating') : (
+                      <>{t('generateInviteCode')} <ArrowRight className="ml-2 h-4 w-4" /></>
                     )}
                   </Button>
                 </div>
               ) : (
                 <div className="space-y-6">
                   <div className="text-center">
-                    <CardTitle className="text-xl mb-2">Compartilhe o código</CardTitle>
+                    <CardTitle className="text-xl mb-2">{t('shareCodeTitle')}</CardTitle>
                     <p className="text-gray-500 text-sm">
-                      Envie este código para a pessoa que vai compartilhar o controle financeiro com você.
+                      {t('shareCodeDescription')}
                     </p>
                   </div>
 
                   <div className="bg-gray-50 border-2 border-dashed border-rose-200 rounded-xl p-6 text-center">
                     <p className="text-4xl font-mono font-bold tracking-widest text-rose-600">{inviteCode}</p>
-                    <p className="text-xs text-gray-400 mt-2">Código de uso único</p>
+                    <p className="text-xs text-gray-400 mt-2">{t('singleUseCode')}</p>
                   </div>
 
                   <div className="flex gap-3">
@@ -147,9 +149,9 @@ export default function SharedGroupSetupPage() {
                       onClick={handleCopy}
                     >
                       {copied ? (
-                        <><Check className="h-4 w-4 mr-2 text-green-600" />Copiado!</>
+                        <><Check className="h-4 w-4 mr-2 text-green-600" />{t('copied')}</>
                       ) : (
-                        <><Copy className="h-4 w-4 mr-2" />Copiar</>
+                        <><Copy className="h-4 w-4 mr-2" />{t('copy')}</>
                       )}
                     </Button>
                     <Button
@@ -161,7 +163,7 @@ export default function SharedGroupSetupPage() {
                   </div>
 
                   <p className="text-xs text-gray-500 text-center">
-                    O outro membro deve acessar <strong>Configurações &gt; Grupo Compartilhado &gt; Entrar em grupo</strong> e inserir este código.
+                    {t.rich('setupInstructions', { strong: (chunks) => <strong>{chunks}</strong> })}
                   </p>
 
                   <Button
@@ -169,7 +171,7 @@ export default function SharedGroupSetupPage() {
                     className="w-full"
                     onClick={() => router.push('/home')}
                   >
-                    Ir para o início
+                    {t('goHome')}
                   </Button>
                 </div>
               )}

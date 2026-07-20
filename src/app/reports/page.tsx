@@ -16,11 +16,13 @@ import { SimpleFilter } from './components/SimpleFilter';
 import { useReportsStore } from './stores/useReportsStore';
 import { useAuth } from '@/contexts/AuthContext';
 import { useViewMode } from '@/contexts/ViewModeContext';
+import { useTranslations } from 'next-intl';
 import { exportService } from './logics/services/exportService';
 import { COLOR_PALETTES, ChartConfig } from './types/report.types';
 import { categoryService } from '../expenses/logics/services/categoryService';
 
 export default function ReportsPage() {
+  const t = useTranslations('reports');
   const { user } = useAuth();
   const { isSharedView } = useViewMode();
   const [partnerId, setPartnerId] = useState<string | null>(null);
@@ -412,7 +414,7 @@ export default function ReportsPage() {
     <ProtectedRoute>
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         <div className="flex flex-wrap justify-between items-center mb-6 gap-3">
-          <PageHeader title="Relatórios" description="Análise detalhada das suas finanças" />
+          <PageHeader title={t('title')} description={t('description')} />
           <div className="flex items-center gap-2">
             <ExportButton
               onExportCSV={handleExportCSV}
@@ -429,7 +431,7 @@ export default function ReportsPage() {
         </div>
 
         {loading ? (
-          <div className="text-center py-8">Carregando relatórios...</div>
+          <div className="text-center py-8">{t('loading')}</div>
         ) : reportData ? (
           <div ref={dashboardRef} className="space-y-6">
             <SimpleFilter
@@ -454,7 +456,7 @@ export default function ReportsPage() {
                       colorPalette: 'default',
                       orientation: 'horizontal',
                     })}
-                    title="Categorias - Receitas"
+                    title={t('incomeCategories')}
                   />
                   <ParentCategoryChart 
                     data={parentCategoryDataDebit} 
@@ -468,7 +470,7 @@ export default function ReportsPage() {
                       colorPalette: 'default',
                       orientation: 'horizontal',
                     })}
-                    title="Categorias - Despesas"
+                    title={t('expenseCategories')}
                   />
                   <SubcategoryChart 
                     data={subcategoryDataCredit} 
@@ -482,7 +484,7 @@ export default function ReportsPage() {
                       colorPalette: 'default',
                       orientation: 'horizontal',
                     })}
-                    title="Subcategorias - Receitas"
+                    title={t('incomeSubcategories')}
                   />
                   <SubcategoryChart 
                     data={subcategoryDataDebit} 
@@ -496,7 +498,7 @@ export default function ReportsPage() {
                       colorPalette: 'default',
                       orientation: 'horizontal',
                     })}
-                    title="Subcategorias - Despesas"
+                    title={t('expenseSubcategories')}
                   />
                 </div>
               </div>
@@ -524,7 +526,7 @@ export default function ReportsPage() {
             />
           </div>
         ) : (
-          <div className="text-center py-8">Nenhum dado disponível</div>
+          <div className="text-center py-8">{t('noData')}</div>
         )}
       </div>
     </ProtectedRoute>

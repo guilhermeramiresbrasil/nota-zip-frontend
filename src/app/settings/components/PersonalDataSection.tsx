@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 export function PersonalDataSection() {
+  const t = useTranslations('settings');
   const { user } = useAuth();
   const { showSuccess, showError } = useToast();
 
@@ -34,15 +36,15 @@ export function PersonalDataSection() {
       });
       const data = await res.json();
       if (data.success) {
-        showSuccess('Dados atualizados', 'Seus dados pessoais foram atualizados com sucesso.');
+        showSuccess(t('dataUpdated'), t('dataUpdatedDescription'));
         setIsEditing(false);
         // Refresh user data
         window.location.reload();
       } else {
-        showError('Erro', data.error || 'Não foi possível atualizar seus dados.');
+        showError('Erro', data.error || t('dataUpdateError'));
       }
     } catch {
-      showError('Erro', 'Não foi possível atualizar seus dados.');
+      showError('Erro', t('dataUpdateError'));
     } finally {
       setLoading(false);
     }
@@ -58,10 +60,10 @@ export function PersonalDataSection() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <User className="h-5 w-5 text-blue-600" />
-          Dados Pessoais
+          {t('personalData')}
         </CardTitle>
         <CardDescription className="mt-1">
-          Gerencie suas informações pessoais
+          {t('personalDataDescription')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -70,7 +72,7 @@ export function PersonalDataSection() {
           <div className="flex items-center gap-2.5">
             <User className="h-5 w-5 text-blue-600 shrink-0" />
             <div>
-              <p className="text-sm font-medium text-slate-800">Nome</p>
+              <p className="text-sm font-medium text-slate-800">{t('name')}</p>
               <p className="text-xs text-slate-500">{user?.name}</p>
             </div>
           </div>
@@ -88,10 +90,10 @@ export function PersonalDataSection() {
         {isEditing && (
           <div className="space-y-3 p-3 rounded-lg bg-blue-50 border border-blue-100">
             <div className="space-y-2">
-              <Label htmlFor="name">Nome completo</Label>
+              <Label htmlFor="name">{t('fullName')}</Label>
               <Input
                 id="name"
-                placeholder="Digite seu nome completo"
+                placeholder={t('fullNamePlaceholder')}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
@@ -102,13 +104,13 @@ export function PersonalDataSection() {
                 disabled={loading || !name}
                 className="flex-1"
               >
-                {loading ? 'Atualizando...' : 'Atualizar dados'}
+                {loading ? t('updating') : t('updateData')}
               </Button>
               <Button
                 variant="outline"
                 onClick={handleCancel}
               >
-                Cancelar
+                {t('cancel')}
               </Button>
             </div>
           </div>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import { Transaction } from '@/app/home/types/dashboard.types';
 import { TransactionItem } from '@/app/home/components/TransactionItem';
 import { Button } from '@/components/ui/button';
@@ -24,6 +25,7 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
   hasMore = false,
   loading = false,
 }) => {
+  const t = useTranslations('expenses');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [transactionToDelete, setTransactionToDelete] = useState<string | null>(null);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
@@ -70,8 +72,8 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
     return (
       <div className="text-center py-8">
         <Wallet className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-        <p className="text-gray-500">Nenhuma transação encontrada</p>
-        <p className="text-sm text-gray-400 mt-1">Adicione uma nova transação clicando em "Nova Transação".</p>
+        <p className="text-gray-500">{t('noTransactions')}</p>
+        <p className="text-sm text-gray-400 mt-1">{t('addFirstTransactionHint')}</p>
       </div>
     );
   }
@@ -126,10 +128,10 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
       <ConfirmDialog
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
-        title="Excluir transação"
-        description="Tem certeza que deseja excluir esta transação? Esta ação não pode ser desfeita."
-        confirmText="Excluir"
-        cancelText="Cancelar"
+        title={t('deleteTransaction')}
+        description={t('deleteTransactionDescription')}
+        confirmText={t('delete')}
+        cancelText={t('cancel')}
         onConfirm={handleDelete}
         variant="destructive"
       />

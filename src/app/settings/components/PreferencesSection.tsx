@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -15,19 +16,20 @@ interface PreferencesSectionProps {
 }
 
 export const PreferencesSection: React.FC<PreferencesSectionProps> = ({ preferences, onChangePreferences, handleSavePreferences, isLoading }) => {
- 
+  const t = useTranslations('settings');
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Palette className="h-5 w-5" />
-          Preferências
+          {t('preferences')}
         </CardTitle>
-        <CardDescription>Personalize sua experiência</CardDescription>
+        <CardDescription>{t('description')}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-2">
-          <Label>Tema</Label>
+          <Label>{t('theme')}</Label>
           <Select
             value={preferences?.theme}
             onValueChange={(value: 'light' | 'dark' | 'system') =>
@@ -38,15 +40,15 @@ export const PreferencesSection: React.FC<PreferencesSectionProps> = ({ preferen
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="light">Claro</SelectItem>
-              <SelectItem value="dark">Escuro</SelectItem>
-              <SelectItem value="system">Sistema</SelectItem>
+              <SelectItem value="light">{t('light')}</SelectItem>
+              <SelectItem value="dark">{t('dark')}</SelectItem>
+              <SelectItem value="system">{t('system')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         <div className="space-y-2">
-          <Label>Moeda</Label>
+          <Label>{t('currency')}</Label>
           <Select
             value={preferences?.currency}
             onValueChange={(value: 'BRL' | 'USD' | 'EUR') =>
@@ -57,18 +59,18 @@ export const PreferencesSection: React.FC<PreferencesSectionProps> = ({ preferen
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="BRL">Real (BRL)</SelectItem>
-              <SelectItem value="USD">Dólar (USD)</SelectItem>
-              <SelectItem value="EUR">Euro (EUR)</SelectItem>
+              <SelectItem value="BRL">{t('real')}</SelectItem>
+              <SelectItem value="USD">{t('dollar')}</SelectItem>
+              <SelectItem value="EUR">{t('euro')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         <div className="space-y-2">
-          <Label>Idioma</Label>
+          <Label>{t('language')}</Label>
           <Select
             value={preferences?.language}
-            onValueChange={(value: 'pt-BR' | 'en-US') =>
+            onValueChange={(value: 'pt-BR' | 'en-US' | 'es-ES') =>
               onChangePreferences({ ...preferences, language: value })
             }
           >
@@ -76,8 +78,9 @@ export const PreferencesSection: React.FC<PreferencesSectionProps> = ({ preferen
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="pt-BR">Português</SelectItem>
-              <SelectItem value="en-US">English</SelectItem>
+              <SelectItem value="pt-BR">{t('portuguese')}</SelectItem>
+              <SelectItem value="en-US">{t('english')}</SelectItem>
+              <SelectItem value="es-ES">{t('spanish')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -85,7 +88,7 @@ export const PreferencesSection: React.FC<PreferencesSectionProps> = ({ preferen
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Bell className="h-5 w-5 text-gray-500" />
-            <Label>Notificações</Label>
+            <Label>{t('notifications')}</Label>
           </div>
           <input
             type="checkbox"
@@ -98,7 +101,7 @@ export const PreferencesSection: React.FC<PreferencesSectionProps> = ({ preferen
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <CreditCard className="h-5 w-5 text-gray-500" />
-            <Label>Alertas por Email</Label>
+            <Label>{t('emailAlerts')}</Label>
           </div>
           <input
             type="checkbox"
@@ -109,7 +112,7 @@ export const PreferencesSection: React.FC<PreferencesSectionProps> = ({ preferen
         </div>
 
         <Button onClick={handleSavePreferences} disabled={isLoading}>
-          {isLoading ? 'Salvando...' : 'Salvar Preferências'}
+          {isLoading ? t('saving') : t('save')}
         </Button>
       </CardContent>
     </Card>

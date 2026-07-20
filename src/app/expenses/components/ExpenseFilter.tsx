@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -17,6 +18,7 @@ type DatePreset = 'current' | 'previous' | 'next' | 'custom';
 export const ExpenseFilter: React.FC<ExpenseFilterProps> = ({
   onDateRangeChange,
 }) => {
+  const t = useTranslations('expenses');
   const [datePreset, setDatePreset] = useState<DatePreset>('current');
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
@@ -77,13 +79,13 @@ export const ExpenseFilter: React.FC<ExpenseFilterProps> = ({
   const getPresetLabel = (preset: DatePreset) => {
     switch (preset) {
       case 'current':
-        return 'Mês Atual';
+        return t('currentMonth');
       case 'previous':
-        return 'Mês Anterior';
+        return t('previousMonth');
       case 'next':
-        return 'Mês Posterior';
+        return t('nextMonth');
       case 'custom':
-        return 'Personalizado';
+        return t('custom');
     }
   };
 
@@ -95,13 +97,13 @@ export const ExpenseFilter: React.FC<ExpenseFilterProps> = ({
           onValueChange={(value: DatePreset) => handlePresetChange(value)}
         >
           <SelectTrigger>
-            <SelectValue placeholder="Período" />
+            <SelectValue placeholder={t('periodPlaceholder')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="current">Mês Atual</SelectItem>
-            <SelectItem value="previous">Mês Anterior</SelectItem>
-            <SelectItem value="next">Mês Posterior</SelectItem>
-            <SelectItem value="custom">Personalizado</SelectItem>
+            <SelectItem value="current">{t('currentMonth')}</SelectItem>
+            <SelectItem value="previous">{t('previousMonth')}</SelectItem>
+            <SelectItem value="next">{t('nextMonth')}</SelectItem>
+            <SelectItem value="custom">{t('custom')}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -125,7 +127,7 @@ export const ExpenseFilter: React.FC<ExpenseFilterProps> = ({
             />
           </div>
           <Button onClick={handleCustomDateSearch}>
-            Buscar
+            {t('search')}
           </Button>
         </>
       )}

@@ -2,12 +2,15 @@
 
 import { useState } from 'react';
 import { LoginLogo } from '../login/components/LoginLogo';
+import { useTranslations } from 'next-intl';
 import { ForgotPasswordForm } from './components/ForgotPasswordForm';
 
 // Hardcoded production URL
 const GATEWAY_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 export default function ForgotPasswordPage() {
+  const t = useTranslations('auth');
+
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -19,13 +22,13 @@ export default function ForgotPasswordPage() {
     setSuccess(false);
 
     if (!email) {
-      setError('Email é obrigatório');
+      setError(t('forgotPasswordRequired'));
       return;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      setError('Email inválido');
+      setError(t('forgotPasswordInvalid'));
       return;
     }
 
@@ -39,12 +42,12 @@ export default function ForgotPasswordPage() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || errorData.message || 'Erro ao solicitar recuperação de senha');
+        throw new Error(errorData.error || errorData.message || t('forgotPasswordRequestError'));
       }
 
       setSuccess(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao solicitar recuperação de senha');
+      setError(err instanceof Error ? err.message : t('forgotPasswordRequestError'));
     } finally {
       setIsLoading(false);
     }

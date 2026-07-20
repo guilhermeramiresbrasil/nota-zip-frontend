@@ -6,6 +6,7 @@ import {
   ResponsiveContainer, Tooltip, Legend,
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useTranslations } from 'next-intl';
 import { ChartConfig, COLOR_PALETTES } from '../types/report.types';
 import { ChartConfigModal } from './ChartConfigModal';
 
@@ -30,6 +31,7 @@ export const ParentCategoryChart: React.FC<ParentCategoryChartProps> = ({
   onConfigReset,
   title = 'Categorias'
 }) => {
+  const t = useTranslations('reports');
   const [hiddenCategories, setHiddenCategories] = useState<Set<string>>(new Set());
   const palette = COLOR_PALETTES[config?.colorPalette ?? 'default'];
   const coloredData = data.map((item, i) => ({ ...item, color: palette[i % palette.length] }));
@@ -67,7 +69,7 @@ export const ParentCategoryChart: React.FC<ParentCategoryChartProps> = ({
             </>
           )}
           {config?.showTooltip !== false && <Tooltip />}
-          <Bar dataKey="value" name="Valor">
+          <Bar dataKey="value" name={t('value')}>
             {filteredData.map((entry, i) => (
               <Cell 
                 key={`cell-${i}`} 
@@ -137,7 +139,7 @@ export const ParentCategoryChart: React.FC<ParentCategoryChartProps> = ({
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle>{title}</CardTitle>
+          <CardTitle>{title === 'Categorias' ? t('categories') : title}</CardTitle>
           {onConfigChange && onConfigReset && (
             <ChartConfigModal
               config={config!}

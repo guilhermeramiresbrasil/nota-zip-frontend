@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
@@ -16,6 +17,7 @@ export const GarantiaList: React.FC<GarantiaListProps> = ({
   onEdit,
   onDelete,
 }) => {
+  const t = useTranslations('garantias');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [garantiaToDelete, setGarantiaToDelete] = useState<Garantia | null>(null);
 
@@ -60,18 +62,18 @@ export const GarantiaList: React.FC<GarantiaListProps> = ({
                 </span>
                 {isExpired(garantia.dataExpiracao) && (
                   <span className="text-xs bg-red-100 text-red-600 px-2 py-1 rounded-full">
-                    Expirada
+                    {t('expired')}
                   </span>
                 )}
                 {isExpiringSoon(garantia.dataExpiracao) && !isExpired(garantia.dataExpiracao) && (
                   <span className="text-xs bg-yellow-100 text-yellow-600 px-2 py-1 rounded-full">
-                    Expira em breve
+                    {t('expiringSoon')}
                   </span>
                 )}
               </CardTitle>
               <CardDescription className="flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
-                Expira: {new Date(garantia.dataExpiracao).toLocaleDateString('pt-BR')}
+                {t('expiresOn', { date: new Date(garantia.dataExpiracao).toLocaleDateString('pt-BR') })}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -95,7 +97,7 @@ export const GarantiaList: React.FC<GarantiaListProps> = ({
                     onClick={() => onEdit(garantia)}
                   >
                     <Edit className="h-4 w-4 mr-1" />
-                    Editar
+                    {t('edit')}
                   </Button>
                   <Button
                     size="sm"
@@ -111,7 +113,7 @@ export const GarantiaList: React.FC<GarantiaListProps> = ({
                     }}
                   >
                     <Download className="h-4 w-4 mr-1" />
-                    Baixar
+                    {t('download')}
                   </Button>
                   <Button
                     size="sm"
@@ -132,10 +134,10 @@ export const GarantiaList: React.FC<GarantiaListProps> = ({
       <ConfirmDialog
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
-        title="Excluir garantia"
-        description={`Tem certeza que deseja excluir a garantia "${garantiaToDelete?.nome}"? Esta ação não pode ser desfeita.`}
-        confirmText="Excluir"
-        cancelText="Cancelar"
+        title={t('deleteWarranty')}
+        description={t('deleteWarrantyDescription', { name: garantiaToDelete?.nome })}
+        confirmText={t('delete')}
+        cancelText={t('cancel')}
         onConfirm={handleDelete}
         variant="destructive"
       />

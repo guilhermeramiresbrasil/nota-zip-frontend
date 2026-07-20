@@ -1,50 +1,56 @@
+'use client';
+
 import * as React from "react"
 import { cn } from "@/lib/utils"
+import { useAuth } from "@/contexts/AuthContext"
+
+type CurrencyCode = 'BRL' | 'USD' | 'EUR'
 
 interface CurrencyInputProps extends Omit<React.ComponentProps<"input">, "type" | "value" | "onChange"> {
   value: string
   onChange: (value: string) => void
+  currency?: CurrencyCode
 }
 
-function CurrencyInput({ className, value, onChange, ...props }: CurrencyInputProps) {
+const currencyConfig: Record<CurrencyCode, { locale: string; symbol: string; placeholder: string }> = {
+  BRL: { locale: 'pt-BR', symbol: 'R$', placeholder: '0,00' },
+  USD: { locale: 'en-US', symbol: '$', placeholder: '0.00' },
+  EUR: { locale: 'pt-BR', symbol: '€', placeholder: '0,00' },
+};
+
+function CurrencyInput({ className, value, onChange, currency: currencyProp, ...props }: CurrencyInputProps) {
+  const { user } = useAuth();
+  const currency: CurrencyCode = currencyProp || user?.currency || 'BRL';
+  const config = currencyConfig[currency];
+
   const formatCurrency = (rawValue: string): string => {
-    // Remove tudo que não é dígito
     const digitsOnly = rawValue.replace(/\D/g, '');
-    
     if (digitsOnly === '') return '';
-    
-    // Converte para número e divide por 100 para considerar centavos
     const numericValue = parseInt(digitsOnly, 10) / 100;
-    
-    // Formata em reais
-    return numericValue.toLocaleString('pt-BR', {
+    return numericValue.toLocaleString(config.locale, {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     });
   };
 
   const parseCurrency = (formattedValue: string): number => {
-    // Remove formatação e converte para número
-    const cleanValue = formattedValue.replace(/\./g, '').replace(',', '.');
-    return parseFloat(cleanValue) || 0;
+    if (currency === 'USD') {
+      return parseFloat(formattedValue.replace(/,/g, '')) || 0;
+    }
+    return parseFloat(formattedValue.replace(/\./g, '').replace(',', '.')) || 0;
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawValue = e.target.value;
-    
-    // Se o usuário apagar tudo, limpa o valor
     if (rawValue === '') {
       onChange('');
       return;
     }
-    
-    // Formata o valor
     const formatted = formatCurrency(rawValue);
     onChange(formatted);
   };
 
   const handleBlur = () => {
-    // Ao sair do campo, garante que o valor está formatado
     if (value && value !== '') {
       const formatted = formatCurrency(value.replace(/\D/g, ''));
       onChange(formatted);
@@ -54,7 +60,7 @@ function CurrencyInput({ className, value, onChange, ...props }: CurrencyInputPr
   return (
     <div className="relative">
       <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-        R$
+        {config.symbol}
       </span>
       <input
         type="text"
@@ -66,7 +72,7 @@ function CurrencyInput({ className, value, onChange, ...props }: CurrencyInputPr
         value={value}
         onChange={handleChange}
         onBlur={handleBlur}
-        placeholder="0,00"
+        placeholder={config.placeholder}
         {...props}
       />
     </div>
@@ -74,3 +80,4 @@ function CurrencyInput({ className, value, onChange, ...props }: CurrencyInputPr
 }
 
 export { CurrencyInput }
+export type { CurrencyInputProps, CurrencyCode }

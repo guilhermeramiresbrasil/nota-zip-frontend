@@ -6,6 +6,7 @@ import { Wallet, Mail, MessageCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { IUser, useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslations } from 'next-intl';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { OnboardingProgress } from './components/OnboardingProgress';
 import { WelcomeStep } from './components/WelcomeStep';
@@ -19,28 +20,29 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 const steps = [
   {
     id: 1,
-    title: 'Bem-vindo ao Nota Zip',
-    description: 'Vamos configurar sua conta em alguns passos simples',
+    title: 'welcomeTitle',
+    description: 'welcomeDescription',
     icon: Wallet,
     skippable: false,
   },
   {
     id: 2,
-    title: 'Verifique seu email',
-    description: 'Enviamos um código de verificação para seu email',
+    title: 'emailVerificationTitle',
+    description: 'emailVerificationDescription',
     icon: Mail,
     skippable: false,
   },
   {
     id: 3,
-    title: 'Conecte seu WhatsApp',
-    description: 'Adicione seu WhatsApp para enviar notas por mensagem (opcional)',
+    title: 'whatsappTitle',
+    description: 'whatsappDescription',
     icon: MessageCircle,
     skippable: true,
   },
 ];
 
 export default function OnboardingPage() {
+  const t = useTranslations('onboarding');
   const router = useRouter();
   const { user, updatedUser } = useAuth();
   const { showSuccess, showError } = useToast();
@@ -80,12 +82,12 @@ export default function OnboardingPage() {
       });
       const data = await res.json();
       if (data.success) {
-        showSuccess('Código enviado para seu email!');
+        showSuccess(t('codeSent'));
         setResendCooldown(60);
       }
     } catch (e) {
       console.error('Failed to send email code:', e);
-      showError('Erro ao enviar código de verificação');
+      showError(t('sendCodeError'));
     }
   };
 
@@ -125,15 +127,15 @@ export default function OnboardingPage() {
       if (data.success) {
         setEmailVerified(true);
         await updatedUser({ ...user, emailVerified: true } as IUser);
-        showSuccess('Email verificado com sucesso!');
+        showSuccess(t('emailVerified'));
         return true;
       } else {
-        showError('Código de verificação inválido');
+        showError(t('invalidCode'));
         return false;
       }
     } catch (e) {
       console.error('Email verification failed:', e);
-      showError('Erro ao verificar email');
+      showError(t('verifyCodeError'));
       return false;
     }
   };
@@ -199,8 +201,8 @@ export default function OnboardingPage() {
       case 1:
         return (
           <WelcomeStep
-            title={currentStepData.title}
-            description={currentStepData.description}
+            title={t(currentStepData.title)}
+            description={t(currentStepData.description)}
             icon={currentStepData.icon}
           />
         );
@@ -208,8 +210,8 @@ export default function OnboardingPage() {
       case 2:
         return (
           <EmailVerificationStep
-            title={currentStepData.title}
-            description={currentStepData.description}
+            title={t(currentStepData.title)}
+            description={t(currentStepData.description)}
             icon={currentStepData.icon}
             emailCode={formData.emailCode}
             emailVerified={emailVerified}
@@ -225,12 +227,12 @@ export default function OnboardingPage() {
                 });
                 const data = await res.json();
                 if (data.success) {
-                  showSuccess('Código reenviado para seu email!');
+                  showSuccess(t('codeResent'));
                   setResendCooldown(60);
                 }
               } catch (e) {
                 console.error('Failed to resend code:', e);
-                showError('Erro ao reenviar código');
+                showError(t('resendCodeError'));
               }
             }}
           />
@@ -239,8 +241,8 @@ export default function OnboardingPage() {
       case 3:
         return (
           <WhatsAppConnectionStep
-            title={currentStepData.title}
-            description={currentStepData.description}
+            title={t(currentStepData.title)}
+            description={t(currentStepData.description)}
             icon={currentStepData.icon}
             qrCodeData={qrCodeData}
             loadingQrCode={loadingQrCode}

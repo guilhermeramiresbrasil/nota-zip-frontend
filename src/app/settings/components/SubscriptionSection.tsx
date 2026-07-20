@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CreditCard, ExternalLink, Loader2 } from 'lucide-react';
@@ -8,6 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 
 export function SubscriptionSection() {
+  const t = useTranslations('settings');
   const { user } = useAuth();
   const { showSuccess, showError } = useToast();
   const [loading, setLoading] = useState(false);
@@ -28,7 +30,7 @@ export function SubscriptionSection() {
       });
 
       if (!response.ok) {
-        throw new Error('Erro ao criar link do portal');
+        throw new Error(t('portalError'));
       }
 
       const data = await response.json();
@@ -36,7 +38,7 @@ export function SubscriptionSection() {
         window.open(data.data.url, '_blank');
       }
     } catch (error) {
-      showError('Erro', 'Não foi possível acessar o portal de assinatura');
+      showError('Erro', t('portalError'));
     } finally {
       setLoading(false);
     }
@@ -45,15 +47,15 @@ export function SubscriptionSection() {
   const getPlanLabel = () => {
     switch (user?.plan) {
       case 'free':
-        return 'Plano Grátis';
+        return t('planFree');
       case 'basic':
-        return 'Plano Básico';
+        return t('planBasic');
       case 'premium':
-        return 'Plano Premium';
+        return t('planPremium');
       case 'shared':
-        return 'Plano Compartilhado';
+        return t('planShared');
       default:
-        return 'Plano desconhecido';
+        return t('planUnknown');
     }
   };
 
@@ -62,13 +64,13 @@ export function SubscriptionSection() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <CreditCard className="h-5 w-5" />
-          Assinatura
+          {t('subscription')}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm text-muted-foreground">Plano atual</p>
+            <p className="text-sm text-muted-foreground">{t('currentPlanLabel')}</p>
             <p className="font-semibold text-lg">{getPlanLabel()}</p>
           </div>
         </div>
@@ -83,12 +85,12 @@ export function SubscriptionSection() {
             {loading ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Carregando...
+                {t('loadingPortal')}
               </>
             ) : (
               <>
                 <ExternalLink className="h-4 w-4 mr-2" />
-                Gerenciar assinatura no Stripe
+                {t('manageSubscription')}
               </>
             )}
           </Button>

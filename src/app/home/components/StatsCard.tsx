@@ -1,6 +1,10 @@
+'use client';
+
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TrendingUp, TrendingDown, Wallet, ArrowUpRight, PiggyBank } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 import { StatsCardProps } from '../types/dashboard.types';
 
 export const StatsCard: React.FC<StatsCardProps> = ({
@@ -9,6 +13,12 @@ export const StatsCard: React.FC<StatsCardProps> = ({
   trend,
   variant = 'balance',
 }) => {
+  const { user } = useAuth();
+  const t = useTranslations('home');
+  const currencyFormatter = new Intl.NumberFormat(user?.language || 'pt-BR', {
+    style: 'currency',
+    currency: user?.currency || 'BRL',
+  });
   const getVariantClasses = () => {
     switch (variant) {
       case 'balance':
@@ -48,7 +58,7 @@ export const StatsCard: React.FC<StatsCardProps> = ({
     return (
       <p className="text-sm mt-2 flex items-center text-white/90 font-medium">
         <Icon className="h-4 w-4 mr-1" />
-        {isPositive ? '+' : ''}{trend}% este mês
+        {isPositive ? '+' : ''}{trend}% {t('thisMonth')}
       </p>
     );
   };
@@ -65,7 +75,7 @@ export const StatsCard: React.FC<StatsCardProps> = ({
       </CardHeader>
       <CardContent>
         <div className="text-3xl font-bold text-white">
-          R$ {value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+          {currencyFormatter.format(value)}
         </div>
         {renderTrend()}
       </CardContent>

@@ -11,8 +11,10 @@ import { garantiaService } from './logics/services/garantiaService';
 import { planService } from '../../services/planService';
 import { Garantia } from './types/garantia.types';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTranslations } from 'next-intl';
 
 export default function GarantiasPage() {
+  const t = useTranslations('garantias');
   const { user } = useAuth();
   const [garantias, setGarantias] = useState<Garantia[]>([]);
   const [loading, setLoading] = useState(true);
@@ -106,7 +108,7 @@ export default function GarantiasPage() {
     <ProtectedRoute>
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         <div className="flex justify-between items-center mb-6">
-          <PageHeader title="Guarda Garantias" description="Armazene suas notas fiscais e documentos de garantia" />
+          <PageHeader title={t('title')} description={t('description')} />
           <GarantiaForm
             uploadLimit={uploadLimit}
             userPlan={user?.plan || 'free'}
@@ -123,10 +125,10 @@ export default function GarantiasPage() {
         </div>
 
         {loading ? (
-          <div className="text-center py-8">Carregando garantias...</div>
+          <div className="text-center py-8">{t('loading')}</div>
         ) : filteredGarantias.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
-            Nenhuma garantia cadastrada. Clique em &quot;Nova Garantia&quot; para começar.
+            {t('empty')}
           </div>
         ) : (
           <GarantiaList garantias={filteredGarantias} onEdit={handleEdit} onDelete={handleDelete} />

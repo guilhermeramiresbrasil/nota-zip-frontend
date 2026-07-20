@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 export function EmailSection() {
+  const t = useTranslations('settings');
   const { user } = useAuth();
   const { showSuccess, showError } = useToast();
 
@@ -36,12 +38,12 @@ export function EmailSection() {
       const data = await res.json();
       if (data.success) {
         setCodeSent(true);
-        showSuccess('Código enviado', 'Um código de verificação foi enviado para seu email.');
+        showSuccess(t('codeSent'), t('codeSentDescription'));
       } else {
-        showError('Erro', 'Não foi possível enviar o código de verificação.');
+        showError('Erro', t('codeSendError'));
       }
     } catch {
-      showError('Erro', 'Não foi possível enviar o código de verificação.');
+      showError('Erro', t('codeSendError'));
     } finally {
       setLoading(false);
     }
@@ -58,16 +60,16 @@ export function EmailSection() {
       });
       const data = await res.json();
       if (data.success) {
-        showSuccess('Email validado', 'Seu email foi validado com sucesso.');
+        showSuccess(t('emailVerifiedToast'), t('emailVerifiedToastDescription'));
         setCode('');
         setCodeSent(false);
         // Refresh user data
         window.location.reload();
       } else {
-        showError('Erro', data.error || 'Código inválido ou expirado.');
+        showError('Erro', data.error || t('invalidCodeError'));
       }
     } catch {
-      showError('Erro', 'Não foi possível validar o código.');
+      showError('Erro', t('verifyCodeError'));
     } finally {
       setLoading(false);
     }
@@ -88,16 +90,16 @@ export function EmailSection() {
       });
       const data = await res.json();
       if (data.success) {
-        showSuccess('Email atualizado', 'Seu email foi atualizado com sucesso. Por favor, valide o novo email.');
+        showSuccess(t('emailUpdated'), t('emailUpdatedDescription'));
         setNewEmail('');
         setIsEditingEmail(false);
         // Refresh user data
         window.location.reload();
       } else {
-        showError('Erro', data.error || 'Não foi possível atualizar o email.');
+        showError('Erro', data.error || t('emailUpdateError'));
       }
     } catch {
-      showError('Erro', 'Não foi possível atualizar o email.');
+      showError('Erro', t('emailUpdateError'));
     } finally {
       setEmailLoading(false);
     }
@@ -108,10 +110,10 @@ export function EmailSection() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Mail className="h-5 w-5 text-blue-600" />
-          Email
+          {t('email')}
         </CardTitle>
         <CardDescription className="mt-1">
-          Valide seu email para garantir a segurança da sua conta.
+          {t('emailDescription')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -120,7 +122,7 @@ export function EmailSection() {
           <div className="flex items-center gap-2.5">
             <Mail className="h-5 w-5 text-blue-600 shrink-0" />
             <div>
-              <p className="text-sm font-medium text-slate-800">Email atual</p>
+              <p className="text-sm font-medium text-slate-800">{t('currentEmail')}</p>
               <p className="text-xs text-slate-500">{user?.email}</p>
             </div>
           </div>
@@ -138,11 +140,11 @@ export function EmailSection() {
         {isEditingEmail && (
           <div className="space-y-3 p-3 rounded-lg bg-blue-50 border border-blue-100">
             <div className="space-y-2">
-              <Label htmlFor="new-email">Novo email</Label>
+              <Label htmlFor="new-email">{t('newEmail')}</Label>
               <Input
                 id="new-email"
                 type="email"
-                placeholder="Digite seu novo email"
+                placeholder={t('newEmailPlaceholder')}
                 value={newEmail}
                 onChange={(e) => setNewEmail(e.target.value)}
               />
@@ -153,7 +155,7 @@ export function EmailSection() {
                 disabled={emailLoading || !newEmail}
                 className="flex-1"
               >
-                {emailLoading ? 'Atualizando...' : 'Atualizar email'}
+                {emailLoading ? t('updatingEmail') : t('updateEmail')}
               </Button>
               <Button
                 variant="outline"
@@ -162,7 +164,7 @@ export function EmailSection() {
                   setNewEmail('');
                 }}
               >
-                Cancelar
+                {t('cancel')}
               </Button>
             </div>
           </div>
@@ -174,16 +176,16 @@ export function EmailSection() {
             <>
               <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" />
               <div>
-                <p className="text-sm font-medium text-slate-800">Email validado</p>
-                <p className="text-xs text-slate-500">Seu email está validado e seguro.</p>
+                <p className="text-sm font-medium text-slate-800">{t('emailVerified')}</p>
+                <p className="text-xs text-slate-500">{t('emailVerifiedDescription')}</p>
               </div>
             </>
           ) : (
             <>
               <Mail className="h-5 w-5 text-slate-400 shrink-0" />
               <div>
-                <p className="text-sm font-medium text-slate-800">Email não validado</p>
-                <p className="text-xs text-slate-500">Valide seu email para garantir a segurança da conta.</p>
+                <p className="text-sm font-medium text-slate-800">{t('emailNotVerified')}</p>
+                <p className="text-xs text-slate-500">{t('emailNotVerifiedDescription')}</p>
               </div>
             </>
           )}
@@ -199,15 +201,15 @@ export function EmailSection() {
                 className="w-full gap-2"
               >
                 <Mail className="h-4 w-4" />
-                {loading ? 'Enviando código...' : 'Enviar código de verificação'}
+                {loading ? t('sendingCode') : t('sendCode')}
               </Button>
             ) : (
               <div className="space-y-3">
                 <div className="space-y-2">
-                  <Label htmlFor="email-code">Código de verificação</Label>
+                  <Label htmlFor="email-code">{t('verificationCode')}</Label>
                   <Input
                     id="email-code"
-                    placeholder="Digite o código recebido"
+                    placeholder={t('verificationCodePlaceholder')}
                     value={code}
                     onChange={(e) => setCode(e.target.value)}
                     maxLength={6}
@@ -219,7 +221,7 @@ export function EmailSection() {
                     disabled={loading || !code}
                     className="flex-1"
                   >
-                    {loading ? 'Validando...' : 'Validar'}
+                    {loading ? t('validating') : t('verify')}
                   </Button>
                   <Button
                     variant="outline"
@@ -228,7 +230,7 @@ export function EmailSection() {
                     className="gap-1.5"
                   >
                     <RefreshCw className="h-3.5 w-3.5" />
-                    Reenviar
+                    {t('resend')}
                   </Button>
                 </div>
               </div>

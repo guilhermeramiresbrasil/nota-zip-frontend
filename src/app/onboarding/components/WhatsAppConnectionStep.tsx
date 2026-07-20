@@ -1,3 +1,4 @@
+import { useTranslations } from 'next-intl';
 import { LucideIcon } from 'lucide-react';
 import { QrCode } from 'lucide-react';
 
@@ -18,6 +19,7 @@ export function WhatsAppConnectionStep({
   loadingQrCode,
   onGenerateQRCode,
 }: WhatsAppConnectionStepProps) {
+  const t = useTranslations('onboarding');
   return (
     <div className="space-y-6">
       <div className="flex justify-center">
@@ -41,20 +43,20 @@ export function WhatsAppConnectionStep({
                 <img src={qrCodeData.qrCode} alt="QR Code" className="w-48 h-48 mx-auto" />
               </div>
               <p className="text-gray-700 mb-2">
-                Escaneie o QR code e envie a mensagem para o WhatsApp
+                {t('scanQRCode')}
               </p>
               <p className="text-sm text-gray-500">
-                Código: <strong className="text-blue-600">{qrCodeData.code}</strong>
+                {t('codeLabel')} <strong className="text-blue-600">{qrCodeData.code}</strong>
               </p>
               <p className="text-xs text-gray-400">
-                Expira em: {new Date(qrCodeData.expiresAt).toLocaleTimeString()}
+                {t('expiresAt', { time: new Date(qrCodeData.expiresAt).toLocaleTimeString() })}
               </p>
             </div>
           ) : (
             <QrCode className="h-16 w-16 text-blue-600 mx-auto mb-4" />
           )}
           <p className="text-sm text-gray-500 mt-4">
-            Envie uma mensagem para o número: <strong>+55 51 99619-6672</strong>
+            {t('sendMessageTo')} <strong>+55 51 99619-6672</strong>
           </p>
         </div>
       </div>

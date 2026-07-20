@@ -7,9 +7,11 @@ import { LoginLogo } from './components/LoginLogo';
 import { LoginForm } from './components/LoginForm';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslations } from 'next-intl';
 import { LoginFormData } from './types/auth.types';
 
 export default function LoginPage() {
+  const t = useTranslations('auth');
   const router = useRouter();
   const { login } = useAuth();
   const { showSuccess, showError } = useToast();
@@ -28,10 +30,10 @@ export default function LoginPage() {
 
     try {
       await login(formData.email, formData.password);
-      showSuccess('Login realizado com sucesso!');
+      showSuccess(t('loginSuccess'));
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Erro ao fazer login';
-      showError('Erro ao fazer login', errorMessage);
+      const errorMessage = err instanceof Error ? err.message : t('loginError');
+      showError(t('loginError'), errorMessage);
       setError(errorMessage);
     } finally {
       setIsLoading(false);
@@ -51,13 +53,13 @@ export default function LoginPage() {
         />
         <div className="text-center mt-6">
           <p className="text-gray-600">
-            Não tem uma conta?{' '}
+            {t('noAccount')}{' '}
             <Link href="/register" className="text-blue-600 hover:text-blue-700 font-medium">
-              Crie uma conta
+              {t('createAccount')}
             </Link>
           </p>
           <Link href="/forgot-password" className="text-sm text-gray-500 hover:text-gray-700">
-            Esqueceu sua senha?
+            {t('forgotPassword')}
           </Link>
         </div>
       </div>

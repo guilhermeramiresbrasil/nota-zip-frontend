@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { MessageCircle, QrCode, CheckCircle2, RefreshCw, Edit2, X, Copy } from 'lucide-react';
@@ -16,6 +17,7 @@ interface QrData {
 }
 
 export function WhatsAppSection() {
+  const t = useTranslations('settings');
   const { user } = useAuth();
   const { showError } = useToast();
 
@@ -38,10 +40,10 @@ export function WhatsAppSection() {
       if (data.success) {
         setQrData(data.data);
       } else {
-        showError('Erro', 'Não foi possível gerar o QR code.');
+        showError('Erro', t('qrGenerationError'));
       }
     } catch {
-      showError('Erro', 'Não foi possível gerar o QR code.');
+      showError('Erro', t('qrGenerationError'));
     } finally {
       setLoading(false);
     }
@@ -58,7 +60,7 @@ export function WhatsAppSection() {
 
   const shareViaWhatsApp = () => {
     if (!qrData) return;
-    const message = `Olá! Estou conectando meu WhatsApp ao Nota Zip. Meu código de conexão é: ${qrData.code}`;
+    const message = t('whatsappShareText', { code: qrData.code });
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
   };
@@ -68,10 +70,10 @@ export function WhatsAppSection() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <MessageCircle className="h-5 w-5 text-green-600" />
-          WhatsApp
+          {t('whatsapp')}
         </CardTitle>
         <CardDescription className="mt-1">
-          Conecte seu WhatsApp para registrar transações por mensagem, foto ou áudio.
+          {t('whatsappDescription')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -85,10 +87,10 @@ export function WhatsAppSection() {
             )}
             <div>
               <p className="text-sm font-medium text-slate-800">
-                {isConnected ? 'Número conectado' : 'Nenhum número conectado'}
+                {isConnected ? t('whatsappConnected') : t('whatsappNotConnected')}
               </p>
               <p className="text-xs text-slate-500">
-                {isConnected ? 'Seu WhatsApp está ativo e pronto para uso.' : 'Gere o QR code para conectar.'}
+                {isConnected ? t('whatsappConnectedDescription') : t('whatsappNotConnectedDescription')}
               </p>
             </div>
           </div>
@@ -113,7 +115,7 @@ export function WhatsAppSection() {
                   className="gap-2"
                 >
                   <QrCode className="h-4 w-4" />
-                  {loading ? 'Gerando…' : 'Gerar QR Code'}
+                  {loading ? t('generatingQR') : t('generateQR')}
                 </Button>
               </div>
             ) : (
@@ -122,15 +124,15 @@ export function WhatsAppSection() {
                   <img src={qrData.qrCode} alt="QR Code WhatsApp" className="w-44 h-44" />
                 </div>
                 <p className="text-sm text-slate-700 text-center">
-                  Escaneie o QR code ou envie o código para o número do WhatsApp:
+                  {t('qrInstructions')}
                 </p>
                 <p className="text-sm font-semibold text-slate-800">+55 51 99619-6672</p>
                 <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full border border-green-200">
-                  <span className="text-xs text-slate-500">Código:</span>
+                  <span className="text-xs text-slate-500">{t('codeLabel')}</span>
                   <span className="text-sm font-bold text-green-600 tracking-wider">{qrData.code}</span>
                 </div>
                 <p className="text-xs text-slate-400">
-                  Expira às {new Date(qrData.expiresAt).toLocaleTimeString('pt-BR')}
+                  {t('expiresAt', { time: new Date(qrData.expiresAt).toLocaleTimeString('pt-BR') })}
                 </p>
                 <div className="flex gap-2">
                   <Button
@@ -140,7 +142,7 @@ export function WhatsAppSection() {
                     className="flex-1 gap-1.5"
                   >
                     <MessageCircle className="h-3.5 w-3.5" />
-                    Compartilhar no WhatsApp
+                    {t('shareWhatsApp')}
                   </Button>
                   <Button
                     variant="outline"

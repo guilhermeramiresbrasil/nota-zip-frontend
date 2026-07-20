@@ -10,8 +10,10 @@ import { TransactionItem } from './components/TransactionItem';
 import { dashboardService } from './logics/services/dashboardService';
 import { useAuth } from '@/contexts/AuthContext';
 import { useViewMode } from '@/contexts/ViewModeContext';
+import { useTranslations } from 'next-intl';
 
 export default function Dashboard() {
+  const t = useTranslations('home');
   const { user } = useAuth();
   const { isSharedView } = useViewMode();
   const [stats, setStats] = useState<any>(null);
@@ -104,8 +106,8 @@ export default function Dashboard() {
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
         <div className="container mx-auto px-4 py-8 max-w-7xl">
           <PageHeader
-            title={user?.name ? `Bem-vindo, ${user.name.split(' ')[0]}` : 'Bem-vindo ao Nota Zip'}
-            description="Gerencie suas finanças de forma simples e inteligente"
+            title={user?.name ? t('welcome', { name: user.name.split(' ')[0] }) : t('welcomeFallback')}
+            description={t('description')}
           />
 
           {/* Stats Cards */}
@@ -117,23 +119,23 @@ export default function Dashboard() {
             ) : (
               <>
                 <StatsCard
-                  title="Saldo Total"
+                  title={t('totalBalance')}
                   value={stats?.totalBalance || 0}
                   trend={stats?.monthlyGrowth}
                   variant="balance"
                 />
                 <StatsCard
-                  title="Receitas"
+                  title={t('income')}
                   value={stats?.totalIncome || 0}
                   variant="income"
                 />
                 <StatsCard
-                  title="Despesas"
+                  title={t('expenses')}
                   value={stats?.totalExpenses || 0}
                   variant="expense"
                 />
                 <StatsCard
-                  title="Economia"
+                  title={t('savings')}
                   value={stats?.savings || 0}
                   variant="savings"
                 />
@@ -147,19 +149,19 @@ export default function Dashboard() {
           {/* Recent Transactions */}
           <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
             <CardHeader>
-              <CardTitle className="text-slate-800">Transações Recentes</CardTitle>
-              <CardDescription className="text-slate-500">Últimas movimentações do mês atual</CardDescription>
+              <CardTitle className="text-slate-800">{t('recentTransactions')}</CardTitle>
+              <CardDescription className="text-slate-500">{t('recentTransactionsDescription')}</CardDescription>
             </CardHeader>
             <CardContent>
               {transactionsLoading ? (
                 <div className="text-center py-8">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                  <p className="text-slate-500 mt-4">Carregando transações...</p>
+                  <p className="text-slate-500 mt-4">{t('loadingTransactions')}</p>
                 </div>
               ) : transactions.length === 0 ? (
                 <div className="text-center py-8 text-slate-500">
-                  <p>Nenhuma transação encontrada.</p>
-                  <p className="text-sm mt-1">Adicione sua primeira transação em <strong>Novo Gasto</strong>.</p>
+                  <p>{t('noTransactions')}</p>
+                  <p className="text-sm mt-1">{t('addFirstTransaction')} <strong>{t('newExpense')}</strong>.</p>
                 </div>
               ) : (
                 <div className="space-y-2">

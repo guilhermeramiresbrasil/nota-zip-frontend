@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { LoginLogo } from '../login/components/LoginLogo';
 import { RegisterForm } from './components/RegisterForm';
 import { useAuth } from '@/contexts/AuthContext';
@@ -11,7 +11,8 @@ import { RegisterFormData } from '@/app/login/types/auth.types';
 import { registerValidation } from './logics/validations/registerValidation';
 
 export default function RegisterPage() {
-  const router = useRouter();
+  const t = useTranslations('auth');
+  const tErrors = useTranslations('errors');
   const { register } = useAuth();
   const { showSuccess, showError } = useToast();
   
@@ -30,21 +31,17 @@ export default function RegisterPage() {
 
     const validation = registerValidation.validate(formData);
     if (!validation.isValid) {
-      showError('Erro de validação', validation.error || 'Verifique os campos e tente novamente');
+      showError(t('validationError'), tErrors(validation.error || 'generic'));
       return;
     }
 
     setIsLoading(true);
     try {
       await register(formData.name, formData.email, formData.password);
-      showSuccess('Conta criada com sucesso!', 'Você será redirecionado para o onboarding.');
-      
-      setTimeout(() => {
-        router.push('/onboarding');
-      }, 100);
+      showSuccess(t('accountCreated'), t('redirecting'));
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Erro ao realizar cadastro';
-      showError('Erro ao criar conta', errorMessage);
+      const errorMessage = error instanceof Error ? error.message : t('registerError');
+      showError(t('registerError'), errorMessage);
       setError(errorMessage);
     } finally {
       setIsLoading(false);
@@ -64,9 +61,9 @@ export default function RegisterPage() {
         />
         <div className="text-center mt-6">
           <p className="text-gray-600">
-            Já tem uma conta?{' '}
+            {t('alreadyHaveAccount')}{' '}
             <Link href="/login" className="text-blue-600 hover:text-blue-700 font-medium">
-              Faça login
+              {t('login')}
             </Link>
           </p>
         </div>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,6 +16,7 @@ interface SimpleFilterProps {
 }
 
 export function SimpleFilter({ filters, onFiltersChange, onReset }: SimpleFilterProps) {
+  const t = useTranslations('reports');
   const hasActiveFilters = filters.startDate || filters.endDate;
 
   return (
@@ -22,7 +24,7 @@ export function SimpleFilter({ filters, onFiltersChange, onReset }: SimpleFilter
       <CardContent className="pt-6">
         <div className="flex flex-wrap gap-4 items-end">
           <div className="flex-1 min-w-[200px]">
-            <Label htmlFor="startDate">Data Inicial</Label>
+            <Label htmlFor="startDate">{t('startDate')}</Label>
             <Input
               id="startDate"
               type="date"
@@ -31,7 +33,7 @@ export function SimpleFilter({ filters, onFiltersChange, onReset }: SimpleFilter
             />
           </div>
           <div className="flex-1 min-w-[200px]">
-            <Label htmlFor="endDate">Data Final</Label>
+            <Label htmlFor="endDate">{t('endDate')}</Label>
             <Input
               id="endDate"
               type="date"
@@ -42,7 +44,7 @@ export function SimpleFilter({ filters, onFiltersChange, onReset }: SimpleFilter
           {hasActiveFilters && (
             <Button variant="ghost" onClick={onReset}>
               <X className="h-4 w-4 mr-2" />
-              Limpar
+              {t('clear')}
             </Button>
           )}
         </div>

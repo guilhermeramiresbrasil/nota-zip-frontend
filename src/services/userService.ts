@@ -16,6 +16,27 @@ class UserService {
     };
   }
 
+  async getUserByEmail(email: string): Promise<any> {
+    try {
+      const response = await fetch(`${GATEWAY_URL}/api/users/email/${encodeURIComponent(email)}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-correlation-id': generateCorrelationId(),
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || errorData.message || 'Failed to get user by email');
+      }
+
+      return await response.json();
+    } catch (error) {
+      throw error;
+    }
+  }
+
   async getUserById(userId: string): Promise<any> {
     try {
       const response = await fetch(`${GATEWAY_URL}/api/users/${userId}`, {
@@ -67,6 +88,44 @@ class UserService {
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || errorData.message || 'Failed to update profile');
+      }
+
+      return await response.json();
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async setVault(userId: string, vault: any): Promise<any> {
+    try {
+      const response = await fetch(`${GATEWAY_URL}/api/users/${userId}/vault`, {
+        method: 'PUT',
+        headers: this.getHeaders(),
+        body: JSON.stringify(vault),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || errorData.message || 'Failed to set vault');
+      }
+
+      return await response.json();
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async changePassword(userId: string, data: any): Promise<any> {
+    try {
+      const response = await fetch(`${GATEWAY_URL}/api/users/${userId}/password`, {
+        method: 'PUT',
+        headers: this.getHeaders(),
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || errorData.message || 'Failed to change password');
       }
 
       return await response.json();

@@ -1,3 +1,4 @@
+import { useTranslations } from 'next-intl';
 import { LucideIcon } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -24,6 +25,7 @@ export function EmailVerificationStep({
   onEmailCodeChange,
   onResendCode,
 }: EmailVerificationStepProps) {
+  const t = useTranslations('onboarding');
   return (
     <div className="space-y-6">
       <div className="flex justify-center">
@@ -37,23 +39,23 @@ export function EmailVerificationStep({
       </div>
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="emailCode">Código de verificação</Label>
+          <Label htmlFor="emailCode">{t('verificationCodeLabel')}</Label>
           <Input
             id="emailCode"
             type="text"
-            placeholder={emailVerified ? "Email verificado com sucesso, pode prosseguir!" : "Digite o código enviado para seu email"}
+            placeholder={emailVerified ? t('verifiedPlaceholder') : t('codePlaceholder')}
             value={emailCode}
             disabled={emailVerified}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => onEmailCodeChange(e.target.value)}
             maxLength={6}
           />
           <p className="text-sm text-gray-500">
-            Não recebeu o código? <button
+            {t('didNotReceiveCode')} <button
               type="button"
               className={`text-blue-600 hover:underline ${resendCooldown > 0 ? 'text-gray-400 cursor-not-allowed' : ''}`}
               disabled={resendCooldown > 0}
               onClick={onResendCode}
-            >{resendCooldown > 0 ? `Reenviar em ${resendCooldown}s` : 'Reenviar'}</button>
+            >{resendCooldown > 0 ? t('resendIn', { seconds: resendCooldown }) : t('resend')}</button>
           </p>
         </div>
       </div>

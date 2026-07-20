@@ -1,11 +1,13 @@
+'use client';
+
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { User } from 'lucide-react';
 import { IUser } from '@/contexts/AuthContext';
-
 
 interface ProfileSectionProps {
   user: IUser;
@@ -16,21 +18,20 @@ interface ProfileSectionProps {
 
 export const ProfileSection: React.FC<ProfileSectionProps> = ({ user, onChangeUser, handleSave, isLoading }) => {
   const [isEditing, setIsEditing] = React.useState(false);
-
-  
+  const t = useTranslations('settings');
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <User className="h-5 w-5" />
-          Perfil
+          {t('profile')}
         </CardTitle>
-        <CardDescription>Gerencie suas informações pessoais</CardDescription>
+        <CardDescription>{t('profileDescription')}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="name">Nome</Label>
+          <Label htmlFor="name">{t('name')}</Label>
           <Input
             id="name"
             value={user.name}
@@ -40,7 +41,7 @@ export const ProfileSection: React.FC<ProfileSectionProps> = ({ user, onChangeUs
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">{t('email')}</Label>
           <Input
             id="email"
             type="email"
@@ -51,21 +52,21 @@ export const ProfileSection: React.FC<ProfileSectionProps> = ({ user, onChangeUs
         </div>
 
         <div className="space-y-2">
-          <Label>Plano Atual</Label>
+          <Label>{t('currentPlan')}</Label>
           <div className="text-sm text-gray-600 capitalize">{user?.plan || 'free'}</div>
         </div>
 
         {isEditing ? (
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => setIsEditing(false)} disabled={isLoading}>
-              Cancelar
+              {t('cancel')}
             </Button>
             <Button onClick={handleSave} disabled={isLoading}>
-              {isLoading ? 'Salvando...' : 'Salvar'}
+              {isLoading ? t('saving') : t('save')}
             </Button>
           </div>
         ) : (
-          <Button onClick={() => setIsEditing(true)}>Editar Perfil</Button>
+          <Button onClick={() => setIsEditing(true)}>{t('editProfile')}</Button>
         )}
       </CardContent>
     </Card>

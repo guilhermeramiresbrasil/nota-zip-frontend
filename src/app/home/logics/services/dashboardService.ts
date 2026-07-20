@@ -1,5 +1,6 @@
 import { Transaction, DashboardStats } from '../../types/dashboard.types';
 import { calculateDashboardStats } from '../calculations/financeCalculations';
+import * as cryptoClient from '@/lib/crypto/cryptoClient';
 
 // Hardcoded production URL
 const GATEWAY_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
@@ -78,15 +79,20 @@ export class DashboardService {
     const json = await response.json();
     const items: any[] = json.data ?? [];
 
-    return items.map((t) => ({
-      id: t.id,
-      name: t.description || t.category || '—',
-      description: t.description,
-      amount: t.type === 'debit' ? -Math.abs(t.amount) : Math.abs(t.amount),
-      category: t.category,
-      date: formatRelativeDate(t.date),
-      type: t.type === 'credit' ? 'income' : 'expense',
-    }));
+    return Promise.all(
+      items.map(async (t) => {
+        const description = (await cryptoClient.maybeDecryptField(t.description)) ?? t.description ?? '';
+        return {
+          id: t.id,
+          name: description || t.category || '—',
+          description,
+          amount: t.type === 'debit' ? -Math.abs(t.amount) : Math.abs(t.amount),
+          category: t.category,
+          date: formatRelativeDate(t.date),
+          type: t.type === 'credit' ? 'income' : 'expense',
+        };
+      })
+    );
   }
 
   calculateStats(transactions: Transaction[]): DashboardStats {

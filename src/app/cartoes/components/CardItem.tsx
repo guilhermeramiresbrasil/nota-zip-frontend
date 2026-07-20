@@ -8,6 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Edit2, Trash2, CreditCard as CardIcon, Wallet } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTranslations } from 'next-intl';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface CardItemProps {
   card: CreditCard;
@@ -28,24 +30,26 @@ const CARD_COLORS: Record<string, string> = {
   default: 'from-gray-700 to-gray-900',
 };
 
-const TYPE_LABELS: Record<string, string> = {
-  credit: 'Crédito',
-  prepaid: 'Pré-pago',
+const TYPE_KEYS: Record<string, string> = {
+  credit: 'credit',
+  prepaid: 'prepaid',
 };
 
-const SUBTYPE_LABELS: Record<string, string> = {
-  vr_va: 'VR/VA',
+const SUBTYPE_KEYS: Record<string, string> = {
+  vr_va: 'vr_va',
   standard: '',
 };
 
 export function CardItem({ card, balance, selected, onSelect, onEdit, onDelete }: CardItemProps) {
+  const t = useTranslations('cards');
+  const { user } = useAuth();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const gradient = CARD_COLORS[card.color || 'default'] || CARD_COLORS.default;
   const usedPct = balance ? Math.min((balance.used / balance.limit) * 100, 100) : 0;
   const isOverLimit = balance && balance.available < 0;
 
   const formatCurrency = (v: number) =>
-    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
+    new Intl.NumberFormat(user?.language || 'pt-BR', { style: 'currency', currency: user?.currency || 'BRL' }).format(v);
 
   const handleDelete = () => {
     onDelete(card.id);
@@ -64,9 +68,9 @@ export function CardItem({ card, balance, selected, onSelect, onEdit, onDelete }
         <div className="flex justify-between items-start mb-4">
           <div>
             <p className="text-xs text-white/70 uppercase tracking-wide">
-              {TYPE_LABELS[card.type]}
-              {card.cardSubtype === 'vr_va' ? ' · ' + SUBTYPE_LABELS.vr_va : ''}
-              {card.owner === 'borrowed' ? ' · Emprestado' : ''}
+              {t(TYPE_KEYS[card.type])}
+              {card.cardSubtype === 'vr_va' && SUBTYPE_KEYS.vr_va ? ` · ${t(SUBTYPE_KEYS.vr_va)}` : ''}
+              {card.owner === 'borrowed' ? ` · ${t('borrowed')}` : ''}
             </p>
             <h3 className="font-semibold text-lg leading-tight">{card.name}</h3>
           </div>
@@ -77,11 +81,11 @@ export function CardItem({ card, balance, selected, onSelect, onEdit, onDelete }
           )}
         </div>
         <p className="text-white/60 text-sm font-mono">
-          {card.lastFourDigits ? `•••• •••• •••• ${card.lastFourDigits}` : 'Sem número'}
+          {card.lastFourDigits ? `•••• •••• •••• ${card.lastFourDigits}` : t('noNumber')}
         </p>
         <div className="flex justify-between mt-3 text-sm">
-          <span className="text-white/60">Fecha dia {card.closingDay}</span>
-          <span className="text-white/60">Vence dia {card.dueDay}</span>
+          <span className="text-white/60">{t('closingDayLabel', { day: card.closingDay })}</span>
+          <span className="text-white/60">{t('dueDayLabel', { day: card.dueDay })}</span>
         </div>
       </div>
 
@@ -89,7 +93,7 @@ export function CardItem({ card, balance, selected, onSelect, onEdit, onDelete }
         {balance && (
           <div>
             <div className="flex justify-between text-xs text-muted-foreground mb-1">
-              <span>Utilizado</span>
+              <span>{t('used')}</span>
               <span className={isOverLimit ? 'text-red-500 font-medium' : ''}>
                 {formatCurrency(balance.used)} / {formatCurrency(balance.limit)}
               </span>
@@ -101,7 +105,7 @@ export function CardItem({ card, balance, selected, onSelect, onEdit, onDelete }
               />
             </div>
             <div className="flex justify-between text-xs mt-1">
-              <span className="text-muted-foreground">Disponível</span>
+              <span className="text-muted-foreground">{t('available')}</span>
               <span className={`font-medium ${isOverLimit ? 'text-red-500' : 'text-green-600'}`}>
                 {formatCurrency(balance.available)}
               </span>
@@ -111,7 +115,7 @@ export function CardItem({ card, balance, selected, onSelect, onEdit, onDelete }
 
         <div className="flex items-center gap-1 justify-between pt-1">
           <Badge variant="secondary" className="text-xs">
-            Fatura: {formatCurrency(balance?.currentInvoice || 0)}
+            {t('invoice')}: {formatCurrency(balance?.currentInvoice || 0)}
           </Badge>
           <div className="flex gap-1">
             <Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); onEdit(card); }}>
@@ -134,10 +138,10 @@ export function CardItem({ card, balance, selected, onSelect, onEdit, onDelete }
       <ConfirmDialog
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
-        title="Desativar cartão"
-        description={`Tem certeza que deseja desativar o cartão "${card.name}"? Esta ação pode ser desfeita.`}
-        confirmText="Desativar"
-        cancelText="Cancelar"
+        title={t('deactivateCard')}
+        description={t('deactivateCardDescription', { name: card.name })}
+        confirmText={t('deactivate')}
+        cancelText={t('cancel')}
         onConfirm={handleDelete}
         variant="destructive"
       />

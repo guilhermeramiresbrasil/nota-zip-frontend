@@ -1,16 +1,19 @@
+import { useTranslations } from 'next-intl';
+
 interface OnboardingProgressProps {
   currentStep: number;
   totalSteps: number;
 }
 
 export function OnboardingProgress({ currentStep, totalSteps }: OnboardingProgressProps) {
+  const t = useTranslations('onboarding');
   const progress = Math.round((currentStep / totalSteps) * 100);
 
   return (
     <div className="mb-8">
       <div className="flex items-center justify-between mb-2">
         <span className="text-sm text-gray-600">
-          Passo {currentStep} de {totalSteps}
+          {t('progressStep', { current: currentStep, total: totalSteps })}
         </span>
         <span className="text-sm text-gray-600">
           {progress}%

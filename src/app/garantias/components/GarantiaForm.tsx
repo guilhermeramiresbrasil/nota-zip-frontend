@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Upload, Plus, AlertCircle } from 'lucide-react';
 import { garantiaService, PLAN_PER_FILE_LIMITS } from '../logics/services/garantiaService';
+import { useTranslations } from 'next-intl';
 import { Garantia } from '../types/garantia.types';
 
 interface GarantiaFormProps {
@@ -32,6 +33,7 @@ interface GarantiaFormData {
 }
 
 export const GarantiaForm: React.FC<GarantiaFormProps> = ({ uploadLimit, userPlan, userId, onGarantiaCreated, editingGarantia, onEditComplete }) => {
+  const t = useTranslations('garantias');
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [formData, setFormData] = React.useState<GarantiaFormData>({
     nome: '',
@@ -102,7 +104,7 @@ export const GarantiaForm: React.FC<GarantiaFormProps> = ({ uploadLimit, userPla
       }
     } catch (err) {
       console.error('Error saving garantia:', err);
-      setError(err instanceof Error ? err.message : 'Erro ao salvar garantia');
+      setError(err instanceof Error ? err.message : t('saveError'));
     }
   };
 
@@ -114,15 +116,19 @@ export const GarantiaForm: React.FC<GarantiaFormProps> = ({ uploadLimit, userPla
     if (file) {
       const perFileLimit = PLAN_PER_FILE_LIMITS[userPlan] ?? PLAN_PER_FILE_LIMITS.free;
       if (file.size > perFileLimit) {
-        setUploadError(`O arquivo excede o limite por arquivo do plano ${userPlan} (${perFileLimit / (1024 * 1024)} MB). Tamanho: ${(file.size / (1024 * 1024)).toFixed(2)} MB`);
+        setUploadError(t('fileLimitExceeded', {
+          plan: userPlan,
+          limit: `${(perFileLimit / (1024 * 1024)).toFixed(0)} MB`,
+          size: `${(file.size / (1024 * 1024)).toFixed(2)} MB`,
+        }));
       }
     }
   };
 
   const formatUploadLimit = (limit: number) => {
-    if (limit === 0) return '0 MB (não permitido)';
-    if (limit >= 1024) return `${(limit / 1024).toFixed(0)} GB`;
-    return `${limit} MB`;
+    if (limit === 0) return t('notAllowed');
+    if (limit >= 1024) return t('gb', { value: (limit / 1024).toFixed(0) });
+    return t('mb', { value: limit });
   };
 
   return (
@@ -136,33 +142,33 @@ export const GarantiaForm: React.FC<GarantiaFormProps> = ({ uploadLimit, userPla
         <DialogTrigger asChild>
           <Button className="flex items-center gap-2">
             <Plus className="h-4 w-4" />
-            Nova Garantia
+            {t('newWarranty')}
           </Button>
         </DialogTrigger>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>Adicionar Nova Garantia</DialogTitle>
+            <DialogTitle>{t('addWarrantyTitle')}</DialogTitle>
             <DialogDescription>
-              Faça upload da nota fiscal ou documento de garantia
+              {t('addWarrantyDescription')}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit}>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="nome">Nome do Produto</Label>
+                <Label htmlFor="nome">{t('productName')}</Label>
                 <Input
                   id="nome"
                   value={formData.nome}
                   onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                  placeholder="Ex: Notebook Dell"
+                  placeholder={t('productNamePlaceholder')}
                 />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="arquivo">
-                  Arquivo da Nota Fiscal
+                  {t('fileLabel')}
                   <span className="text-gray-500 text-sm ml-2">
-                    (Limite por arquivo: {(PLAN_PER_FILE_LIMITS[userPlan] ?? PLAN_PER_FILE_LIMITS.free) / (1024 * 1024)} MB)
+                    ({t('fileLimit', { limit: `${(PLAN_PER_FILE_LIMITS[userPlan] ?? PLAN_PER_FILE_LIMITS.free) / (1024 * 1024)} MB` })})
                   </span>
                 </Label>
                 <div className="flex items-center gap-2">
@@ -189,7 +195,7 @@ export const GarantiaForm: React.FC<GarantiaFormProps> = ({ uploadLimit, userPla
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="dataExpiracao">Data de Expiração da Garantia</Label>
+                <Label htmlFor="dataExpiracao">{t('expirationDate')}</Label>
                 <Input
                   id="dataExpiracao"
                   type="date"
@@ -199,12 +205,12 @@ export const GarantiaForm: React.FC<GarantiaFormProps> = ({ uploadLimit, userPla
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="tags">Tags (separadas por vírgula)</Label>
+                <Label htmlFor="tags">{t('tags')}</Label>
                 <Input
                   id="tags"
                   value={formData.tags.join(', ')}
                   onChange={(e) => setFormData({ ...formData, tags: e.target.value.split(',').map(t => t.trim()).filter(Boolean) })}
-                  placeholder="Ex: eletrônicos, notebook"
+                  placeholder={t('tagsPlaceholder')}
                 />
               </div>
 
@@ -214,10 +220,10 @@ export const GarantiaForm: React.FC<GarantiaFormProps> = ({ uploadLimit, userPla
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
-                Cancelar
+                {t('cancel')}
               </Button>
               <Button type="submit" disabled={!formData.nome || !formData.arquivo || !!uploadError}>
-                Salvar Garantia
+                {t('save')}
               </Button>
             </DialogFooter>
           </form>
@@ -233,28 +239,28 @@ export const GarantiaForm: React.FC<GarantiaFormProps> = ({ uploadLimit, userPla
       }}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>Editar Garantia</DialogTitle>
+            <DialogTitle>{t('editWarrantyTitle')}</DialogTitle>
             <DialogDescription>
-              Atualize os dados da garantia
+              {t('editWarrantyDescription')}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit}>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="nome-edit">Nome do Produto</Label>
+                <Label htmlFor="nome-edit">{t('productName')}</Label>
                 <Input
                   id="nome-edit"
                   value={formData.nome}
                   onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                  placeholder="Ex: Notebook Dell"
+                  placeholder={t('productNamePlaceholder')}
                 />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="arquivo-edit">
-                  Arquivo da Nota Fiscal
+                  {t('fileLabel')}
                   <span className="text-gray-500 text-sm ml-2">
-                    (Deixe em branco para manter o arquivo atual)
+                    ({t('keepFileEmpty')})
                   </span>
                 </Label>
                 <div className="flex items-center gap-2">
@@ -281,7 +287,7 @@ export const GarantiaForm: React.FC<GarantiaFormProps> = ({ uploadLimit, userPla
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="dataExpiracao-edit">Data de Expiração da Garantia</Label>
+                <Label htmlFor="dataExpiracao-edit">{t('expirationDate')}</Label>
                 <Input
                   id="dataExpiracao-edit"
                   type="date"
@@ -291,12 +297,12 @@ export const GarantiaForm: React.FC<GarantiaFormProps> = ({ uploadLimit, userPla
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="tags-edit">Tags (separadas por vírgula)</Label>
+                <Label htmlFor="tags-edit">{t('tags')}</Label>
                 <Input
                   id="tags-edit"
                   value={formData.tags.join(', ')}
                   onChange={(e) => setFormData({ ...formData, tags: e.target.value.split(',').map(t => t.trim()).filter(Boolean) })}
-                  placeholder="Ex: eletrônicos, notebook"
+                  placeholder={t('tagsPlaceholder')}
                 />
               </div>
 
@@ -310,10 +316,10 @@ export const GarantiaForm: React.FC<GarantiaFormProps> = ({ uploadLimit, userPla
                 resetFormData();
                 onEditComplete?.();
               }}>
-                Cancelar
+                {t('cancel')}
               </Button>
               <Button type="submit" disabled={!formData.nome || !!uploadError}>
-                Atualizar Garantia
+                {t('update')}
               </Button>
             </DialogFooter>
           </form>

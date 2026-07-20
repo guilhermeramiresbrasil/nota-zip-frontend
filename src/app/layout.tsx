@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ViewModeProvider } from "@/contexts/ViewModeContext";
 import { TemporaryPasswordGuard } from "@/components/TemporaryPasswordGuard";
+import { I18nProvider } from "@/components/I18nProvider";
 
 const inter = Inter({subsets:['latin'],variable:'--font-sans'});
 
@@ -37,15 +38,17 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-gray-50">
         <AuthProvider>
-          <ViewModeProvider>
-            <TemporaryPasswordGuard>
-              <Navigation />
-              <main className="flex-1">
-                {children}
-              </main>
-              <Toaster />
-            </TemporaryPasswordGuard>
-          </ViewModeProvider>
+          <I18nProvider>
+            <ViewModeProvider>
+              <TemporaryPasswordGuard>
+                <Navigation />
+                <main className="flex-1">
+                  {children}
+                </main>
+                <Toaster />
+              </TemporaryPasswordGuard>
+            </ViewModeProvider>
+          </I18nProvider>
         </AuthProvider>
       </body>
     </html>

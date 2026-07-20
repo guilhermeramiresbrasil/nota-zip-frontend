@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -22,6 +23,7 @@ export const ExportButton: React.FC<ExportButtonProps> = ({
   onExportImage,
   onExportDashboard,
 }) => {
+  const t = useTranslations('reports');
   const [exporting, setExporting] = useState(false);
 
   const handleAsync = async (fn: () => Promise<void>) => {
@@ -40,15 +42,15 @@ export const ExportButton: React.FC<ExportButtonProps> = ({
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="sm" disabled={exporting} className="no-print">
           {exporting ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Download className="h-4 w-4 mr-1" />}
-          Exportar
+          {t('export')}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="no-print">
-        <DropdownMenuItem onClick={onExportCSV}>CSV (dados brutos)</DropdownMenuItem>
-        <DropdownMenuItem onClick={onExportSummaryCSV}>CSV (resumo)</DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleAsync(onExportPDF)}>PDF (relatório)</DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleAsync(onExportImage)}>Imagem (gráficos)</DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleAsync(onExportDashboard)}>Imagem (dashboard)</DropdownMenuItem>
+        <DropdownMenuItem onClick={onExportCSV}>{t('exportRawCSV')}</DropdownMenuItem>
+        <DropdownMenuItem onClick={onExportSummaryCSV}>{t('exportSummaryCSV')}</DropdownMenuItem>
+        <DropdownMenuItem onClick={() => handleAsync(onExportPDF)}>{t('exportPDF')}</DropdownMenuItem>
+        <DropdownMenuItem onClick={() => handleAsync(onExportImage)}>{t('exportImage')}</DropdownMenuItem>
+        <DropdownMenuItem onClick={() => handleAsync(onExportDashboard)}>{t('exportDashboard')}</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

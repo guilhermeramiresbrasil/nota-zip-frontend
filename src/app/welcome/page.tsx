@@ -9,10 +9,12 @@ import { Label } from '@/components/ui/label';
 import { Mail, Lock, ArrowRight, CheckCircle, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslations } from 'next-intl';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 export default function WelcomePage() {
+  const t = useTranslations('auth');
   const router = useRouter();
   const { user, login } = useAuth();
   const { showSuccess, showError } = useToast();
@@ -42,19 +44,19 @@ export default function WelcomePage() {
     setError('');
     
     if (!email || !password) {
-      setError('Preencha todos os campos');
+      setError(t('fillAllFields'));
       return;
     }
 
     setLoading(true);
     try {
       await login(email, password);
-      showSuccess('Login realizado com sucesso!');
+      showSuccess(t('loginSuccess'));
       
       // Redirect will be handled by login based on user state
     } catch (error) {
       console.error('Login error:', error);
-      setError('Erro ao fazer login. Tente novamente.');
+      setError(t('loginFailed'));
     } finally {
       setLoading(false);
     }
@@ -65,7 +67,7 @@ export default function WelcomePage() {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Verificando status...</p>
+          <p className="mt-4 text-gray-600">{t('checkingStatus')}</p>
         </div>
       </div>
     );
@@ -79,15 +81,15 @@ export default function WelcomePage() {
             <div className="mx-auto mb-4 h-16 w-16 bg-blue-100 rounded-full flex items-center justify-center">
               <Mail className="h-8 w-8 text-blue-600" />
             </div>
-            <CardTitle className="text-2xl">Bem-vindo ao Nota Zip!</CardTitle>
+            <CardTitle className="text-2xl">{t('welcomeTitle')}</CardTitle>
             <CardDescription className="text-base">
               {user ? (
                 <span className="text-green-600 font-medium flex items-center justify-center gap-2">
                   <CheckCircle className="h-4 w-4" />
-                  Você já está logado
+                  {t('welcomeLoggedIn')}
                 </span>
               ) : (
-                'Faça login para acessar sua conta'
+                t('welcomeLoginPrompt')
               )}
             </CardDescription>
           </CardHeader>
@@ -96,14 +98,13 @@ export default function WelcomePage() {
               <div className="space-y-4">
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
                   <p className="text-sm text-blue-800">
-                    <strong>Senha temporária enviada por email:</strong>
+                    <strong>{t('temporaryPasswordTitle')}</strong>
                   </p>
                   <p className="text-sm text-blue-700 mt-2">
-                    Após completar o pagamento, enviamos uma senha temporária para seu email. 
-                    Use essa senha para fazer login pela primeira vez.
+                    {t('temporaryPasswordLine1')}
                   </p>
                   <p className="text-sm text-blue-700 mt-2">
-                    Após o login, você poderá redefinir sua senha nas configurações.
+                    {t('temporaryPasswordLine2')}
                   </p>
                 </div>
 
@@ -115,13 +116,13 @@ export default function WelcomePage() {
                   )}
 
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="email">{t('email')}</Label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                       <Input
                         id="email"
                         type="email"
-                        placeholder="seu@email.com"
+                        placeholder={t('yourEmail')}
                         className="pl-10"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
@@ -131,7 +132,7 @@ export default function WelcomePage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="password">Senha (temporária)</Label>
+                    <Label htmlFor="password">{t('password')}</Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                       <Input
@@ -158,14 +159,14 @@ export default function WelcomePage() {
                     className="w-full"
                     disabled={loading}
                   >
-                    {loading ? 'Entrando...' : 'Entrar'}
+                    {loading ? t('loggingIn') : t('enter')}
                     {!loading && <ArrowRight className="ml-2 h-4 w-4" />}
                   </Button>
                 </form>
 
                 <div className="text-center pt-4">
                   <p className="text-sm text-gray-600">
-                    Não recebeu a senha? Verifique sua caixa de entrada ou spam.
+                    {t('didNotReceivePassword')}
                   </p>
                 </div>
               </div>
@@ -176,9 +177,9 @@ export default function WelcomePage() {
 
         <div className="mt-6 text-center">
           <p className="text-sm text-gray-600">
-            Precisa de ajuda?{' '}
+            {t('needHelp')}{' '}
             <a href="mailto:suporte@notazip.com.br" className="text-blue-600 hover:underline">
-              Entre em contato
+              {t('contactSupport')}
             </a>
           </p>
         </div>

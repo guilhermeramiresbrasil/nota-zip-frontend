@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { useTranslations } from 'next-intl';
 import { ChartConfig, ChartType, ColorPalette } from '../types/report.types';
 import { Settings } from 'lucide-react';
 
@@ -26,6 +27,7 @@ export const ChartConfigModal: React.FC<ChartConfigModalProps> = ({
   onConfigChange,
   onReset,
 }) => {
+  const t = useTranslations('reports');
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -35,11 +37,11 @@ export const ChartConfigModal: React.FC<ChartConfigModalProps> = ({
       </DialogTrigger>
       <DialogContent className="sm:max-w-[400px]">
         <DialogHeader>
-          <DialogTitle>Configurar Gráfico</DialogTitle>
+          <DialogTitle>{t('configureChart')}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label>Tipo de Gráfico</Label>
+            <Label>{t('chartType')}</Label>
             <Select
               value={config.chartType}
               onValueChange={(value) => onConfigChange({ chartType: value as ChartType })}
@@ -48,16 +50,16 @@ export const ChartConfigModal: React.FC<ChartConfigModalProps> = ({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="pie">Pizza</SelectItem>
-                <SelectItem value="bar">Barras</SelectItem>
-                <SelectItem value="line">Linha</SelectItem>
-                <SelectItem value="area">Área</SelectItem>
+                <SelectItem value="pie">{t('pie')}</SelectItem>
+                <SelectItem value="bar">{t('bar')}</SelectItem>
+                <SelectItem value="line">{t('line')}</SelectItem>
+                <SelectItem value="area">{t('area')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div className="space-y-2">
-            <Label>Paleta de Cores</Label>
+            <Label>{t('colorPalette')}</Label>
             <Select
               value={config.colorPalette}
               onValueChange={(value) => onConfigChange({ colorPalette: value as ColorPalette })}
@@ -66,17 +68,17 @@ export const ChartConfigModal: React.FC<ChartConfigModalProps> = ({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="default">Padrão</SelectItem>
-                <SelectItem value="warm">Quente</SelectItem>
-                <SelectItem value="cool">Frio</SelectItem>
-                <SelectItem value="pastel">Pastel</SelectItem>
+                <SelectItem value="default">{t('default')}</SelectItem>
+                <SelectItem value="warm">{t('warm')}</SelectItem>
+                <SelectItem value="cool">{t('cool')}</SelectItem>
+                <SelectItem value="pastel">{t('pastel')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           {config.chartType === 'bar' && (
             <div className="space-y-2">
-              <Label>Orientação</Label>
+              <Label>{t('orientation')}</Label>
               <Select
                 value={config.orientation}
                 onValueChange={(value) => onConfigChange({ orientation: value as 'horizontal' | 'vertical' })}
@@ -85,8 +87,8 @@ export const ChartConfigModal: React.FC<ChartConfigModalProps> = ({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="horizontal">Horizontal</SelectItem>
-                  <SelectItem value="vertical">Vertical</SelectItem>
+                  <SelectItem value="horizontal">{t('horizontal')}</SelectItem>
+                  <SelectItem value="vertical">{t('vertical')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -94,7 +96,7 @@ export const ChartConfigModal: React.FC<ChartConfigModalProps> = ({
 
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <Label htmlFor="show-legend">Mostrar Legenda</Label>
+              <Label htmlFor="show-legend">{t('showLegend')}</Label>
               <Switch
                 id="show-legend"
                 checked={config.showLegend}
@@ -103,7 +105,7 @@ export const ChartConfigModal: React.FC<ChartConfigModalProps> = ({
             </div>
 
             <div className="flex items-center justify-between">
-              <Label htmlFor="show-labels">Mostrar Rótulos</Label>
+              <Label htmlFor="show-labels">{t('showLabels')}</Label>
               <Switch
                 id="show-labels"
                 checked={config.showLabels}
@@ -112,7 +114,7 @@ export const ChartConfigModal: React.FC<ChartConfigModalProps> = ({
             </div>
 
             <div className="flex items-center justify-between">
-              <Label htmlFor="show-tooltip">Mostrar Tooltip</Label>
+              <Label htmlFor="show-tooltip">{t('showTooltip')}</Label>
               <Switch
                 id="show-tooltip"
                 checked={config.showTooltip}
@@ -122,7 +124,7 @@ export const ChartConfigModal: React.FC<ChartConfigModalProps> = ({
           </div>
 
           <Button onClick={onReset} variant="outline" className="w-full">
-            Restaurar Padrões
+            {t('restoreDefaults')}
           </Button>
         </div>
       </DialogContent>

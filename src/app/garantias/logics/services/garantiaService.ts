@@ -1,4 +1,5 @@
 import { Garantia, GarantiaFormData } from '../../types/garantia.types';
+import * as cryptoClient from '@/lib/crypto/cryptoClient';
 import { compressImage, fileToBase64 } from '../utils/imageCompressor';
 
 // Hardcoded production URL
@@ -40,15 +41,28 @@ export class GarantiaService {
     if (!response.ok) throw new Error('Erro ao buscar garantias');
     const json = await response.json();
     const items: any[] = json.data ?? [];
-    return items.map((w) => ({
-      id: w.id,
-      nome: w.nome,
-      arquivoUrl: this.generateDownloadUrl(w.arquivoBase64, w.arquivoTipo),
-      arquivoNome: w.arquivoNome,
-      dataExpiracao: w.dataExpiracao ?? '',
-      dataUpload: new Date(w.createdAt).toISOString().split('T')[0],
-      tags: w.tags ?? [],
-    }));
+    return Promise.all(
+      items.map(async (w) => {
+        const nome = (await cryptoClient.maybeDecryptField(w.nome)) ?? w.nome ?? '';
+        const tagsCiphertext = (await cryptoClient.maybeDecryptField(w.tags)) ?? w.tags ?? '[]';
+        const arquivoBase64 = (await cryptoClient.maybeDecryptField(w.arquivoBase64)) ?? w.arquivoBase64 ?? '';
+        let tags: string[] = [];
+        try {
+          tags = JSON.parse(tagsCiphertext);
+        } catch {
+          tags = [];
+        }
+        return {
+          id: w.id,
+          nome,
+          arquivoUrl: this.generateDownloadUrl(arquivoBase64, w.arquivoTipo),
+          arquivoNome: w.arquivoNome,
+          dataExpiracao: w.dataExpiracao ?? '',
+          dataUpload: new Date(w.createdAt).toISOString().split('T')[0],
+          tags,
+        };
+      })
+    );
   }
 
   private generateDownloadUrl(base64: string, mimeType: string): string {
@@ -73,19 +87,23 @@ export class GarantiaService {
 
     const arquivoBase64 = await fileToBase64(processedFile);
 
+    const encryptedNome = await cryptoClient.encryptField(formData.nome);
+    const encryptedTags = await cryptoClient.encryptField(JSON.stringify(formData.tags));
+    const encryptedArquivo = await cryptoClient.encryptField(arquivoBase64);
+
     const response = await fetch(`${GATEWAY_URL}/api/warranties`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify({
         userId,
         userPlan,
-        nome: formData.nome,
-        arquivoBase64,
+        nome: encryptedNome,
+        arquivoBase64: encryptedArquivo,
         arquivoNome: processedFile.name,
         arquivoTipo: processedFile.type || file.type,
         arquivoTamanhoBytes: processedFile.size,
         dataExpiracao: formData.dataExpiracao || undefined,
-        tags: formData.tags,
+        tags: encryptedTags,
       }),
     });
 
@@ -96,14 +114,23 @@ export class GarantiaService {
 
     const json = await response.json();
     const w = json.data;
+    const nome = (await cryptoClient.maybeDecryptField(w.nome)) ?? w.nome ?? '';
+    const tagsCiphertext = (await cryptoClient.maybeDecryptField(w.tags)) ?? w.tags ?? '[]';
+    const decryptedArquivoBase64 = (await cryptoClient.maybeDecryptField(w.arquivoBase64)) ?? w.arquivoBase64 ?? '';
+    let tags: string[] = [];
+    try {
+      tags = JSON.parse(tagsCiphertext);
+    } catch {
+      tags = [];
+    }
     return {
       id: w.id,
-      nome: w.nome,
-      arquivoUrl: '',
+      nome,
+      arquivoUrl: decryptedArquivoBase64 ? this.generateDownloadUrl(decryptedArquivoBase64, w.arquivoTipo) : '',
       arquivoNome: w.arquivoNome,
       dataExpiracao: w.dataExpiracao ?? '',
       dataUpload: new Date(w.createdAt).toISOString().split('T')[0],
-      tags: w.tags ?? [],
+      tags,
     };
   }
 
@@ -126,9 +153,9 @@ export class GarantiaService {
     userPlan: string
   ): Promise<Garantia> {
     const body: any = {
-      nome: formData.nome,
+      nome: await cryptoClient.encryptField(formData.nome),
       dataExpiracao: formData.dataExpiracao || undefined,
-      tags: formData.tags,
+      tags: await cryptoClient.encryptField(JSON.stringify(formData.tags)),
     };
 
     if (file) {
@@ -141,7 +168,7 @@ export class GarantiaService {
         );
       }
 
-      body.arquivoBase64 = await fileToBase64(processedFile);
+      body.arquivoBase64 = await cryptoClient.encryptField(await fileToBase64(processedFile));
       body.arquivoNome = processedFile.name;
       body.arquivoTipo = processedFile.type || file.type;
       body.arquivoTamanhoBytes = processedFile.size;
@@ -160,14 +187,23 @@ export class GarantiaService {
 
     const json = await response.json();
     const w = json.data;
+    const nome = (await cryptoClient.maybeDecryptField(w.nome)) ?? w.nome ?? '';
+    const tagsCiphertext = (await cryptoClient.maybeDecryptField(w.tags)) ?? w.tags ?? '[]';
+    const decryptedArquivoBase64 = (await cryptoClient.maybeDecryptField(w.arquivoBase64)) ?? w.arquivoBase64 ?? '';
+    let tags: string[] = [];
+    try {
+      tags = JSON.parse(tagsCiphertext);
+    } catch {
+      tags = [];
+    }
     return {
       id: w.id,
-      nome: w.nome,
-      arquivoUrl: this.generateDownloadUrl(w.arquivoBase64, w.arquivoTipo),
+      nome,
+      arquivoUrl: decryptedArquivoBase64 ? this.generateDownloadUrl(decryptedArquivoBase64, w.arquivoTipo) : '',
       arquivoNome: w.arquivoNome,
       dataExpiracao: w.dataExpiracao ?? '',
       dataUpload: new Date(w.createdAt).toISOString().split('T')[0],
-      tags: w.tags ?? [],
+      tags,
     };
   }
 

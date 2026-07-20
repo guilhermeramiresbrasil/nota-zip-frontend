@@ -6,6 +6,7 @@ import {
   ResponsiveContainer, Tooltip, Legend,
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useTranslations } from 'next-intl';
 import { ChartConfig, COLOR_PALETTES } from '../types/report.types';
 import { ChartConfigModal } from './ChartConfigModal';
 
@@ -28,6 +29,7 @@ export const PaymentMethodChart: React.FC<PaymentMethodChartProps> = ({
   onConfigChange,
   onConfigReset 
 }) => {
+  const t = useTranslations('reports');
   const [hiddenCategories, setHiddenCategories] = useState<Set<string>>(new Set());
   const palette = COLOR_PALETTES[config?.colorPalette ?? 'default'];
   const coloredData = data.map((item, i) => ({ ...item, color: palette[i % palette.length] }));
@@ -66,7 +68,7 @@ export const PaymentMethodChart: React.FC<PaymentMethodChartProps> = ({
           )}
           {config?.showTooltip !== false && <Tooltip />}
           {config?.showLegend !== false && <Legend />}
-          <Bar dataKey="value" name="Valor">
+          <Bar dataKey="value" name={t('value')}>
             {filteredData.map((entry, i) => (
               <Cell 
                 key={`cell-${i}`} 
@@ -113,7 +115,7 @@ export const PaymentMethodChart: React.FC<PaymentMethodChartProps> = ({
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle>Formas de Pagamento</CardTitle>
+          <CardTitle>{t('paymentMethods')}</CardTitle>
           {onConfigChange && onConfigReset && (
             <ChartConfigModal
               config={config!}
@@ -123,7 +125,7 @@ export const PaymentMethodChart: React.FC<PaymentMethodChartProps> = ({
           )}
         </div>
         <p className="text-sm text-muted-foreground">
-          Clique na legenda para ocultar/exibir
+          {t('clickLegendToggle')}
         </p>
       </CardHeader>
       <CardContent>

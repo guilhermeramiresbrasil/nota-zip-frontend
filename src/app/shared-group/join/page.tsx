@@ -8,11 +8,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslations } from 'next-intl';
 import { sharedGroupService } from '@/services/sharedGroupService';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { Users, ArrowRight, Check } from 'lucide-react';
 
 export default function SharedGroupJoinPage() {
+  const t = useTranslations('sharedGroup');
   const router = useRouter();
   const { user, updatedUser } = useAuth();
   const { showSuccess, showError } = useToast();
@@ -28,7 +30,7 @@ export default function SharedGroupJoinPage() {
   const handleValidateCode = () => {
     const trimmedCode = code.trim().toUpperCase();
     if (trimmedCode.length < 6) {
-      showError('Insira o código completo de convite (mínimo 6 caracteres).');
+      showError(t('inviteCodeMinError'));
       return;
     }
     setCode(trimmedCode);
@@ -37,7 +39,7 @@ export default function SharedGroupJoinPage() {
 
   const handleJoin = async () => {
     if (!form.partnerNickname.trim() || !form.partnerSelfNickname.trim()) {
-      showError('Preencha os dois campos de apelido.');
+      showError(t('fillNicknamesError'));
       return;
     }
     if (!user?.id) return;
@@ -55,10 +57,10 @@ export default function SharedGroupJoinPage() {
         partnerNickname: form.partnerNickname.trim(),
         selfNickname: form.partnerSelfNickname.trim(),
       });
-      showSuccess(`Visão compartilhada ativa com ${form.partnerNickname}!`);
+      showSuccess(t('sharedViewActive', { partnerNickname: form.partnerNickname }));
       router.push('/home');
     } catch (err: any) {
-      showError(err.message || 'Erro ao entrar no grupo compartilhado.');
+      showError(err.message || t('joinError'));
     } finally {
       setLoading(false);
     }
@@ -72,8 +74,8 @@ export default function SharedGroupJoinPage() {
             <div className="w-16 h-16 bg-gradient-to-br from-rose-500 to-pink-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <Users className="h-8 w-8 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">Entrar em grupo compartilhado</h1>
-            <p className="text-gray-500 mt-1 text-sm">Passo {step} de 2</p>
+            <h1 className="text-2xl font-bold text-gray-900">{t('joinGroupTitle')}</h1>
+            <p className="text-gray-500 mt-1 text-sm">{t('step', { step, total: 2 })}</p>
           </div>
 
           <div className="w-full bg-gray-200 rounded-full h-2 mb-8">
@@ -88,17 +90,17 @@ export default function SharedGroupJoinPage() {
               {step === 1 ? (
                 <div className="space-y-6">
                   <div className="text-center">
-                    <CardTitle className="text-xl mb-2">Insira o código de convite</CardTitle>
+                    <CardTitle className="text-xl mb-2">{t('enterInviteCode')}</CardTitle>
                     <p className="text-gray-500 text-sm">
-                      Peça o código para quem te convidou para o grupo compartilhado.
+                      {t('askForCode')}
                     </p>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="code">Código de convite</Label>
+                    <Label htmlFor="code">{t('inviteCodeLabel')}</Label>
                     <Input
                       id="code"
-                      placeholder="Ex: ABCD1234"
+                      placeholder={t('inviteCodePlaceholder')}
                       value={code}
                       onChange={(e) => setCode(e.target.value.toUpperCase())}
                       maxLength={10}
@@ -111,7 +113,7 @@ export default function SharedGroupJoinPage() {
                     onClick={handleValidateCode}
                     disabled={code.trim().length < 6}
                   >
-                    <>Próximo <ArrowRight className="ml-2 h-4 w-4" /></>
+                    <>{t('next')} <ArrowRight className="ml-2 h-4 w-4" /></>
                   </Button>
                 </div>
               ) : (
@@ -120,28 +122,28 @@ export default function SharedGroupJoinPage() {
                     <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
                       <Check className="h-6 w-6 text-green-600" />
                     </div>
-                    <CardTitle className="text-xl mb-2">Código válido!</CardTitle>
+                    <CardTitle className="text-xl mb-2">{t('validCode')}</CardTitle>
                     <p className="text-gray-500 text-sm">
-                      Defina como vocês vão se identificar na visão compartilhada.
+                      {t('setNicknames')}
                     </p>
                   </div>
 
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="partnerNickname">Como você vai chamar o outro membro?</Label>
+                      <Label htmlFor="partnerNickname">{t('partnerNicknameLabel')}</Label>
                       <Input
                         id="partnerNickname"
-                        placeholder="Ex: Guilherme, Pai, Sócio"
+                        placeholder={t('nicknamePlaceholder')}
                         value={form.partnerNickname}
                         onChange={(e) => setForm({ ...form, partnerNickname: e.target.value })}
                         maxLength={30}
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="partnerSelfNickname">Como você quer ser chamado(a)?</Label>
+                      <Label htmlFor="partnerSelfNickname">{t('selfNicknameLabel')}</Label>
                       <Input
                         id="partnerSelfNickname"
-                        placeholder="Ex: Ana, Eu, Maria"
+                        placeholder={t('selfNicknamePlaceholder')}
                         value={form.partnerSelfNickname}
                         onChange={(e) => setForm({ ...form, partnerSelfNickname: e.target.value })}
                         maxLength={30}
@@ -154,8 +156,8 @@ export default function SharedGroupJoinPage() {
                     onClick={handleJoin}
                     disabled={loading}
                   >
-                    {loading ? 'Entrando...' : (
-                      <>Confirmar e entrar <ArrowRight className="ml-2 h-4 w-4" /></>
+                    {loading ? t('joining') : (
+                      <>{t('confirmAndJoin')} <ArrowRight className="ml-2 h-4 w-4" /></>
                     )}
                   </Button>
                 </div>

@@ -14,6 +14,7 @@ import { expenseService } from './logics/services/expenseService';
 import { calculateTotalByType } from './logics/calculations/expenseCalculations';
 import { useAuth } from '@/contexts/AuthContext';
 import { useViewMode } from '@/contexts/ViewModeContext';
+import { useTranslations } from 'next-intl';
 import { Transaction } from '@/app/home/types/dashboard.types';
 
 interface FormData {
@@ -30,8 +31,15 @@ interface FormData {
 }
 
 export default function ExpensesPage() {
+  const t = useTranslations('expenses');
   const { user } = useAuth();
   const { isSharedView } = useViewMode();
+  const parseCurrencyToNumber = (v: string) => {
+    if (user?.currency === 'USD') {
+      return parseFloat(v.replace(/,/g, '')) || 0;
+    }
+    return parseFloat(v.replace(/\./g, '').replace(',', '.')) || 0;
+  };
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -130,16 +138,17 @@ export default function ExpensesPage() {
     e.preventDefault();
     if (!user?.id) return;
 
-    if (!formData.amount || parseFloat(formData.amount) <= 0) {
-      alert('Valor é obrigatório');
+    const amountValue = parseCurrencyToNumber(formData.amount);
+    if (!formData.amount || amountValue <= 0) {
+      alert(t('amountRequired'));
       return;
     }
     if (!formData.categoryId) {
-      alert('Categoria é obrigatória');
+      alert(t('categoryRequired'));
       return;
     }
     if (transactionType === 'expense' && !formData.payment_method) {
-      alert('Forma de pagamento é obrigatória');
+      alert(t('paymentMethodRequired'));
       return;
     }
 
@@ -173,9 +182,9 @@ export default function ExpensesPage() {
     const transaction = transactions.find((t) => t.id === id);
     if (!transaction) return;
 
-    // Format amount to Brazilian currency format for CurrencyInput
+    // Format amount to user locale for CurrencyInput
     const amountValue = Math.abs(transaction.amount);
-    const formattedAmount = amountValue.toLocaleString('pt-BR', {
+    const formattedAmount = amountValue.toLocaleString(user?.language || 'pt-BR', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     });
@@ -203,7 +212,7 @@ export default function ExpensesPage() {
   return (
     <ProtectedRoute>
       <div className="container mx-auto px-4 py-8 max-w-7xl">
-        <PageHeader title="Transações" description="Gerencie suas receitas e despesas" />
+        <PageHeader title={t('pageTitle')} description={t('pageDescription')} />
 
         <div className="flex justify-between items-center mb-6">
           <ExpenseFilter
@@ -211,23 +220,23 @@ export default function ExpensesPage() {
           />
           <Button onClick={handleAddTransaction}>
             <Plus className="h-5 w-5 mr-2" />
-            Nova Transação
+            {t('newTransactionButton')}
           </Button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <StatsCard title="Total Receitas" value={totalIncome} variant="income" />
-          <StatsCard title="Total Despesas" value={totalExpenses} variant="expense" />
-          <StatsCard title="Saldo" value={balance} variant="balance" />
+          <StatsCard title={t('totalIncome')} value={totalIncome} variant="income" />
+          <StatsCard title={t('totalExpenses')} value={totalExpenses} variant="expense" />
+          <StatsCard title={t('balance')} value={balance} variant="balance" />
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>Histórico de Transações</CardTitle>
+            <CardTitle>{t('history')}</CardTitle>
           </CardHeader>
           <CardContent>
             {loading ? (
-              <div className="text-center py-8">Carregando...</div>
+              <div className="text-center py-8">{t('loading')}</div>
             ) : (
               <ExpenseList
                 transactions={transactions}

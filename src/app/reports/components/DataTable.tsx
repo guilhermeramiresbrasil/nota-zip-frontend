@@ -1,10 +1,12 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { DetailedTransaction } from '../types/report.types';
 import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface DataTableProps {
   data: DetailedTransaction[];
@@ -16,6 +18,8 @@ type SortField = 'date' | 'description' | 'category' | 'type' | 'amount' | 'user
 const PAGE_SIZE = 10;
 
 export const DataTable: React.FC<DataTableProps> = ({ data, isSharedView = false }) => {
+  const tx = useTranslations('reports');
+  const { user } = useAuth();
   const [sortField, setSortField] = useState<SortField>('date');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [page, setPage] = useState(0);
@@ -52,11 +56,11 @@ export const DataTable: React.FC<DataTableProps> = ({ data, isSharedView = false
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-sm">Transações Detalhadas</CardTitle>
+        <CardTitle className="text-sm">{tx('detailedTransactions')}</CardTitle>
       </CardHeader>
       <CardContent>
         {data.length === 0 ? (
-          <p className="text-center text-gray-500 py-4 text-sm">Nenhuma transação encontrada</p>
+          <p className="text-center text-gray-500 py-4 text-sm">{tx('noTransactionsFound')}</p>
         ) : (
           <>
             <div className="overflow-x-auto">
@@ -64,12 +68,12 @@ export const DataTable: React.FC<DataTableProps> = ({ data, isSharedView = false
                 <thead>
                   <tr className="border-b text-left">
                     {([
-                      ['date', 'Data'],
-                      ['description', 'Descrição'],
-                      ['category', 'Categoria'],
-                      ...(isSharedView ? [['userNickname', 'Fonte'] as [SortField, string]] : []),
-                      ['type', 'Tipo'],
-                      ['amount', 'Valor'],
+                      ['date', tx('date')],
+                      ['description', tx('description')],
+                      ['category', tx('category')],
+                      ...(isSharedView ? [['userNickname', tx('source')] as [SortField, string]] : []),
+                      ['type', tx('type')],
+                      ['amount', tx('amount')],
                     ] as [SortField, string][]).map(([field, label]) => (
                       <th
                         key={field}
@@ -84,7 +88,7 @@ export const DataTable: React.FC<DataTableProps> = ({ data, isSharedView = false
                 <tbody>
                   {paged.map((t) => (
                     <tr key={t.id} className="border-b hover:bg-gray-50">
-                      <td className="py-2 px-2 text-xs">{new Date(t.date).toLocaleDateString('pt-BR')}</td>
+                      <td className="py-2 px-2 text-xs">{new Date(t.date).toLocaleDateString(user?.language || 'pt-BR')}</td>
                       <td className="py-2 px-2 text-xs">
                         {t.description.replace(/^(Receita|Despesa) \d+ - /, '')}
                       </td>
@@ -94,11 +98,11 @@ export const DataTable: React.FC<DataTableProps> = ({ data, isSharedView = false
                       )}
                       <td className="py-2 px-2 text-xs">
                         <span className={t.type === 'credit' ? 'text-green-600' : 'text-red-600'}>
-                          {t.type === 'credit' ? 'Receita' : 'Despesa'}
+                          {t.type === 'credit' ? tx('income') : tx('expense')}
                         </span>
                       </td>
                       <td className={`py-2 px-2 text-xs font-medium ${t.type === 'credit' ? 'text-green-600' : 'text-red-600'}`}>
-                        R$ {t.amount.toFixed(2)}
+                        {new Intl.NumberFormat(user?.language || 'pt-BR', { style: 'currency', currency: user?.currency || 'BRL' }).format(t.amount)}
                       </td>
                     </tr>
                   ))}
@@ -108,7 +112,7 @@ export const DataTable: React.FC<DataTableProps> = ({ data, isSharedView = false
             {totalPages > 1 && (
               <div className="flex items-center justify-between mt-3">
                 <span className="text-xs text-gray-500">
-                  {page * PAGE_SIZE + 1}-{Math.min((page + 1) * PAGE_SIZE, sorted.length)} de {sorted.length}
+                  {tx('pagination', { start: page * PAGE_SIZE + 1, end: Math.min((page + 1) * PAGE_SIZE, sorted.length), total: sorted.length })}
                 </span>
                 <div className="flex gap-1">
                   <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0}>

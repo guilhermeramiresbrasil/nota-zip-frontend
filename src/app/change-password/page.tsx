@@ -9,9 +9,12 @@ import { Label } from '@/components/ui/label';
 import { Lock, Eye, EyeOff, AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+import { useTranslations } from 'next-intl';
+import userService from '@/services/userService';
+import * as cryptoClient from '@/lib/crypto/cryptoClient';
 
 export default function ChangePasswordPage() {
+  const t = useTranslations('auth');
   const { user } = useAuth();
   const router = useRouter();
   const { showSuccess, showError } = useToast();
@@ -27,16 +30,16 @@ export default function ChangePasswordPage() {
 
   const validatePassword = (password: string) => {
     if (password.length < 8) {
-      return 'A senha deve ter pelo menos 8 caracteres';
+      return t('passwordMinLength');
     }
     if (!/[A-Z]/.test(password)) {
-      return 'A senha deve conter pelo menos uma letra maiúscula';
+      return t('passwordUppercase');
     }
     if (!/[a-z]/.test(password)) {
-      return 'A senha deve conter pelo menos uma letra minúscula';
+      return t('passwordLowercase');
     }
     if (!/[0-9]/.test(password)) {
-      return 'A senha deve conter pelo menos um número';
+      return t('passwordNumber');
     }
     return '';
   };
@@ -46,12 +49,12 @@ export default function ChangePasswordPage() {
     setError('');
 
     if (!currentPassword || !newPassword || !confirmPassword) {
-      setError('Preencha todos os campos');
+      setError(t('fillAllFields'));
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setError('As senhas não coincidem');
+      setError(t('passwordsDoNotMatch'));
       return;
     }
 
@@ -63,33 +66,46 @@ export default function ChangePasswordPage() {
 
     setLoading(true);
     try {
-      const accessToken = localStorage.getItem('accessToken');
-      const res = await fetch(`${API_URL}/api/users/${user?.id}/password`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`,
+      if (!user?.id || !user.encryptionSalt) {
+        throw new Error('User vault data unavailable');
+      }
+
+      const keys = cryptoClient.getVaultKeys();
+      if (!keys) {
+        throw new Error('Private key not loaded in this session');
+      }
+
+      const oldSalt = user.encryptionSalt;
+      const { authKey: oldAuthKey } = await cryptoClient.deriveKeys(currentPassword, oldSalt, 'moderate');
+      const oldAuthKeyB64 = await cryptoClient.authKeyToString(oldAuthKey);
+
+      const newVault = await cryptoClient.reEncryptVault(keys.privateKey, newPassword, oldSalt);
+      const { authKey: newAuthKey } = await cryptoClient.deriveKeys(newPassword, newVault.salt, 'moderate');
+      const newAuthKeyB64 = await cryptoClient.authKeyToString(newAuthKey);
+
+      const userServiceInstance = new userService();
+      await userServiceInstance.changePassword(user.id, {
+        currentPassword: oldAuthKeyB64,
+        newPassword: newAuthKeyB64,
+        vault: {
+          publicKey: keys.publicKey,
+          encryptedPrivateKey: newVault.encryptedPrivateKey,
+          encryptionNonce: newVault.encryptionNonce,
+          encryptionSalt: newVault.salt,
+          keyVersion: newVault.keyVersion,
         },
-        body: JSON.stringify({
-          currentPassword,
-          newPassword,
-        }),
       });
 
-      const data = await res.json();
+      await cryptoClient.persistPrivateKey(keys.privateKey);
+      cryptoClient.setVaultKeys(keys.publicKey, keys.privateKey);
 
-      if (data.success) {
-        showSuccess('Senha alterada com sucesso!', 'Você será redirecionado para a página inicial.');
-        // Update user context to clear temporary password flag and redirect to home
-        setTimeout(() => {
-          router.push('/home');
-        }, 1500);
-      } else {
-        setError(data.error || 'Erro ao alterar senha');
-      }
+      showSuccess(t('passwordChangedSuccess'), t('passwordChangedRedirect'));
+      setTimeout(() => {
+        router.push('/home');
+      }, 1500);
     } catch (error) {
       console.error('Password change error:', error);
-      setError('Erro ao alterar senha. Tente novamente.');
+      setError(t('passwordChangeError'));
     } finally {
       setLoading(false);
     }
@@ -104,9 +120,9 @@ export default function ChangePasswordPage() {
               <AlertTriangle className="h-8 w-8 text-amber-600" />
             </div>
           </div>
-          <CardTitle className="text-2xl text-center">Troca de Senha Obrigatória</CardTitle>
+          <CardTitle className="text-2xl text-center">{t('changePasswordTitle')}</CardTitle>
           <CardDescription className="text-center">
-            Você está usando uma senha temporária. Por segurança, você deve alterá-la antes de continuar.
+            {t('changePasswordDescription')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -118,13 +134,13 @@ export default function ChangePasswordPage() {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="currentPassword">Senha Atual</Label>
+              <Label htmlFor="currentPassword">{t('currentPassword')}</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                 <Input
                   id="currentPassword"
                   type={showCurrentPassword ? 'text' : 'password'}
-                  placeholder="Digite sua senha atual"
+                  placeholder={t('currentPasswordPlaceholder')}
                   className="pl-10 pr-10"
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
@@ -141,13 +157,13 @@ export default function ChangePasswordPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="newPassword">Nova Senha</Label>
+              <Label htmlFor="newPassword">{t('newPassword')}</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                 <Input
                   id="newPassword"
                   type={showNewPassword ? 'text' : 'password'}
-                  placeholder="Digite sua nova senha"
+                  placeholder={t('newPasswordPlaceholder')}
                   className="pl-10 pr-10"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
@@ -162,18 +178,18 @@ export default function ChangePasswordPage() {
                 </button>
               </div>
               <p className="text-xs text-gray-500">
-                Mínimo 8 caracteres, incluindo maiúscula, minúscula e número
+                {t('passwordRequirementsHint')}
               </p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirmar Nova Senha</Label>
+              <Label htmlFor="confirmPassword">{t('confirmNewPassword')}</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                 <Input
                   id="confirmPassword"
                   type={showConfirmPassword ? 'text' : 'password'}
-                  placeholder="Confirme sua nova senha"
+                  placeholder={t('confirmNewPasswordPlaceholder')}
                   className="pl-10 pr-10"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
@@ -194,7 +210,7 @@ export default function ChangePasswordPage() {
               className="w-full"
               disabled={loading}
             >
-              {loading ? 'Alterando...' : 'Alterar Senha'}
+              {loading ? t('changing') : t('changePassword')}
             </Button>
           </form>
         </CardContent>

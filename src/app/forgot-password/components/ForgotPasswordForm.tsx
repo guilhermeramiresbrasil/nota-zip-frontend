@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Mail, ArrowLeft } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 
 interface ForgotPasswordFormProps {
@@ -23,6 +24,7 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
   onChangeEmail,
   onSubmit,
 }) => {
+  const t = useTranslations('auth');
 
   if (success) {
     return (
@@ -45,14 +47,14 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
               </svg>
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-900">Email enviado!</h3>
+              <h3 className="text-lg font-semibold text-gray-900">{t('emailSent')}</h3>
               <p className="text-sm text-gray-600 mt-2">
-                Enviamos instruções para recuperação de senha para {email}
+                {t('emailSentInstructions', { email })}
               </p>
             </div>
             <div className="space-y-2">
               <Link href="/login">
-                <Button className="w-full">Voltar ao Login</Button>
+                <Button className="w-full">{t('backToLogin')}</Button>
               </Link>
             </div>
           </div>
@@ -64,9 +66,9 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
   return (
     <Card className="shadow-xl">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold text-center">Recuperar Senha</CardTitle>
+        <CardTitle className="text-2xl font-bold text-center">{t('forgotPasswordTitle')}</CardTitle>
         <CardDescription className="text-center">
-          Digite seu email para receber instruções de recuperação
+          {t('forgotPasswordDescription')}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -78,13 +80,13 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t('email')}</Label>
             <div className="relative">
               <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
               <Input
                 id="email"
                 type="email"
-                placeholder="seu@email.com"
+                placeholder={t('forgotPasswordEmailPlaceholder')}
                 className="pl-10"
                 value={email}
                 onChange={(e) => onChangeEmail(e.target.value)}
@@ -94,13 +96,13 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
           </div>
 
           <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? 'Enviando...' : 'Enviar Instruções'}
+            {isLoading ? t('sending') : t('sendInstructions')}
           </Button>
 
           <div className="text-center">
             <Link href="/login" className="text-sm text-gray-600 hover:text-gray-900 flex items-center justify-center gap-2">
               <ArrowLeft className="h-4 w-4" />
-              Voltar ao Login
+              {t('backToLogin')}
             </Link>
           </div>
         </form>

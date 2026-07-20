@@ -5,68 +5,70 @@ export interface ValidationResult {
   error: string | null;
 }
 
+export const PASSWORD_REQUIREMENTS = [
+  'passwordMinLength',
+  'passwordLowercase',
+  'passwordUppercase',
+  'passwordNumber',
+  'passwordSpecial',
+] as const;
+
 export class RegisterValidation {
   validate(data: RegisterFormData): ValidationResult {
     const { name, email, password, confirmPassword } = data;
 
-    // Check if all fields are filled
     if (!name.trim() || !email.trim() || !password || !confirmPassword) {
-      return { isValid: false, error: 'Todos os campos são obrigatórios' };
+      return { isValid: false, error: 'required' };
     }
 
-    // Check email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      return { isValid: false, error: 'Email inválido' };
+      return { isValid: false, error: 'invalidEmail' };
     }
 
-    // Check password length
     if (password.length < 8) {
-      return { isValid: false, error: 'A senha deve ter pelo menos 8 caracteres' };
+      return { isValid: false, error: 'passwordMinLength' };
     }
 
-    // Check password has at least one lowercase letter
     if (!/[a-z]/.test(password)) {
-      return { isValid: false, error: 'A senha deve ter pelo menos uma letra minúscula' };
+      return { isValid: false, error: 'passwordLowercase' };
     }
 
-    // Check password has at least one uppercase letter
     if (!/[A-Z]/.test(password)) {
-      return { isValid: false, error: 'A senha deve ter pelo menos uma letra maiúscula' };
+      return { isValid: false, error: 'passwordUppercase' };
     }
 
-    // Check password has at least one number
     if (!/[0-9]/.test(password)) {
-      return { isValid: false, error: 'A senha deve ter pelo menos um número' };
+      return { isValid: false, error: 'passwordNumber' };
     }
 
-    // Check password match
+    if (!/[^A-Za-z0-9]/.test(password)) {
+      return { isValid: false, error: 'passwordSpecial' };
+    }
+
     if (password !== confirmPassword) {
-      return { isValid: false, error: 'As senhas não coincidem' };
+      return { isValid: false, error: 'passwordMismatch' };
     }
 
     return { isValid: true, error: null };
   }
 
   getPasswordRequirements(): string[] {
-    return [
-      'Pelo menos 8 caracteres',
-      'Pelo menos uma letra minúscula',
-      'Pelo menos uma letra maiúscula',
-      'Pelo menos um número',
-    ];
+    return PASSWORD_REQUIREMENTS as unknown as string[];
   }
 
   checkRequirement(password: string, requirement: string): boolean {
     switch (requirement) {
-      case 'Pelo menos 8 caracteres':
+      case 'passwordMinLength':
         return password.length >= 8;
-      case 'Pelo menos uma letra minúscula':
+      case 'passwordLowercase':
         return /[a-z]/.test(password);
-      case 'Pelo menos uma letra maiúscula':
+      case 'passwordUppercase':
         return /[A-Z]/.test(password);
-      case 'Pelo menos um número':
+      case 'passwordNumber':
         return /[0-9]/.test(password);
+      case 'passwordSpecial':
+        return /[^A-Za-z0-9]/.test(password);
       default:
         return false;
     }

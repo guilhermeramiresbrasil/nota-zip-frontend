@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,13 +27,14 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
 }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const t = useTranslations('auth');
 
   return (
     <Card className="shadow-xl">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold text-center">Criar Conta</CardTitle>
+        <CardTitle className="text-2xl font-bold text-center">{t('registerTitle')}</CardTitle>
         <CardDescription className="text-center">
-          Comece sua jornada financeira hoje
+          {t('registerSubtitle')}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -44,13 +46,13 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="name">Nome</Label>
+            <Label htmlFor="name">{t('name')}</Label>
             <div className="relative">
               <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
               <Input
                 id="name"
                 type="text"
-                placeholder="Seu nome"
+                placeholder={t('yourName')}
                 className="pl-10"
                 value={formData.name}
                 onChange={(e) => onChangeFormData({ ...formData, name: e.target.value })}
@@ -60,13 +62,13 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t('email')}</Label>
             <div className="relative">
               <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
               <Input
                 id="email"
                 type="email"
-                placeholder="seu@email.com"
+                placeholder={t('yourEmail')}
                 className="pl-10"
                 value={formData.email}
                 onChange={(e) => onChangeFormData({ ...formData, email: e.target.value })}
@@ -76,7 +78,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">Senha</Label>
+            <Label htmlFor="password">{t('password')}</Label>
             <div className="relative">
               <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
               <Input
@@ -100,7 +102,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirmar Senha</Label>
+            <Label htmlFor="confirmPassword">{t('confirmPassword')}</Label>
             <div className="relative">
               <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
               <Input
@@ -123,7 +125,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
           </div>
 
           <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? 'Criando conta...' : 'Criar Conta'}
+            {isLoading ? t('creatingAccount') : t('registerTitle')}
             {!isLoading && <ArrowRight className="ml-2 h-4 w-4" />}
           </Button>
         </form>

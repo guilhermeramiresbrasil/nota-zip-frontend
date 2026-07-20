@@ -2,6 +2,8 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CreditCard, Calendar, DollarSign, CheckCircle2, AlertCircle } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import { useAuth } from '@/contexts/AuthContext';
 import { CreditCardInvoice, PAYMENT_METHOD_LABELS, PaymentMethod } from '../types/card.types';
 
 interface InvoiceCardProps {
@@ -19,6 +21,8 @@ export const InvoiceCard: React.FC<InvoiceCardProps> = ({
   onPay,
   onViewDetails,
 }) => {
+  const t = useTranslations('cards');
+  const { user } = useAuth();
   const isClosed = invoice.status === 'closed';
   const isPaid = invoice.status === 'paid';
   const isPartial = invoice.status === 'partial';
@@ -26,13 +30,13 @@ export const InvoiceCard: React.FC<InvoiceCardProps> = ({
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+    return date.toLocaleDateString(user?.language || 'pt-BR', { month: 'long', year: 'numeric' });
   };
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
+    return new Intl.NumberFormat(user?.language || 'pt-BR', {
       style: 'currency',
-      currency: 'BRL',
+      currency: user?.currency || 'BRL',
     }).format(value);
   };
 
@@ -51,10 +55,10 @@ export const InvoiceCard: React.FC<InvoiceCardProps> = ({
   };
 
   const getStatusText = () => {
-    if (isPaid) return 'Paga';
-    if (isClosed) return 'Fechada';
-    if (isPartial) return 'Parcial';
-    return 'Aberta';
+    if (isPaid) return t('paid');
+    if (isClosed) return t('closed');
+    if (isPartial) return t('partial');
+    return t('open');
   };
 
   return (
@@ -70,7 +74,7 @@ export const InvoiceCard: React.FC<InvoiceCardProps> = ({
                 {cardName} {cardLastFour && `•••• ${cardLastFour}`}
               </CardTitle>
               <p className="text-sm text-slate-500 mt-1">
-                Fatura de {formatDate(invoice.billingMonth)}
+                {t('invoiceMonth', { month: formatDate(invoice.billingMonth) })}
               </p>
             </div>
           </div>
@@ -84,7 +88,7 @@ export const InvoiceCard: React.FC<InvoiceCardProps> = ({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-slate-600">
             <DollarSign className="h-4 w-4" />
-            <span className="text-sm">Valor total:</span>
+            <span className="text-sm">{t('totalValue')}:</span>
           </div>
           <span className="text-xl font-bold text-slate-800">
             {formatCurrency(invoice.totalAmount)}
@@ -95,7 +99,7 @@ export const InvoiceCard: React.FC<InvoiceCardProps> = ({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-slate-600">
               <CheckCircle2 className="h-4 w-4" />
-              <span className="text-sm">Já pago:</span>
+              <span className="text-sm">{t('alreadyPaid')}:</span>
             </div>
             <span className="text-lg font-semibold text-green-600">
               {formatCurrency(invoice.paidAmount || 0)}
@@ -107,7 +111,7 @@ export const InvoiceCard: React.FC<InvoiceCardProps> = ({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-slate-600">
               <AlertCircle className="h-4 w-4" />
-              <span className="text-sm">Restante:</span>
+              <span className="text-sm">{t('remaining')}:</span>
             </div>
             <span className="text-lg font-semibold text-orange-600">
               {formatCurrency(remainingAmount)}
@@ -117,14 +121,14 @@ export const InvoiceCard: React.FC<InvoiceCardProps> = ({
 
         {invoice.paymentDate && (
           <div className="flex items-center justify-between text-sm text-slate-500">
-            <span>Pago em:</span>
+            <span>{t('paidOn')}:</span>
             <span>{new Date(invoice.paymentDate).toLocaleDateString('pt-BR')}</span>
           </div>
         )}
 
         {invoice.paymentType && (
           <div className="flex items-center justify-between text-sm text-slate-500">
-            <span>Método:</span>
+            <span>{t('method')}:</span>
             <span>{PAYMENT_METHOD_LABELS[invoice.paymentType as PaymentMethod]}</span>
           </div>
         )}
@@ -135,7 +139,7 @@ export const InvoiceCard: React.FC<InvoiceCardProps> = ({
               onClick={() => onPay(invoice.id, 'full')}
               className="flex-1 bg-orange-600 hover:bg-orange-700"
             >
-              Pagar Fatura
+              {t('payInvoice')}
             </Button>
           )}
           {isPartial && (
@@ -143,7 +147,7 @@ export const InvoiceCard: React.FC<InvoiceCardProps> = ({
               onClick={() => onPay(invoice.id, 'full', remainingAmount)}
               className="flex-1 bg-orange-600 hover:bg-orange-700"
             >
-              Pagar Restante
+              {t('payRemaining')}
             </Button>
           )}
           {onViewDetails && (
@@ -152,7 +156,7 @@ export const InvoiceCard: React.FC<InvoiceCardProps> = ({
               variant="outline"
               className="flex-1"
             >
-              Ver Detalhes
+              {t('viewDetails')}
             </Button>
           )}
         </div>
