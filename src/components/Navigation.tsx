@@ -11,6 +11,7 @@ import { useTranslations } from 'next-intl';
 import { useAuth } from '@/contexts/AuthContext';
 import { NotificationsCenter } from '@/components/NotificationsCenter';
 import { ViewModeToggle } from '@/components/ViewModeToggle';
+import { LocaleSwitcher } from '@/components/LocaleSwitcher';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const navigation = [
@@ -89,6 +90,7 @@ export default function Navigation() {
               </>
             ) : (
               <div className="flex items-center space-x-4">
+                <LocaleSwitcher className="hidden sm:flex" />
                 <Link href="/login">
                   <Button variant="ghost">{t('login')}</Button>
                 </Link>
@@ -104,6 +106,7 @@ export default function Navigation() {
           {/* User Menu - Desktop only */}
           {isAuthenticated && (
             <div className="hidden lg:flex lg:items-center gap-4">
+              <LocaleSwitcher />
               <NotificationsCenter />
               <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
                 <DropdownMenuTrigger asChild>
@@ -146,6 +149,7 @@ export default function Navigation() {
 
           {/* Mobile menu button */}
           <div className="flex items-center lg:hidden gap-2">
+            <LocaleSwitcher />
             {isAuthenticated && (
               <>
                 <ViewModeToggle />
@@ -252,6 +256,15 @@ export default function Navigation() {
                 </>
               ) : (
                 <>
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.05 }}
+                  >
+                    <div className="px-3 py-2">
+                      <LocaleSwitcher />
+                    </div>
+                  </motion.div>
                   <motion.div
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}

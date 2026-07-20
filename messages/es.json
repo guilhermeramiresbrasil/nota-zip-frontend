@@ -822,5 +822,11 @@
     "s8_text": "Nos reservamos el derecho de modificar estos términos en cualquier momento. Los cambios significativos se comunicarán por email o notificación en la aplicación. El uso continuado después de las modificaciones constituye aceptación de los nuevos términos.",
     "s9_title": "9. Contacto",
     "s9_text": "Para dudas sobre estos Términos de Uso, contáctenos por email: suporte@notazip.com.br"
+  },
+  "locale": {
+    "language": "Idioma",
+    "pt-BR": "Português",
+    "en-US": "English",
+    "es-ES": "Español"
   }
 }
