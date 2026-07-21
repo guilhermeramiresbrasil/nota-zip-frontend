@@ -41,7 +41,7 @@ export const metadata: Metadata = {
     type: 'website',
   },
   twitter: {
-    card: 'summary',
+    card: 'summary_large_image',
     title: 'Nota Zip — Mensagens e áudios de WhatsApp viram finanças automáticas',
     description: 'Transforme mensagens e áudios de WhatsApp em organização financeira automática. A IA do Nota Zip lê, categoriza e organiza seus gastos sem planilhas.',
   },
