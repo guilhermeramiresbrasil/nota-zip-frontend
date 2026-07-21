@@ -138,8 +138,11 @@ export function CustomPricingTable() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
         {plans.map((plan) => {
           const msgs = planMessages[plan.name] || {};
-          const price = cycle === 'monthly' ? plan.monthlyPrice : plan.yearlyPrice;
-          const intervalLabel = cycle === 'monthly' ? t('perMonth') : t('perYear');
+          const isYearly = cycle === 'yearly';
+          const yearlyTotal = plan.yearlyPrice;
+          const monthlyPrice = isYearly
+            ? (parseFloat(plan.yearlyPrice) / 12).toFixed(2)
+            : plan.monthlyPrice;
           const isPopular = plan.name === 'premium';
           const features = typeof msgs.features === 'string'
             ? msgs.features.split('|').map((f) => f.trim()).filter(Boolean)
@@ -170,10 +173,17 @@ export function CustomPricingTable() {
                 </p>
               </div>
 
-              <div className="mb-6">
-                <span className="text-4xl font-bold text-slate-900">{formatPrice(price)}</span>
-                <span className="text-sm text-slate-500 ml-1">{intervalLabel}</span>
+              <div className="mb-1">
+                <span className="text-4xl font-bold text-slate-900">{formatPrice(monthlyPrice)}</span>
+                <span className="text-sm text-slate-500 ml-1">{t('perMonth')}</span>
               </div>
+              {isYearly ? (
+                <div className="mb-5 text-sm text-slate-500">
+                  {formatPrice(yearlyTotal)} <span className="text-slate-400">{t('perYear')}</span>
+                </div>
+              ) : (
+                <div className="mb-5" />
+              )}
 
               <button
                 type="button"
