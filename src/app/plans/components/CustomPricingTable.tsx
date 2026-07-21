@@ -39,6 +39,8 @@ export function CustomPricingTable() {
   const [pending, setPending] = useState(false);
   const [checkout, setCheckout] = useState<CheckoutData | null>(null);
   const [stripePromise, setStripePromise] = useState<any>(null);
+  const [currency, setCurrency] = useState('BRL');
+  const [rate, setRate] = useState(1);
 
   useEffect(() => {
     fetch(`${API_URL}/api/subscriptions/plans`)
@@ -55,11 +57,37 @@ export function CustomPricingTable() {
       .finally(() => setLoading(false));
   }, [t]);
 
+  useEffect(() => {
+    fetch('https://ipwho.is/')
+      .then((res) => res.json())
+      .then((data) => {
+        if (!data.success) return;
+        let detected: 'BRL' | 'USD' | 'EUR' = 'BRL';
+        if (data.continent === 'North America' || ['US', 'CA', 'MX'].includes(data.country_code)) {
+          detected = 'USD';
+        } else if (data.continent === 'Europe') {
+          detected = 'EUR';
+        }
+        if (detected === 'BRL') return;
+        fetch('https://api.exchangerate-api.com/v4/latest/BRL')
+          .then((r) => r.json())
+          .then((r) => {
+            const conversion = r.rates?.[detected];
+            if (conversion) {
+              setCurrency(detected);
+              setRate(conversion);
+            }
+          });
+      })
+      .catch(() => {});
+  }, []);
+
   const formatPrice = (value: string) => {
     const n = parseFloat(value);
     if (Number.isNaN(n)) return value;
+    const converted = n * rate;
     const localeCode = locale === 'pt' ? 'pt-BR' : locale === 'es' ? 'es' : 'en';
-    return n.toLocaleString(localeCode, { style: 'currency', currency: 'BRL' });
+    return converted.toLocaleString(localeCode, { style: 'currency', currency });
   };
 
   const planMessages: Record<string, { name?: string; description?: string; features?: string; button?: string }> =
