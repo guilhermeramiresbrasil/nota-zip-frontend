@@ -666,7 +666,35 @@
   "plans": {
     "title": "Planes y Precios",
     "description": "Elige el plan ideal para tus necesidades",
-    "subscribeTitle": "Suscribirse a un Plan"
+    "subscribeTitle": "Suscribirse a un Plan",
+    "monthly": "Mensual",
+    "yearly": "Anual",
+    "perMonth": "por mes",
+    "perYear": "por año",
+    "includes": "Incluye:",
+    "mostPopular": "Más popular",
+    "subscribe": "Suscribirse",
+    "startTrial": "Iniciar prueba",
+    "processing": "Procesando...",
+    "loading": "Cargando...",
+    "error": "No se pudieron cargar los planes.",
+    "loginToSubscribe": "Inicia sesión para suscribirte a un plan.",
+    "close": "Cerrar",
+    "basic": {
+      "name": "NotaZip Basic",
+      "description": "Plan básico de NotaZip",
+      "features": "Transacciones ilimitadas|Reportes|Control de tarjeta de crédito"
+    },
+    "premium": {
+      "name": "NotaZip Premium",
+      "description": "Experiencia completa de NotaZip con todas las funciones",
+      "features": "Transacciones ilimitadas|Reportes|Guarda Garantía (notas guardadas por el tiempo que elijas)|Control de tarjeta de crédito|WhatsApp (audio, foto o texto)|Exportación de datos|Prueba gratuita"
+    },
+    "shared": {
+      "name": "NotaZip Shared",
+      "description": "Plan compartido para parejas",
+      "features": "Transacciones ilimitadas|Reportes|Guarda Garantía (notas guardadas por el tiempo que elijas)|Control de tarjeta de crédito|WhatsApp para 2 personas (audio, foto o texto)|Exportación de datos|Vista compartida con otro miembro|2 personas en la misma cuenta|Prueba gratuita en planes recurrentes"
+    }
   },
   "paymentSuccess": {
     "title": "¡Pago confirmado!",

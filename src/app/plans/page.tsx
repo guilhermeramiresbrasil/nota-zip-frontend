@@ -2,7 +2,7 @@
 
 import { PageHeader } from '@/components/PageHeader';
 import { useTranslations } from 'next-intl';
-import { StripePricingTable } from './components/StripePricingTable';
+import { CustomPricingTable } from './components/CustomPricingTable';
 
 // Valores reais obtidos via Stripe CLI/API (BRL, mensal/anual)
 const STRIPE_PLANS = [
@@ -75,7 +75,7 @@ export default function PlansPage() {
       />
       <div className="mt-12">
         <h2 className="text-2xl font-bold mb-6">{t('subscribeTitle')}</h2>
-        <StripePricingTable />
+        <CustomPricingTable />
       </div>
     </div>
   );

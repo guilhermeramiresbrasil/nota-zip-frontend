@@ -666,7 +666,35 @@
   "plans": {
     "title": "Plans and Pricing",
     "description": "Choose the ideal plan for your needs",
-    "subscribeTitle": "Subscribe to Plan"
+    "subscribeTitle": "Subscribe to Plan",
+    "monthly": "Monthly",
+    "yearly": "Yearly",
+    "perMonth": "per month",
+    "perYear": "per year",
+    "includes": "Includes:",
+    "mostPopular": "Most popular",
+    "subscribe": "Subscribe",
+    "startTrial": "Start trial",
+    "processing": "Processing...",
+    "loading": "Loading...",
+    "error": "Could not load plans.",
+    "loginToSubscribe": "Log in to subscribe to a plan.",
+    "close": "Close",
+    "basic": {
+      "name": "NotaZip Basic",
+      "description": "Basic NotaZip plan",
+      "features": "Unlimited transactions|Reports|Credit card control"
+    },
+    "premium": {
+      "name": "NotaZip Premium",
+      "description": "Full NotaZip experience with all features",
+      "features": "Unlimited transactions|Reports|Warranty Vault (save notes for as long as you want)|Credit card control|WhatsApp (audio, photo or text)|Data export|Free trial"
+    },
+    "shared": {
+      "name": "NotaZip Shared",
+      "description": "Shared plan for couples",
+      "features": "Unlimited transactions|Reports|Warranty Vault (save notes for as long as you want)|Credit card control|WhatsApp for 2 people (audio, photo or text)|Data export|Shared view with another member|2 people on the same account|Free trial on recurring plans"
+    }
   },
   "paymentSuccess": {
     "title": "Payment confirmed!",
