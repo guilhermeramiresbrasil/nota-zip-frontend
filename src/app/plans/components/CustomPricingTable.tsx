@@ -26,6 +26,19 @@ interface CheckoutData {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
+const FOREIGN_PRICES: Record<'USD' | 'EUR', Record<string, { monthly: string; yearly: string }>> = {
+  USD: {
+    basic: { monthly: '14.00', yearly: '120.00' },
+    premium: { monthly: '18.00', yearly: '130.00' },
+    shared: { monthly: '25.00', yearly: '180.00' },
+  },
+  EUR: {
+    basic: { monthly: '11.00', yearly: '100.00' },
+    premium: { monthly: '14.00', yearly: '170.00' },
+    shared: { monthly: '18.00', yearly: '200.00' },
+  },
+};
+
 export function CustomPricingTable() {
   const { user } = useAuth();
   const t = useTranslations('plans');
@@ -40,7 +53,6 @@ export function CustomPricingTable() {
   const [checkout, setCheckout] = useState<CheckoutData | null>(null);
   const [stripePromise, setStripePromise] = useState<any>(null);
   const [currency, setCurrency] = useState('BRL');
-  const [rate, setRate] = useState(1);
 
   useEffect(() => {
     fetch(`${API_URL}/api/subscriptions/plans`)
@@ -62,22 +74,13 @@ export function CustomPricingTable() {
       .then((res) => res.json())
       .then((data) => {
         if (!data.success) return;
-        let detected: 'BRL' | 'USD' | 'EUR' = 'BRL';
-        if (data.continent === 'North America' || ['US', 'CA', 'MX'].includes(data.country_code)) {
-          detected = 'USD';
+        if (data.country_code === 'BR') {
+          setCurrency('BRL');
         } else if (data.continent === 'Europe') {
-          detected = 'EUR';
+          setCurrency('EUR');
+        } else {
+          setCurrency('USD');
         }
-        if (detected === 'BRL') return;
-        fetch('https://api.exchangerate-api.com/v4/latest/BRL')
-          .then((r) => r.json())
-          .then((r) => {
-            const conversion = r.rates?.[detected];
-            if (conversion) {
-              setCurrency(detected);
-              setRate(conversion);
-            }
-          });
       })
       .catch(() => {});
   }, []);
@@ -85,9 +88,8 @@ export function CustomPricingTable() {
   const formatPrice = (value: string) => {
     const n = parseFloat(value);
     if (Number.isNaN(n)) return value;
-    const converted = n * rate;
     const localeCode = locale === 'pt' ? 'pt-BR' : locale === 'es' ? 'es' : 'en';
-    return converted.toLocaleString(localeCode, { style: 'currency', currency });
+    return n.toLocaleString(localeCode, { style: 'currency', currency });
   };
 
   const planMessages: Record<string, { name?: string; description?: string; features?: string; button?: string }> =
@@ -167,10 +169,13 @@ export function CustomPricingTable() {
         {plans.map((plan) => {
           const msgs = planMessages[plan.name] || {};
           const isYearly = cycle === 'yearly';
-          const yearlyTotal = plan.yearlyPrice;
+          const foreign = currency !== 'BRL' ? FOREIGN_PRICES[currency as 'USD' | 'EUR'][plan.name] : null;
+          const baseMonthly = foreign ? foreign.monthly : plan.monthlyPrice;
+          const baseYearly = foreign ? foreign.yearly : plan.yearlyPrice;
+          const yearlyTotal = baseYearly;
           const monthlyPrice = isYearly
-            ? (parseFloat(plan.yearlyPrice) / 12).toFixed(2)
-            : plan.monthlyPrice;
+            ? (parseFloat(baseYearly) / 12).toFixed(2)
+            : baseMonthly;
           const isPopular = plan.name === 'premium';
           const features = typeof msgs.features === 'string'
             ? msgs.features.split('|').map((f) => f.trim()).filter(Boolean)
@@ -203,7 +208,7 @@ export function CustomPricingTable() {
 
               {isYearly && (
                 <div className="mb-1 text-sm text-slate-400 line-through">
-                  {formatPrice(plan.monthlyPrice)}
+                  {formatPrice(baseMonthly)}
                 </div>
               )}
               <div className="mb-1">
