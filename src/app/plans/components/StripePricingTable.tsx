@@ -2,24 +2,21 @@
 
 import { useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useLocale } from 'next-intl';
 
-const DEFAULT_PRICING_TABLE_ID = 'prctbl_1TqyyS7ZGxkJBfmcxJlfeIGA';
-const DEFAULT_PUBLISHABLE_KEY = 'pk_test_51TXREK7ZGxkJBfmch0Ltz9BeQ9D9q3PD1BygSFZ0tM1rlSDkbAK8fmqvkW6wS4zzlREVn0IVM4e3vz5yP8FX1ay700sXOu9Zhx';
-const SUCCESS_URL = 'http://localhost:3000/home';
+const PRICING_TABLE_ID = 'prctbl_1TuwJD8L0Pv2QYqZEHK7CEiI';
+const PUBLISHABLE_KEY = 'pk_live_51TXRE28L0Pv2QYqZFzhDmnecFyCTenqaCECWIczOjhfuwrKk9JGTQXnu9CPUubA7KwZCSeFpJccNESOP0ya3OJQd00wBmCJCsi';
+const SUCCESS_URL = 'https://notazip.com.br/payment-success';
 
 export function StripePricingTable() {
   const { user } = useAuth();
-  const locale = useLocale();
-  return <StripePricingTableInner key={`${user?.id ?? 'loading'}-${locale}`} user={user} locale={locale} />;
+  return <StripePricingTableInner key={user?.id ?? 'loading'} user={user} />;
 }
 
 interface StripePricingTableInnerProps {
   user?: { id?: string; email?: string } | null;
-  locale: string;
 }
 
-function StripePricingTableInner({ user, locale }: StripePricingTableInnerProps) {
+function StripePricingTableInner({ user }: StripePricingTableInnerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -30,18 +27,9 @@ function StripePricingTableInner({ user, locale }: StripePricingTableInnerProps)
 
     const container = containerRef.current;
     if (container) {
-      const pricingTableIds: Record<string, string | undefined> = {
-        pt: process.env.NEXT_PUBLIC_STRIPE_PRICING_TABLE_ID_PT,
-        en: process.env.NEXT_PUBLIC_STRIPE_PRICING_TABLE_ID_EN,
-        es: process.env.NEXT_PUBLIC_STRIPE_PRICING_TABLE_ID_ES,
-      };
-      const pricingTableId =
-        pricingTableIds[locale] || process.env.NEXT_PUBLIC_STRIPE_PRICING_TABLE_ID || DEFAULT_PRICING_TABLE_ID;
-      const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || DEFAULT_PUBLISHABLE_KEY;
-
       const pricingTable = document.createElement('stripe-pricing-table');
-      pricingTable.setAttribute('pricing-table-id', pricingTableId);
-      pricingTable.setAttribute('publishable-key', publishableKey);
+      pricingTable.setAttribute('pricing-table-id', PRICING_TABLE_ID);
+      pricingTable.setAttribute('publishable-key', PUBLISHABLE_KEY);
 
       if (user?.email) {
         pricingTable.setAttribute('customer-email', user.email);
@@ -73,7 +61,7 @@ function StripePricingTableInner({ user, locale }: StripePricingTableInnerProps)
         }
       };
     }
-  }, [user, locale]);
+  }, []);
 
   return <div ref={containerRef} className="min-h-[600px]" />;
 }
