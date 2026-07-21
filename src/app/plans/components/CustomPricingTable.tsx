@@ -173,6 +173,11 @@ export function CustomPricingTable() {
                 </p>
               </div>
 
+              {isYearly && (
+                <div className="mb-1 text-sm text-slate-400 line-through">
+                  {formatPrice(plan.monthlyPrice)}
+                </div>
+              )}
               <div className="mb-1">
                 <span className="text-4xl font-bold text-slate-900">{formatPrice(monthlyPrice)}</span>
                 <span className="text-sm text-slate-500 ml-1">{t('perMonth')}</span>
