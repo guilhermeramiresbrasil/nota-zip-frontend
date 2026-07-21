@@ -8,6 +8,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ViewModeProvider } from "@/contexts/ViewModeContext";
 import { TemporaryPasswordGuard } from "@/components/TemporaryPasswordGuard";
 import { I18nProvider } from "@/components/I18nProvider";
+import { Analytics } from "@/components/Analytics";
 
 const inter = Inter({subsets:['latin'],variable:'--font-sans'});
 
@@ -24,16 +25,21 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL('https://notazip.com.br'),
   title: {
-    default: 'Nota Zip — Mensagens e áudios de WhatsApp viram finanças automáticas',
+    default: 'Nota Zip — Controle de gastos pelo WhatsApp',
     template: '%s | Nota Zip',
   },
   description: 'Transforme mensagens e áudios de WhatsApp em organização financeira automática. A IA do Nota Zip lê, categoriza e organiza seus gastos sem planilhas.',
   keywords: ['finanças pessoais', 'controle de gastos', 'nota fiscal', 'whatsapp', 'inteligência artificial', 'Nota Zip'],
   authors: [{ name: 'Nota Zip' }],
   robots: { index: true, follow: true },
-  alternates: { canonical: '/' },
+  alternates: {
+    canonical: '/',
+    languages: {
+      'pt-BR': 'https://notazip.com.br/',
+    },
+  },
   openGraph: {
-    title: 'Nota Zip — Mensagens e áudios de WhatsApp viram finanças automáticas',
+    title: 'Nota Zip — Controle de gastos pelo WhatsApp',
     description: 'Transforme mensagens e áudios de WhatsApp em organização financeira automática. A IA do Nota Zip lê, categoriza e organiza seus gastos sem planilhas.',
     url: '/',
     siteName: 'Nota Zip',
@@ -42,7 +48,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Nota Zip — Mensagens e áudios de WhatsApp viram finanças automáticas',
+    title: 'Nota Zip — Controle de gastos pelo WhatsApp',
     description: 'Transforme mensagens e áudios de WhatsApp em organização financeira automática. A IA do Nota Zip lê, categoriza e organiza seus gastos sem planilhas.',
   },
   icons: {
@@ -72,6 +78,7 @@ export default function RootLayout({
                   {children}
                 </main>
                 <Toaster />
+                <Analytics />
               </TemporaryPasswordGuard>
             </ViewModeProvider>
           </I18nProvider>

@@ -51,6 +51,12 @@ export default function PlansPage() {
         '@type': 'Product',
         name: plan.name,
         description: plan.description,
+        image: 'https://notazip.com.br/opengraph-image?c=plans',
+        brand: {
+          '@type': 'Brand',
+          name: 'Nota Zip',
+        },
+        sku: `${plan.id}-${price.interval}`,
         offers: {
           '@type': 'Offer',
           name: price.interval === 'month' ? 'Mensal' : 'Anual',
@@ -58,6 +64,10 @@ export default function PlansPage() {
           priceCurrency: price.currency,
           availability: 'https://schema.org/InStock',
           url: 'https://notazip.com.br/plans',
+          hasMerchantReturnPolicy: {
+            '@type': 'MerchantReturnPolicy',
+            returnPolicyCategory: 'https://schema.org/MerchantReturnNotPermitted',
+          },
         },
       }))
     ),

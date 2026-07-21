@@ -13,5 +13,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${SITE_URL}/forgot-password`, lastModified: now, changeFrequency: 'monthly', priority: 0.3 },
     { url: `${SITE_URL}/terms`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
     { url: `${SITE_URL}/privacy`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
+    { url: `${SITE_URL}/lp/financas-whatsapp`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${SITE_URL}/lp/controle-gastos-casal`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${SITE_URL}/lp/controle-gastos-2-pessoas`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
   ];
 }

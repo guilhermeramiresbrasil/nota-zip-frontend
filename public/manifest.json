@@ -1,17 +1,46 @@
 {
   "name": "Nota Zip",
   "short_name": "Nota Zip",
-  "description": "Sistema Financeiro Inteligente",
+  "description": "Transforme mensagens e áudios do WhatsApp em organização financeira automática.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#2563eb",
+  "categories": ["finance", "productivity", "utilities"],
   "icons": [
     {
       "src": "/icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/opengraph-image",
+      "sizes": "1200x630",
+      "type": "image/png",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "form_factor": "narrow"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Planos",
+      "short_name": "Planos",
+      "description": "Ver planos e preços",
+      "url": "/plans"
+    },
+    {
+      "name": "Cadastrar",
+      "short_name": "Cadastrar",
+      "description": "Criar uma conta",
+      "url": "/register"
     }
   ]
 }
