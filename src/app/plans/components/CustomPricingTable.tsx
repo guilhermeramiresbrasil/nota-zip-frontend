@@ -2,9 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslations, useMessages, useLocale } from 'next-intl';
-import { loadStripe } from '@stripe/stripe-js';
-import { EmbeddedCheckoutProvider, EmbeddedCheckout } from '@stripe/react-stripe-js';
-import { Check, X } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 type BillingCycle = 'monthly' | 'yearly';
@@ -17,11 +15,6 @@ interface Plan {
   yearlyPrice: string;
   trialDays: number;
   features?: string[] | null;
-}
-
-interface CheckoutData {
-  clientSecret: string;
-  publishableKey: string;
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
@@ -49,9 +42,7 @@ export function CustomPricingTable() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [cycle, setCycle] = useState<BillingCycle>('monthly');
-  const [pending, setPending] = useState(false);
-  const [checkout, setCheckout] = useState<CheckoutData | null>(null);
-  const [stripePromise, setStripePromise] = useState<any>(null);
+  const [pending, setPending] = useState<Record<string, boolean>>({});
   const [currency, setCurrency] = useState('BRL');
 
   useEffect(() => {
@@ -102,12 +93,12 @@ export function CustomPricingTable() {
       };
     }, [messages]);
 
-  const handleSubscribe = async (planId: string, hasTrial: boolean) => {
+  const handleSubscribe = async (planId: string) => {
     if (!user?.id) {
       setError(t('loginToSubscribe'));
       return;
     }
-    setPending(true);
+    setPending((prev) => ({ ...prev, [planId]: true }));
     setError(null);
     try {
       const res = await fetch(`${API_URL}/api/subscriptions/create-payment-link`, {
@@ -121,16 +112,15 @@ export function CustomPricingTable() {
         }),
       });
       const data = await res.json();
-      if (!data.success) {
+      if (!data.success || !data.data?.url) {
         setError(data.error || t('error'));
         return;
       }
-      setCheckout({ clientSecret: data.data.clientSecret, publishableKey: data.data.publishableKey });
-      setStripePromise(loadStripe(data.data.publishableKey));
+      window.location.href = data.data.url;
     } catch {
       setError(t('error'));
     } finally {
-      setPending(false);
+      setPending((prev) => ({ ...prev, [planId]: false }));
     }
   };
 
@@ -225,11 +215,11 @@ export function CustomPricingTable() {
 
               <button
                 type="button"
-                disabled={pending}
-                onClick={() => handleSubscribe(plan.id, plan.trialDays > 0)}
+                disabled={!!pending[plan.id]}
+                onClick={() => handleSubscribe(plan.id)}
                 className="w-full rounded-lg bg-[#0074d4] px-4 py-3 text-sm font-medium text-white hover:bg-[#0066ba] disabled:opacity-60"
               >
-                {pending ? t('processing') : buttonLabel}
+                {pending[plan.id] ? t('processing') : buttonLabel}
               </button>
 
               <div className="mt-6">
@@ -248,25 +238,7 @@ export function CustomPricingTable() {
         })}
       </div>
 
-      {checkout && stripePromise && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="relative w-full max-w-2xl max-h-[90vh] overflow-auto rounded-xl bg-white p-4 shadow-2xl">
-            <button
-              type="button"
-              onClick={() => setCheckout(null)}
-              className="absolute right-3 top-3 text-slate-500 hover:text-slate-900"
-              aria-label={t('close')}
-            >
-              <X className="h-5 w-5" />
-            </button>
-            <div className="pt-6">
-              <EmbeddedCheckoutProvider stripe={stripePromise} options={{ clientSecret: checkout.clientSecret }}>
-                <EmbeddedCheckout />
-              </EmbeddedCheckoutProvider>
-            </div>
-          </div>
-        </div>
-      )}
+
     </div>
   );
 }
