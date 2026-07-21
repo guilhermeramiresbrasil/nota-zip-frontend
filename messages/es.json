@@ -693,7 +693,8 @@
     "shared": {
       "name": "NotaZip Shared",
       "description": "Plan compartido para parejas",
-      "features": "Transacciones ilimitadas|Reportes|Guarda Garantía (notas guardadas por el tiempo que elijas)|Control de tarjeta de crédito|WhatsApp para 2 personas (audio, foto o texto)|Exportación de datos|Vista compartida con otro miembro|2 personas en la misma cuenta|Prueba gratuita en planes recurrentes"
+      "features": "Transacciones ilimitadas|Reportes|Guarda Garantía (notas guardadas por el tiempo que elijas)|Control de tarjeta de crédito|WhatsApp para 2 personas (audio, foto o texto)|Exportación de datos|Vista compartida con otro miembro|2 personas en la misma cuenta|Prueba gratuita",
+      "button": "Iniciar prueba"
     }
   },
   "paymentSuccess": {

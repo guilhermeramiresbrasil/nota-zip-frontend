@@ -693,7 +693,8 @@
     "shared": {
       "name": "NotaZip Shared",
       "description": "Shared plan for couples",
-      "features": "Unlimited transactions|Reports|Warranty Vault (save notes for as long as you want)|Credit card control|WhatsApp for 2 people (audio, photo or text)|Data export|Shared view with another member|2 people on the same account|Free trial on recurring plans"
+      "features": "Unlimited transactions|Reports|Warranty Vault (save notes for as long as you want)|Credit card control|WhatsApp for 2 people (audio, photo or text)|Data export|Shared view with another member|2 people on the same account|Free trial",
+      "button": "Start trial"
     }
   },
   "paymentSuccess": {

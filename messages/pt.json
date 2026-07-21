@@ -693,7 +693,8 @@
     "shared": {
       "name": "NotaZip Shared",
       "description": "Plano compartilhado do NotaZip",
-      "features": "Transações ilimitadas|Relatórios|Guarda Garantia (notas salvas pelo tempo que escolher)|Controle de cartão de crédito|WhatsApp para as 2 pessoas (áudio, foto ou texto)|Exportação de dados|Visão compartilhada com outro membro|2 pessoas na mesma conta|Avaliação gratuita nos planos recorrentes"
+      "features": "Transações ilimitadas|Relatórios|Guarda Garantia (notas salvas pelo tempo que escolher)|Controle de cartão de crédito|WhatsApp para as 2 pessoas (áudio, foto ou texto)|Exportação de dados|Visão compartilhada com outro membro|2 pessoas na mesma conta|Avaliação gratuita",
+      "button": "Iniciar avaliação"
     }
   },
   "paymentSuccess": {
