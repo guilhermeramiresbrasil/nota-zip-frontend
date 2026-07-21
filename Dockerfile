@@ -6,8 +6,15 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
+# Copy shared crypto package
+COPY --from=crypto . /packages/nota-zip-crypto
+RUN sed -i 's#"@notazip/crypto": "[^"]*"#"@notazip/crypto": "file:../../packages/nota-zip-crypto"#g' package.json
+
+# Add missing dependencies
+RUN sed -i 's#"dependencies": {#"dependencies": {\n    "@stripe/stripe-js": "^2.0.0",\n    "@stripe/react-stripe-js": "^2.0.0",#' package.json
+
 # Install dependencies
-RUN bun install --frozen-lockfile
+RUN rm -f bun.lock && bun install
 
 # Copy source code
 COPY . .
@@ -30,8 +37,12 @@ RUN apk add --no-cache curl
 # Copy package files
 COPY package*.json ./
 
+# Copy shared crypto package
+COPY --from=crypto . /packages/nota-zip-crypto
+RUN sed -i 's#"@notazip/crypto": "[^"]*"#"@notazip/crypto": "file:../../packages/nota-zip-crypto"#g' package.json
+
 # Install production dependencies only
-RUN bun install --production --frozen-lockfile
+RUN rm -f bun.lock && bun install --production
 
 # Copy built application from builder stage
 COPY --from=builder /app/.next ./.next
