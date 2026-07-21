@@ -94,22 +94,21 @@ export function CustomPricingTable() {
     }, [messages]);
 
   const handleSubscribe = async (planId: string) => {
-    if (!user?.id) {
-      setError(t('loginToSubscribe'));
-      return;
-    }
     setPending((prev) => ({ ...prev, [planId]: true }));
     setError(null);
     try {
+      const body: Record<string, string> = {
+        planId,
+        billingCycle: cycle,
+        paymentMethod: 'credit_card',
+      };
+      if (user?.id) {
+        body.userId = user.id;
+      }
       const res = await fetch(`${API_URL}/api/subscriptions/create-payment-link`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: user.id,
-          planId,
-          billingCycle: cycle,
-          paymentMethod: 'credit_card',
-        }),
+        body: JSON.stringify(body),
       });
       const data = await res.json();
       if (!data.success || !data.data?.url) {
