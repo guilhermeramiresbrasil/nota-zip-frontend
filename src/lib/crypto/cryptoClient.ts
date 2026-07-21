@@ -111,6 +111,11 @@ export async function authKeyToString(authKey: Uint8Array): Promise<string> {
 export async function createVault(password: string): Promise<Vault> {
   const sodium = await getSodium();
   const salt = await generateSalt();
+  return createVaultWithSalt(password, salt);
+}
+
+export async function createVaultWithSalt(password: string, salt: string): Promise<Vault> {
+  const sodium = await getSodium();
   const { authKey, encryptionKey } = await deriveKeys(password, salt, 'moderate');
   const keypair = sodium.crypto_box_keypair();
   const publicKey = await toBase64(keypair.publicKey);

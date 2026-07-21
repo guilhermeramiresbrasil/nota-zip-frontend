@@ -210,16 +210,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       let privateKey: string | null = null;
 
       if (userDetails.encryptedPrivateKey && finalPublicKey && finalSalt) {
-        privateKey = await cryptoClient.unlockVault(
-          password,
-          finalSalt,
-          userDetails.encryptedPrivateKey,
-          userDetails.encryptionNonce
-        );
+        try {
+          privateKey = await cryptoClient.unlockVault(
+            password,
+            finalSalt,
+            userDetails.encryptedPrivateKey,
+            userDetails.encryptionNonce
+          );
+        } catch (error) {
+          if (userDetails.isTemporaryPassword) {
+            console.warn('Vault unlock failed for temporary password; recreating vault with same salt');
+            const vault = await cryptoClient.createVaultWithSalt(password, finalSalt);
+            await userServiceInstance.setVault(userDetails.id, {
+              publicKey: vault.publicKey,
+              encryptedPrivateKey: vault.encryptedPrivateKey,
+              encryptionNonce: vault.encryptionNonce,
+              encryptionSalt: vault.salt,
+              keyVersion: vault.keyVersion,
+            });
+            finalPublicKey = vault.publicKey;
+            finalSalt = vault.salt;
+            finalKeyVersion = vault.keyVersion;
+            privateKey = vault.privateKey;
+          } else {
+            console.error('Vault unlock failed:', error);
+            throw new Error('Não foi possível destravar o cofre. Tente redefinir a senha.');
+          }
+        }
       }
 
       if (!privateKey || !finalPublicKey) {
-        const vault = await cryptoClient.createVault(password);
+        const saltForNewVault = finalSalt || (await cryptoClient.generateSalt());
+        const vault = await cryptoClient.createVaultWithSalt(password, saltForNewVault);
         await userServiceInstance.setVault(userDetails.id, {
           publicKey: vault.publicKey,
           encryptedPrivateKey: vault.encryptedPrivateKey,
