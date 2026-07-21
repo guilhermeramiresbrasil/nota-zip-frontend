@@ -128,7 +128,7 @@ export function CustomPricingTable() {
     return <p className="text-center text-gray-500">{t('loading')}</p>;
   }
 
-  if (error && !checkout) {
+  if (error) {
     return <p className="text-center text-red-500">{error}</p>;
   }
 
