@@ -4,7 +4,6 @@ import dynamic from 'next/dynamic';
 import { useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import { LandingHero } from '@/components/LandingHero';
-import { LazySection } from '@/components/LazySection';
 
 const LandingHowItWorks = dynamic(() => import('@/components/LandingHowItWorks').then((m) => ({ default: m.LandingHowItWorks })));
 const LandingFeatures = dynamic(() => import('@/components/LandingFeatures').then((m) => ({ default: m.LandingFeatures })));
@@ -82,30 +81,14 @@ export default function HomePage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <LandingHero />
-      <LazySection>
-        <LandingHowItWorks />
-      </LazySection>
-      <LazySection>
-        <LandingFeatures />
-      </LazySection>
-      <LazySection>
-        <LandingTestimonials />
-      </LazySection>
-      <LazySection>
-        <LandingSecurity />
-      </LazySection>
-      <LazySection>
-        <LandingCTA />
-      </LazySection>
-      <LazySection>
-        <PlansPage />
-      </LazySection>
-      <LazySection>
-        <LandingFAQ />
-      </LazySection>
-      <LazySection>
-        <LandingFooter />
-      </LazySection>
+      <LandingHowItWorks />
+      <LandingFeatures />
+      <LandingTestimonials />
+      <LandingSecurity />
+      <LandingCTA />
+      <PlansPage />
+      <LandingFAQ />
+      <LandingFooter />
     </div>
   );
 }

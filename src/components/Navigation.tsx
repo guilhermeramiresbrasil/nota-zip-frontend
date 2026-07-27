@@ -6,13 +6,12 @@ import { Wallet, PieChart, Shield, Home, Menu, X, Settings, LogOut, TrendingUp, 
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useAuth } from '@/contexts/AuthContext';
 import { NotificationsCenter } from '@/components/NotificationsCenter';
 import { ViewModeToggle } from '@/components/ViewModeToggle';
 import { LocaleSwitcher } from '@/components/LocaleSwitcher';
-import { motion, AnimatePresence } from 'framer-motion';
 
 const navigation = [
   { key: 'home', href: '/home', icon: Home },
@@ -29,17 +28,7 @@ export default function Navigation() {
   const t = useTranslations('navigation');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [isDesktop, setIsDesktop] = useState(true);
 
-  useEffect(() => {
-    const checkScreenSize = () => {
-      setIsDesktop(window.innerWidth >= 1024);
-    };
-
-    checkScreenSize();
-    window.addEventListener('resize', checkScreenSize);
-    return () => window.removeEventListener('resize', checkScreenSize);
-  }, []);
 
   const handleLogout = () => {
     logout();
@@ -173,131 +162,83 @@ export default function Navigation() {
       </div>
 
       {/* Mobile menu */}
-      <AnimatePresence>
-        {mobileMenuOpen && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3, ease: 'easeInOut' }}
-            className="lg:hidden border-t border-gray-200 overflow-hidden"
-          >
-            <div className="px-4 pt-2 pb-4 space-y-1">
-              {isAuthenticated ? (
-                <>
-                  {navigation.map((item, index) => {
-                    const isActive = pathname === item.href;
-                    const Icon = item.icon;
-                    return (
-                      <motion.div
-                        key={item.key}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.05 }}
-                      >
-                        <Link
-                          href={item.href}
-                          onClick={() => setMobileMenuOpen(false)}
-                          className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all duration-200 whitespace-nowrap ${
-                            isActive
-                              ? 'bg-gradient-to-r from-blue-50 to-purple-50 text-blue-600'
-                              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                          }`}
-                        >
-                          <Icon className="h-5 w-5" />
-                          <span className="font-medium">{t(item.key)}</span>
-                        </Link>
-                      </motion.div>
-                    );
-                  })}
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.25 }}
+      <div
+        className="lg:hidden border-t border-gray-200 overflow-hidden transition-all duration-300 ease-in-out"
+        style={{ maxHeight: mobileMenuOpen ? 600 : 0, opacity: mobileMenuOpen ? 1 : 0 }}
+        aria-hidden={mobileMenuOpen ? 'false' : 'true'}
+      >
+        <div className="px-4 pt-2 pb-4 space-y-1">
+          {isAuthenticated ? (
+            <>
+              {navigation.map((item) => {
+                const isActive = pathname === item.href;
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.key}
+                    href={item.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all duration-200 whitespace-nowrap ${
+                      isActive
+                        ? 'bg-gradient-to-r from-blue-50 to-purple-50 text-blue-600'
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                    }`}
                   >
-                    <Link
-                      href="/settings"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center space-x-3 px-3 py-2 rounded-lg transition-all duration-200 text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                    >
-                      <Settings className="h-5 w-5" />
-                      <span className="font-medium">{t('settings')}</span>
-                    </Link>
-                  </motion.div>
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.3 }}
-                  >
-                    <Link
-                      href="/plans"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center space-x-3 px-3 py-2 rounded-lg transition-all duration-200 text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                    >
-                      <TrendingUp className="h-5 w-5" />
-                      <span className="font-medium">{t('plans')}</span>
-                    </Link>
-                  </motion.div>
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.35 }}
-                  >
-                    <button
-                      onClick={() => {
-                        handleLogout();
-                        setMobileMenuOpen(false);
-                      }}
-                      className="flex items-center space-x-3 px-3 py-2 rounded-lg transition-all duration-200 text-red-600 hover:text-red-700 hover:bg-red-50 w-full"
-                    >
-                      <LogOut className="h-5 w-5" />
-                      <span className="font-medium">{t('logout')}</span>
-                    </button>
-                  </motion.div>
-                </>
-              ) : (
-                <>
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.05 }}
-                  >
-                    <div className="px-3 py-2">
-                      <LocaleSwitcher />
-                    </div>
-                  </motion.div>
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.1 }}
-                  >
-                    <Link
-                      href="/login"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center space-x-3 px-3 py-2 rounded-lg transition-all duration-200 text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                    >
-                      <span className="font-medium">{t('login')}</span>
-                    </Link>
-                  </motion.div>
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.15 }}
-                  >
-                    <Link
-                      href="/register"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center space-x-3 px-3 py-2 rounded-lg transition-all duration-200 bg-gradient-to-r from-blue-500 to-blue-600 text-white"
-                    >
-                      <span className="font-medium">{t('register')}</span>
-                    </Link>
-                  </motion.div>
-                </>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+                    <Icon className="h-5 w-5" />
+                    <span className="font-medium">{t(item.key)}</span>
+                  </Link>
+                );
+              })}
+              <Link
+                href="/settings"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center space-x-3 px-3 py-2 rounded-lg transition-all duration-200 text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+              >
+                <Settings className="h-5 w-5" />
+                <span className="font-medium">{t('settings')}</span>
+              </Link>
+              <Link
+                href="/plans"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center space-x-3 px-3 py-2 rounded-lg transition-all duration-200 text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+              >
+                <TrendingUp className="h-5 w-5" />
+                <span className="font-medium">{t('plans')}</span>
+              </Link>
+              <button
+                onClick={() => {
+                  handleLogout();
+                  setMobileMenuOpen(false);
+                }}
+                className="flex items-center space-x-3 px-3 py-2 rounded-lg transition-all duration-200 text-red-600 hover:text-red-700 hover:bg-red-50 w-full"
+              >
+                <LogOut className="h-5 w-5" />
+                <span className="font-medium">{t('logout')}</span>
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="px-3 py-2">
+                <LocaleSwitcher />
+              </div>
+              <Link
+                href="/login"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center space-x-3 px-3 py-2 rounded-lg transition-all duration-200 text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+              >
+                <span className="font-medium">{t('login')}</span>
+              </Link>
+              <Link
+                href="/register"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center space-x-3 px-3 py-2 rounded-lg transition-all duration-200 bg-gradient-to-r from-blue-500 to-blue-600 text-white"
+              >
+                <span className="font-medium">{t('register')}</span>
+              </Link>
+            </>
+          )}
+        </div>
+      </div>
     </nav>
   );
 }
