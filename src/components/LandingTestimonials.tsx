@@ -45,7 +45,7 @@ export const LandingTestimonials: React.FC = () => {
                 <p className="text-gray-600 mb-4 italic">&ldquo;{t.content}&rdquo;</p>
                 <div className="flex items-center gap-3">
                   <Avatar>
-                    <AvatarFallback className="bg-blue-100 text-blue-600 text-sm font-medium">
+                    <AvatarFallback className="bg-blue-100 text-blue-800 text-sm font-medium">
                       {t.initials}
                     </AvatarFallback>
                   </Avatar>

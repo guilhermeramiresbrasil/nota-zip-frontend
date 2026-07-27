@@ -159,6 +159,7 @@ export default function Navigation() {
             <Button
               variant="ghost"
               size="icon"
+              aria-label={mobileMenuOpen ? 'Fechar menu' : 'Abrir menu'}
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
               {mobileMenuOpen ? (

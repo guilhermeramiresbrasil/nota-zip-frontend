@@ -17,7 +17,7 @@ export const LandingHowItWorks: React.FC = () => {
           {/* WhatsApp side */}
           <div className="rounded-2xl border border-green-100 bg-green-50 p-6 shadow-sm">
             <div className="flex items-center gap-3 mb-6">
-              <div className="bg-green-500 text-white p-2 rounded-full">
+              <div className="bg-green-700 text-white p-2 rounded-full">
                 <MessageSquare className="h-5 w-5" />
               </div>
               <div>
@@ -28,20 +28,20 @@ export const LandingHowItWorks: React.FC = () => {
 
             <div className="space-y-4">
               <div className="flex justify-end">
-                <div className="bg-green-500 text-white rounded-l-2xl rounded-tr-2xl rounded-br-md p-3 max-w-xs text-sm">
+                <div className="bg-green-700 text-white rounded-l-2xl rounded-tr-2xl rounded-br-md p-3 max-w-xs text-sm">
                   <div className="flex items-center gap-2 mb-2">
-                    <Image className="h-4 w-4" />
+                    <Image className="h-4 w-4" aria-hidden="true" />
                     <span>Foto do recibo</span>
                   </div>
-                  <div className="bg-white/20 rounded h-24 w-full flex items-center justify-center">
-                    <span className="text-xs opacity-80">JPEG</span>
+                  <div className="bg-white/90 rounded h-24 w-full flex items-center justify-center">
+                    <span className="text-xs text-slate-700 font-medium">JPEG</span>
                   </div>
                 </div>
               </div>
 
               <div className="flex justify-end">
-                <div className="bg-green-500 text-white rounded-l-2xl rounded-tr-2xl rounded-br-md p-3 max-w-xs text-sm flex items-center gap-2">
-                  <Mic className="h-4 w-4" />
+                <div className="bg-green-700 text-white rounded-l-2xl rounded-tr-2xl rounded-br-md p-3 max-w-xs text-sm flex items-center gap-2">
+                  <Mic className="h-4 w-4" aria-hidden="true" />
                   <div className="flex items-end gap-1 h-4">
                     <motion.div
                       className="w-1 bg-white rounded"
@@ -80,8 +80,8 @@ export const LandingHowItWorks: React.FC = () => {
           >
             <div className="flex items-center justify-between mb-6">
               <p className="font-semibold text-gray-900">Nota Zip</p>
-              <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full flex items-center gap-1">
-                <Check className="h-3 w-3" /> processado
+              <span className="text-xs text-green-800 bg-green-100 px-2 py-1 rounded-full flex items-center gap-1">
+                <Check className="h-3 w-3" aria-hidden="true" /> processado
               </span>
             </div>
 
