@@ -3,9 +3,6 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   transpilePackages: ["@notazip/crypto"],
   poweredByHeader: false,
-  experimental: {
-    optimizePackageImports: ['lucide-react', 'framer-motion'],
-  },
   env: {
     NEXT_PUBLIC_STRIPE_PRICING_TABLE_ID: process.env.NEXT_PUBLIC_STRIPE_PRICING_TABLE_ID || '',
     NEXT_PUBLIC_STRIPE_PRICING_TABLE_ID_PT: process.env.NEXT_PUBLIC_STRIPE_PRICING_TABLE_ID_PT || '',
