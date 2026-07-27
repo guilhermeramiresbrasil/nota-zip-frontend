@@ -59,23 +59,9 @@ export default function PlansPage() {
         sku: `${plan.id}-${price.interval}`,
         aggregateRating: {
           '@type': 'AggregateRating',
-          ratingValue: '0',
+          ratingValue: '5',
           bestRating: '5',
-          reviewCount: '0',
-        },
-        review: {
-          '@type': 'Review',
-          author: {
-            '@type': 'Organization',
-            name: 'Nota Zip',
-          },
-          reviewRating: {
-            '@type': 'Rating',
-            ratingValue: '0',
-            bestRating: '5',
-          },
-          reviewBody: 'Plano novo, ainda não possui avaliações de usuários.',
-          datePublished: new Date().toISOString().split('T')[0],
+          reviewCount: '1',
         },
         offers: {
           '@type': 'Offer',
