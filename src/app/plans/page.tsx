@@ -70,8 +70,21 @@ export default function PlansPage() {
           priceCurrency: price.currency,
           availability: 'https://schema.org/InStock',
           url: 'https://notazip.com.br/plans',
+          shippingDetails: {
+            '@type': 'OfferShippingDetails',
+            shippingRate: {
+              '@type': 'MonetaryAmount',
+              value: '0.00',
+              currency: 'BRL',
+            },
+            shippingDestination: {
+              '@type': 'DefinedRegion',
+              addressCountry: 'BR',
+            },
+          },
           hasMerchantReturnPolicy: {
             '@type': 'MerchantReturnPolicy',
+            applicableCountry: 'BR',
             returnPolicyCategory: 'https://schema.org/MerchantReturnNotPermitted',
           },
         },
