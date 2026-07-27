@@ -178,12 +178,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error('User not found');
       }
       const { id: userId, encryptionSalt, publicKey } = publicInfo.data;
-      if (!encryptionSalt) {
-        throw new Error('Account not ready for zero-knowledge login');
-      }
 
-      const { authKey } = await cryptoClient.deriveKeys(password, encryptionSalt, 'moderate');
-      const authKeyB64 = await cryptoClient.authKeyToString(authKey);
+      let authKeyB64: string;
+
+      if (!encryptionSalt) {
+        // Account exists but has no zero-knowledge vault (pre-migration or
+        // incomplete registration). Try to log in with the plain password so
+        // we can create the vault now and re-encrypt the credentials.
+        const legacyLoginInfo = await authServiceInstance.login({ email, password });
+        if (!legacyLoginInfo?.data) {
+          throw new Error('Invalid user data');
+        }
+        const legacyDetails = legacyLoginInfo.data;
+
+        const vault = await cryptoClient.createVault(password);
+
+        await userServiceInstance.changePassword(legacyDetails.userId, {
+          currentPassword: password,
+          newPassword: vault.authKeyB64,
+          vault: {
+            publicKey: vault.publicKey,
+            encryptedPrivateKey: vault.encryptedPrivateKey,
+            encryptionNonce: vault.encryptionNonce,
+            encryptionSalt: vault.salt,
+            keyVersion: vault.keyVersion,
+          },
+        });
+
+        authKeyB64 = vault.authKeyB64;
+      } else {
+        const { authKey } = await cryptoClient.deriveKeys(password, encryptionSalt, 'moderate');
+        authKeyB64 = await cryptoClient.authKeyToString(authKey);
+      }
 
       const loginInfo = await authServiceInstance.login({ email, password: authKeyB64 });
       if (!loginInfo?.data) {

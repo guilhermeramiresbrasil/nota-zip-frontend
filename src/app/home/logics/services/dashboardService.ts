@@ -1,4 +1,4 @@
-import { Transaction, DashboardStats } from '../../types/dashboard.types';
+import { Transaction, TransactionType, DashboardStats } from '../../types/dashboard.types';
 import { calculateDashboardStats } from '../calculations/financeCalculations';
 import * as cryptoClient from '@/lib/crypto/cryptoClient';
 
@@ -26,6 +26,8 @@ function formatRelativeDate(dateStr: string): string {
 
 export class DashboardService {
   private static instance: DashboardService;
+  private readonly cache = new Map<string, { value: any; expiresAt: number }>();
+  private static readonly CACHE_TTL_MS = 30_000;
 
   private constructor() {}
 
@@ -36,7 +38,24 @@ export class DashboardService {
     return DashboardService.instance;
   }
 
+  private getCached<T>(key: string): T | undefined {
+    const entry = this.cache.get(key);
+    if (entry && entry.expiresAt > Date.now()) {
+      return entry.value;
+    }
+    this.cache.delete(key);
+    return undefined;
+  }
+
+  private setCached(key: string, value: any) {
+    this.cache.set(key, { value, expiresAt: Date.now() + DashboardService.CACHE_TTL_MS });
+  }
+
   async fetchDashboardStats(userId: string): Promise<DashboardStats> {
+    const cacheKey = `stats:${userId}`;
+    const cached = this.getCached<DashboardStats>(cacheKey);
+    if (cached) return cached;
+
     const response = await fetch(`${GATEWAY_URL}/api/reports`, {
       method: 'POST',
       headers: getAuthHeaders(),
@@ -52,7 +71,7 @@ export class DashboardService {
     const totalExpenses = data.totalExpenses ?? 0;
     const savings = totalIncome - totalExpenses;
 
-    return {
+    const result: DashboardStats = {
       totalBalance: savings,
       totalIncome,
       totalExpenses,
@@ -60,6 +79,9 @@ export class DashboardService {
       savingsRate: totalIncome > 0 ? (savings / totalIncome) * 100 : 0,
       monthlyGrowth: 0,
     };
+
+    this.setCached(cacheKey, result);
+    return result;
   }
 
   async fetchRecentTransactions(userId: string): Promise<Transaction[]> {
@@ -67,6 +89,10 @@ export class DashboardService {
     const startDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
     const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
     const endDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+    const cacheKey = `transactions:${userId}:${startDate}:${endDate}`;
+
+    const cached = this.getCached<Transaction[]>(cacheKey);
+    if (cached) return cached;
 
     const response = await fetch(`${GATEWAY_URL}/api/transactions/list`, {
       method: 'POST',
@@ -79,7 +105,7 @@ export class DashboardService {
     const json = await response.json();
     const items: any[] = json.data ?? [];
 
-    return Promise.all(
+    const result = await Promise.all(
       items.map(async (t) => {
         const description = (await cryptoClient.maybeDecryptField(t.description)) ?? t.description ?? '';
         return {
@@ -89,10 +115,13 @@ export class DashboardService {
           amount: t.type === 'debit' ? -Math.abs(t.amount) : Math.abs(t.amount),
           category: t.category,
           date: formatRelativeDate(t.date),
-          type: t.type === 'credit' ? 'income' : 'expense',
-        };
+          type: (t.type === 'credit' ? 'income' : 'expense') as TransactionType,
+        } as Transaction;
       })
     );
+
+    this.setCached(cacheKey, result);
+    return result;
   }
 
   calculateStats(transactions: Transaction[]): DashboardStats {
