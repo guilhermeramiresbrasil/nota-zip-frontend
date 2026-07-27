@@ -1,16 +1,18 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import { LandingHero } from '@/components/LandingHero';
-import { LandingHowItWorks } from '@/components/LandingHowItWorks';
-import { LandingFeatures } from '@/components/LandingFeatures';
-import { LandingTestimonials } from '@/components/LandingTestimonials';
-import { LandingSecurity } from '@/components/LandingSecurity';
-import { LandingCTA } from '@/components/LandingCTA';
-import { LandingFAQ } from '@/components/LandingFAQ';
-import { LandingFooter } from '@/components/LandingFooter';
-import PlansPage from './plans/page';
+
+const LandingHowItWorks = dynamic(() => import('@/components/LandingHowItWorks').then((m) => ({ default: m.LandingHowItWorks })));
+const LandingFeatures = dynamic(() => import('@/components/LandingFeatures').then((m) => ({ default: m.LandingFeatures })));
+const LandingTestimonials = dynamic(() => import('@/components/LandingTestimonials').then((m) => ({ default: m.LandingTestimonials })));
+const LandingSecurity = dynamic(() => import('@/components/LandingSecurity').then((m) => ({ default: m.LandingSecurity })));
+const LandingCTA = dynamic(() => import('@/components/LandingCTA').then((m) => ({ default: m.LandingCTA })));
+const LandingFAQ = dynamic(() => import('@/components/LandingFAQ').then((m) => ({ default: m.LandingFAQ })));
+const LandingFooter = dynamic(() => import('@/components/LandingFooter').then((m) => ({ default: m.LandingFooter })));
+const PlansPage = dynamic(() => import('./plans/page'));
 
 function useHomeJsonLd() {
   const t = useTranslations('landing');

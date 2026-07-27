@@ -45,5 +45,10 @@
     "eslint-config-next": "16.2.6",
     "tailwindcss": "^4.3.3",
     "typescript": "^5"
-  }
+  },
+  "browserslist": [
+    "> 0.5% and supports es6-module",
+    "last 2 versions and not dead",
+    "not IE 11"
+  ]
 }
